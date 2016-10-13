@@ -154,14 +154,20 @@ public class ChatMembersActivity extends BaseActivity {
     }
 
     private void obtainUser(final String userName) {
-        User user = new User();
-        user.setLogin(userName);
-        mMembers.add(user);
-        mMembersAdapter.notifyDataSetChanged();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                User user = new User();
+                user.setLogin(userName);
+                mMembers.add(user);
+                mMembersAdapter.notifyDataSetChanged();
 
-        if (progressLoading.getVisibility() == View.VISIBLE) {
-            progressLoading.setVisibility(View.GONE);
-        }
+                if (progressLoading.getVisibility() == View.VISIBLE) {
+                    progressLoading.setVisibility(View.GONE);
+                }
+            }
+        });
+
     }
 
     @Override
