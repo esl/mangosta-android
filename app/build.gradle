@@ -1,8 +1,10 @@
 apply plugin: 'com.android.application'
+apply plugin: 'realm-android'
 
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.0"
+
     defaultConfig {
         applicationId "inaka.com.mangosta"
         minSdkVersion 17
@@ -10,20 +12,123 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
+
+    signingConfigs {
+        release {
+            storeFile file('mangosta.jks')
+            storePassword "esl2016"
+            keyAlias "mangosta"
+            keyPassword "esl2016"
+        }
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
+
     buildTypes {
+        debug {
+
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
+
+        applicationVariants.all { variant ->
+            variant.outputs.each { output ->
+                def flavorName = variant.baseName;
+                output.outputFile = new File("${project.buildDir}/outputs/apk/", "mangosta-" + flavorName + "-" + variant.versionName + "-" + variant.versionCode + ".apk");
+            }
+        }
+    }
+
+    lintOptions {
+        disable 'InvalidPackage', 'ContentDescription', 'LabelFor'
     }
 }
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        // Realm
+        classpath "io.realm:realm-gradle-plugin:2.0.2"
+    }
+}
+
+repositories {
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+    mavenCentral()
+}
+
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Espresso
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:24.2.1'
+
+    // JUnit
     testCompile 'junit:junit:4.12'
+
+    // Android
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:support-v13:24.2.1'
+    compile 'com.android.support:support-v4:24.2.1'
+    compile 'com.android.support:design:24.2.1'
+    compile 'com.android.support:recyclerview-v7:24.2.1'
+    compile 'com.android.support:cardview-v7:24.2.1'
+
+    // Butterknife
+    compile 'com.jakewharton:butterknife:7.0.1'
+
+    // PagerSlidingTabStrip
+    compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
+
+    // Gson
+    compile 'com.google.code.gson:gson:2.6.2'
+
+    // SquareUp
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile "com.squareup.retrofit2:converter-gson:2.1.0"
+    compile "com.squareup.retrofit2:adapter-rxjava:2.1.0"
+    compile 'com.squareup.okhttp:okhttp:2.7.5'
+    compile 'com.squareup:otto:1.3.8'
+    compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.7.5'
+
+    // Joda
+    compile 'joda-time:joda-time:2.9.3'
+
+    // Floating action button group
+    compile 'com.getbase:floatingactionbutton:1.10.1'
+
+    // Linear layout manager for use wrap_content in RecyclerView
+    compile 'org.solovyev.android.views:linear-layout-manager:0.5@aar'
+
+    // ReactiveX
+    compile 'io.reactivex:rxandroid:1.1.0'
+    compile 'io.reactivex:rxjava:1.1.0'
+    compile 'com.jakewharton.rxbinding:rxbinding:0.3.0'
+
+    // Smack
+//    compile 'org.igniterealtime.smack:smack-android:4.2.0-beta3-SNAPSHOT'
+//    compile 'org.igniterealtime.smack:smack-android-extensions:4.2.0-beta3-SNAPSHOT'
+//    compile 'org.igniterealtime.smack:smack-tcp:4.2.0-beta3-SNAPSHOT'
+//    compile "org.igniterealtime.smack:smack-experimental:4.2.0-beta3-SNAPSHOT"
+
+    // EventBus
+    compile 'de.greenrobot:eventbus:2.4.0'
+
+    // NanoTasks
+    compile 'com.fabiendevos:nanotasks:1.1.0'
 }

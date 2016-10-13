@@ -1,3 +1,144 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Mangosta</string>
+
+    <string name="title_activity_view_gist_comments">Comments</string>
+    <string name="title_activity_create_new_gist">Create new gist</string>
+    <string name="title_activity_user_profile">User profile</string>
+    <string name="title_activity_show_gist">ShowGistActivity</string>
+    <string name="title_activity_edit_user">Edit user</string>
+    <string name="title_activity_create_chat">Create chat</string>
+    <string name="title_activity_chat">Chat</string>
+    <string name="title_activity_chat_members">Members</string>
+    <string name="title_activity_blocked_users">Block/Unblock users</string>
+    <string name="title_activity_edit_room_members">Edit room members</string>
+    <string name="title_activity_create_blog">Create blog post</string>
+    <string name="title_activity_blog_post_details">Blog post details</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="action_follow">Follow</string>
+    <string name="action_unfollow">Unfollow</string>
+    <string name="action_signout">Sign out</string>
+    <string name="action_block_users">Block/Unblock users</string>
+    <string name="action_filter">Filter</string>
+    <string name="action_leave_chat">Leave</string>
+    <string name="action_chat_members">Members</string>
+    <string name="action_destroy_chat">Destroy</string>
+    <string name="action_change_room_name">Change room name</string>
+    <string name="action_change_room_subject">Change room subject</string>
+
+    <string name="title_tab_all_gists">All</string>
+    <string name="title_tab_starred_gists">Starred</string>
+    <string name="title_tab_bio">Bio</string>
+    <string name="title_tab_gists">Gists</string>
+    <string name="title_tab_chat">Chat</string>
+    <string name="title_tab_blogs">Blogs</string>
+
+    <string name="title_button_share">Share</string>
+    <string name="title_button_star">Star</string>
+    <string name="title_button_unstar">Unstar</string>
+    <string name="title_button_fork">Fork</string>
+    <string name="title_button_comments">Comments</string>
+    <string name="title_button_download_files">Download files</string>
+
+    <string name="title_button_create_chat">Create chat</string>
+    <string name="title_button_upload_gist">Upload gist</string>
+    <string name="title_button_create_blog">Create blog</string>
+
+    <string name="title_dialog_filters">Sort gists</string>
+    <string name="title_dialog_login">Login with Github</string>
+
+    <string name="label_created">Created %1$s</string>
+    <string name="label_updated">Updated %1$s</string>
+    <string name="label_email">Email: %1$s</string>
+
+    <string name="date_seconds_ago"
+            tools:ignore="PluralsCandidate">%1$d seconds ago</string>
+    <string name="date_seconds_now">just now</string>
+
+    <string name="unknown_user">Unknown user</string>
+    <string name="comment_created">Comment sent successfully</string>
+    <string name="fork_done">Fork done</string>
+    <string name="successful_download">Successful download</string>
+    <string name="gist_starred_ok">Gist starred</string>
+    <string name="gist_starred_fail">Gist could not be starred</string>
+    <string name="gist_unstarred_ok">Gist unstarred</string>
+    <string name="gist_unstarred_fail">Gist could not be unstarred</string>
+    <string name="comment_deleted">Comment deleted</string>
+    <string name="comment_edited">Comment edited</string>
+    <string name="edit_comment">Edit comment</string>
+    <string name="followed">Followed</string>
+    <string name="unfollowed">Unfollowed</string>
+    <string name="user_updated">User updated</string>
+    <string name="error_updating_user">Error updating user: %1$s</string>
+
+    <string name="hint_edit_text">Enter text here</string>
+    <string name="text_file_name">File</string>
+    <string name="text_is_public">Public</string>
+    <string name="text_description">Description</string>
+    <string name="text_followers">Followers</string>
+    <string name="text_following">Following</string>
+    <string name="text_gist_created">New gist created</string>
+    <string name="text_name">Name:</string>
+    <string name="text_email">E-mail:</string>
+    <string name="text_blog">Blog:</string>
+    <string name="text_company">Company:</string>
+    <string name="text_location">Location:</string>
+    <string name="text_bio">Bio:</string>
+    <string name="text_hireable">Hireable:</string>
+    <string name="text_recently_created">Recently created</string>
+    <string name="text_least_recently_created">Least recently created</string>
+    <string name="text_recently_updated">Recently updated</string>
+    <string name="text_least_recently_updated">Least recently updated</string>
+    <string name="text_no_comments">This gist hasn\'t got comments yet</string>
+    <string name="text_no_file_manager_found">"No suitable File Manager was found."</string>
+    <string name="text_open_file">Open file</string>
+
+    <string name="share_gist_content">Take a look at  %1$s gist!</string>
+
+    <string name="error">ERROR</string>
+    <string name="loading">Loading &#8230;</string>
+    <string name="edit">Edit</string>
+    <string name="cancel">Cancel</string>
+    <string name="sending_request">Sending the request &#8230;</string>
+    <string name="empty_message">Empty message</string>
+    <string name="empty_file">Empty file</string>
+    <string name="directory_not_created">Directory not created</string>
+    <string name="folder_not_found">Folder not found"</string>
+    <string name="error_create_chat">ERROR! Could not create chat.</string>
+    <string name="error_send_message">ERROR! Could not send the message.</string>
+
+    <string name="gists_files_path">"/Documents/Gistoid"</string>
+
+    <string name="search_user_hint">Search user</string>
+    <string name="title_chat_members">Chat members</string>
+    <string name="add_user_to_chat">Add</string>
+    <string name="remove_user_from_chat">Remove</string>
+    <string name="chat_last_message">%1$s: %2$s</string>
+    <string name="chat_last_message_sticker">%1$s sent a sticker</string>
+    <string name="user_doesnt_exist">User \'%1$s\' doesn\'t exist on Gistoid. Send invitation?</string>
+    <string name="invite_to_gistoid">Invite to Gistoid</string>
+    <string name="add_people_to_create_chat">You have to add people to create a chat.</string>
+    <string name="chat_with">Chat with %1$s</string>
+    <string name="room_name">Room name</string>
+    <string name="enter_room_name">Enter a name for the room</string>
+    <string name="enter_new_room_name">Enter a name for the room</string>
+    <string name="room_name_changed">Room name changed</string>
+    <string name="room_subject">Room subject</string>
+    <string name="enter_new_room_subject">Enter a new subject for the room</string>
+    <string name="room_subject_changed">Room subject changed</string>
+    <string name="want_to_leave_chat">Do you want to leave this chat?</string>
+    <string name="want_to_destroy_chat">Do you want to destroy this chat?</string>
+    <string name="correct_message">Correct message</string>
+    <string name="enter_new_message">Enter the new body</string>
+    <string name="typing">%1$s is typing &#8230;</string>
+
+    <string name="muc_chat_type">MUC</string>
+    <string name="muc_light_chat_type">MUC Light</string>
+
+    <string name="title_blocked_users">Blocked</string>
+    <string name="button_unblock_all">Unblock all</string>
+    <string name="user_not_found">User not found</string>
+
+    <string name="blog_post_published">Blog post published</string>
+    <string name="blog_post_publishing">Publishing blog post</string>
 </resources>

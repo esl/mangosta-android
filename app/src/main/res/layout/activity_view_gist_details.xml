@@ -1,0 +1,87 @@
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+    </android.support.design.widget.AppBarLayout>
+
+    <include layout="@layout/content_view_gist_details"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.getbase.floatingactionbutton.FloatingActionsMenu
+            android:id="@+id/multipleActions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            fab:fab_addButtonColorNormal="@color/colorPrimary"
+            fab:fab_addButtonColorPressed="@color/colorPrimaryLight"
+            fab:fab_addButtonPlusIconColor="@color/white"
+            fab:fab_labelStyle="@style/menu_labels_style">
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floatingButtonShare"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_colorNormal="@color/purple_share"
+                fab:fab_colorPressed="@color/purple_share_light"
+                fab:fab_title="@string/title_button_share"/>
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floatingButtonStar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_colorNormal="@color/orange"
+                fab:fab_colorPressed="@color/yellow_star"
+                fab:fab_title="@string/title_button_star"/>
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floatingButtonFork"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_colorNormal="@color/red"
+                fab:fab_colorPressed="@android:color/holo_red_light"
+                fab:fab_title="@string/title_button_fork"/>
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floatingButtonComment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_colorNormal="@color/blue"
+                fab:fab_colorPressed="@android:color/holo_blue_bright"
+                fab:fab_title="@string/title_button_comments"/>
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floatingButtonDownload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_colorNormal="@color/green"
+                fab:fab_colorPressed="@color/green_comment"
+                fab:fab_title="@string/title_button_download_files"/>
+
+        </com.getbase.floatingactionbutton.FloatingActionsMenu>
+
+    </RelativeLayout>
+
+</android.support.design.widget.CoordinatorLayout>
