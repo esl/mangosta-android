@@ -14,26 +14,20 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     public ChatsListFragment mChatsListFragment;
 
-    Fragment mFragmentList[] = new Fragment[]{
-            mChatsListFragment
-    };
-
     private FragmentManager mFragmentManager;
 
-    private String mTabTitles[];
+    private String mTabTitle;
 
-    private String mPublicGistsFragmentTag;
-    private String mStarredGistsFragmentTag;
     private String mChatFragmentTag;
 
-    String mFragmentListTags[] = new String[]{
+    private String mFragmentListTags[] = new String[]{
             mChatFragmentTag
     };
 
-    public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitles[]) {
+    public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitle) {
         super(fm);
         this.mFragmentManager = fm;
-        this.mTabTitles = tabTitles;
+        this.mTabTitle = tabTitle;
     }
 
     @Override
@@ -45,17 +39,17 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
 
         Fragment fragment;
-        if (mFragmentList[position] == null) {
+        if (mChatsListFragment == null) {
             ChatsListFragment chatsListFragment = new ChatsListFragment();
             chatsListFragment.loadChatsBackgroundTask();
-            mFragmentList[position] = chatsListFragment;
-            fragment = mFragmentList[position];
+            mChatsListFragment = chatsListFragment;
+            fragment = mChatsListFragment;
         } else {
             fragment = this.mFragmentManager.findFragmentByTag(mFragmentListTags[position]);
         }
 
         Bundle bundle = new Bundle();
-        bundle.putString("title", mTabTitles[position]);
+        bundle.putString("title", mTabTitle);
         bundle.putInt("position", position);
 
         fragment.setArguments(bundle);
@@ -65,7 +59,7 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return mTabTitles[position];
+        return mTabTitle;
     }
 
     @Override
@@ -80,11 +74,11 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
     }
 
     public Fragment getRegisteredFragment(int position) {
-        return mFragmentList[position];
+        return mChatsListFragment;
     }
 
     public void clearFragmentsList() {
-        mFragmentList = new Fragment[]{};
+        mChatsListFragment = null;
     }
 
 }

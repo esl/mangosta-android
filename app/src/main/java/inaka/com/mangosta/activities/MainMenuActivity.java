@@ -11,6 +11,8 @@ import android.view.View;
 import com.astuetz.PagerSlidingTabStrip;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 
+import java.util.Locale;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
@@ -47,10 +49,9 @@ public class MainMenuActivity extends BaseActivity {
 
         ButterKnife.bind(this);
 
-        String tabTitles[] = new String[]{
-                getResources().getString(R.string.title_tab_chat)};
+        String tabTitle = String.format(Locale.getDefault(), getResources().getString(R.string.title_tab_chat), XMPPUtils.getAuthenticatedUserName());
 
-        mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
+        mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitle));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);

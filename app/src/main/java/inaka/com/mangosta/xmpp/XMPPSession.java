@@ -225,7 +225,7 @@ public class XMPPSession {
             @Override
             public void connected(XMPPConnection connection) {
                 Log.w(XMPP_TAG, "Connection Successful");
-                login();
+                backgroundLogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
                 sendPresence(Presence.Type.available);
                 activeCSI();
@@ -628,61 +628,63 @@ public class XMPPSession {
         }
     }
 
-    public void login() {
+    public void backgroundLogin() {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    mXMPPConnection.connect();
-                } catch (SmackException.AlreadyConnectedException ace) {
-                    Log.w(XMPP_TAG, "Client Already Connected");
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                login();
+            }
+        }).start();
+    }
 
-                Preferences preferences = Preferences.getInstance();
-                if (preferences.isLoggedIn()) {
+    public void login() {
+        try {
+            mXMPPConnection.connect();
+        } catch (SmackException.AlreadyConnectedException ace) {
+            Log.w(XMPP_TAG, "Client Already Connected");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
-                    // TODO change this
+        Preferences preferences = Preferences.getInstance();
+        if (preferences.isLoggedIn()) {
+
+            // TODO change this
 //                    String userName = "test.user";
 //                    String password = "9xpW9mmUenFgMjay";
 
-                    String userName = "ramabit";
+            String userName = "ramabit";
 //                    String userName = "gardano";
 //                    String userName = "griveroa-inaka";
 
-                    try {
-                        String resourceString = Settings.Secure.getString(MangostaApplication.getInstance().getContentResolver(), Settings.Secure.ANDROID_ID);
-                        Resourcepart resourcepart = Resourcepart.from(resourceString);
+            try {
+                String resourceString = Settings.Secure.getString(MangostaApplication.getInstance().getContentResolver(), Settings.Secure.ANDROID_ID);
+                Resourcepart resourcepart = Resourcepart.from(resourceString);
 
-                        // login
-                        if (connectionDoneOnce && !preferences.getXmppOauthAccessToken().isEmpty() && tokenSetMinutesAgo(30)) {
-                            mXMPPConnection.login(preferences.getXmppOauthAccessToken(), resourcepart);
-                        } else {
-                            mXMPPConnection.login(userName, passwordOfOtherUsers, resourcepart);
-                        }
-
-                        preferences.setUserXMPPJid(XMPPUtils.fromUserNameToJID(userName));
-
-                        mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                        sendPresence(Presence.Type.available);
-
-                    } catch (SmackException.AlreadyLoggedInException ale) {
-                        mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                        sendPresence(Presence.Type.available);
-
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                // login
+                if (connectionDoneOnce && !preferences.getXmppOauthAccessToken().isEmpty() && tokenSetMinutesAgo(30)) {
+                    mXMPPConnection.login(preferences.getXmppOauthAccessToken(), resourcepart);
+                } else {
+                    mXMPPConnection.login(userName, passwordOfOtherUsers, resourcepart);
                 }
 
-            }
+                preferences.setUserXMPPJid(XMPPUtils.fromUserNameToJID(userName));
 
-            private boolean tokenSetMinutesAgo(int minutes) throws ParseException {
-                return TimeCalculation.wasMinutesAgoMax(XmppDateTime.parseXEP0082Date(Preferences.getInstance().getDateLastTokenUpdate()), minutes);
-            }
+                mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+                sendPresence(Presence.Type.available);
 
-        }).start();
+            } catch (SmackException.AlreadyLoggedInException ale) {
+                mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+                sendPresence(Presence.Type.available);
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private boolean tokenSetMinutesAgo(int minutes) throws ParseException {
+        return TimeCalculation.wasMinutesAgoMax(XmppDateTime.parseXEP0082Date(Preferences.getInstance().getDateLastTokenUpdate()), minutes);
     }
 
     public void logoff() {

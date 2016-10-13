@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    android:orientation="vertical"
-    tools:showIn="@layout/activity_main_menu">
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              app:layout_behavior="@string/appbar_scrolling_view_behavior"
+              tools:showIn="@layout/activity_main_menu">
 
     <com.astuetz.PagerSlidingTabStrip
         android:id="@+id/slidingTabStrip"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        app:pstsShouldExpand="true"
-        app:pstsTextAllCaps="true"
         android:textColor="@color/colorPrimary"
         app:pstsDividerColor="@color/colorPrimary"
         app:pstsIndicatorColor="@color/colorPrimaryLight"
-        app:pstsUnderlineColor="@color/colorPrimary"
-        app:pstsTabPaddingLeftRight="8dp" />
+        app:pstsShouldExpand="true"
+        app:pstsTextAllCaps="true"
+        app:pstsUnderlineColor="@color/colorPrimary"/>
 
     <android.support.v4.view.ViewPager
         android:id="@+id/viewpagerMainMenu"

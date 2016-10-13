@@ -30,7 +30,7 @@
     <string name="title_tab_starred_gists">Starred</string>
     <string name="title_tab_bio">Bio</string>
     <string name="title_tab_gists">Gists</string>
-    <string name="title_tab_chat">Chat</string>
+    <string name="title_tab_chat">%1$s\'s chats</string>
     <string name="title_tab_blogs">Blogs</string>
 
     <string name="title_button_share">Share</string>

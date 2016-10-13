@@ -9,7 +9,7 @@
         android:id="@+id/chatsTypeRadioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/complete_white"
+        android:background="@color/colorPrimaryLight"
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:padding="10dp">
@@ -19,14 +19,14 @@
             android:layout_width="130dp"
             android:layout_height="wrap_content"
             android:text="@string/muc_light_chat_type"
-            android:textColor="@color/colorPrimary"/>
+            android:textColor="@color/white"/>
 
         <RadioButton
             android:id="@+id/mucChatsRadioButton"
             android:layout_width="130dp"
             android:layout_height="wrap_content"
             android:text="@string/muc_chat_type"
-            android:textColor="@color/colorPrimary"/>
+            android:textColor="@color/white"/>
     </RadioGroup>
 
     <ProgressBar

@@ -40,7 +40,7 @@ public class MangostaApplication extends Application {
     public void moveToForeground() {
         if (mIsInBackground) {
             if (Preferences.getInstance().isLoggedIn()) {
-                XMPPSession.getInstance().login();
+                XMPPSession.getInstance().backgroundLogin();
             }
         }
         mIsInBackground = false;

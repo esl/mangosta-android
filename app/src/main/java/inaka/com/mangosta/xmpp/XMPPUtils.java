@@ -99,4 +99,8 @@ public class XMPPUtils {
         return user.getLogin().equals(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
     }
 
+    public static String getAuthenticatedUserName() {
+        return XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getXMPPConnection().getUser().toString());
+    }
+
 }
