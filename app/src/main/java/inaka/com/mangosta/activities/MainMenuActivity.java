@@ -30,16 +30,11 @@ public class MainMenuActivity extends BaseActivity {
     @Bind(R.id.viewpagerMainMenu)
     ViewPager mViewpagerMainMenu;
 
-    @Bind(R.id.addNewGistFloatingButton)
-    FloatingActionButton addNewGistFloatingButton;
-
     @Bind(R.id.createNewChatFloatingButton)
     FloatingActionButton createNewChatFloatingButton;
 
     @Bind(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
-
-    private int mFilterSelection = 0;
 
     public boolean mRoomsLoaded = false;
 
@@ -53,8 +48,6 @@ public class MainMenuActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         String tabTitles[] = new String[]{
-                getResources().getString(R.string.title_tab_all_gists),
-                getResources().getString(R.string.title_tab_starred_gists),
                 getResources().getString(R.string.title_tab_chat)};
 
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));

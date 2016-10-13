@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorPrimaryLight">#a2a6b2f4</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#4d94cc</color>
+    <color name="colorPrimaryLight">#99c2ff</color>
+    <color name="colorAccent">#4d94ff</color>
 
     <color name="yellow_star">#ffdd03</color>
     <color name="blue">#6db6ff</color>
@@ -28,9 +27,9 @@
 
     <color name="black_semi_transparent">#B2000000</color>
 
-    <color name="purple_back_user_profile">#a28194f9</color>
+    <color name="blue_back_user_profile">#cc99c2ff</color>
 
-    <color name="background_chat">#cc8694e1</color>
+    <color name="background_chat">#cc66adff</color>
 
     <color name="grey_me_message_text">#888888</color>
     <color name="grey_me_message_back">#f4f4f4</color>

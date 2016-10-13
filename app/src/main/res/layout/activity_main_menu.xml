@@ -55,14 +55,6 @@
             fab:fab_colorPressed="@color/brown_create_chat_light"
             fab:fab_title="@string/title_button_create_chat"/>
 
-        <com.getbase.floatingactionbutton.FloatingActionButton
-            android:id="@+id/addNewGistFloatingButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            fab:fab_colorNormal="@color/green"
-            fab:fab_colorPressed="@color/green_comment"
-            fab:fab_title="@string/title_button_upload_gist"/>
-
     </com.getbase.floatingactionbutton.FloatingActionsMenu>
 
 </android.support.design.widget.CoordinatorLayout>

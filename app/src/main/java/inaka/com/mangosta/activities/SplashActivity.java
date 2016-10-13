@@ -28,10 +28,10 @@ public class SplashActivity extends FragmentActivity {
         ButterKnife.bind(this);
 
         if (Build.VERSION.SDK_INT >= 23) {
-            progressLoading.getIndeterminateDrawable().setColorFilter(this.getColor(R.color.colorPrimaryDark),
+            progressLoading.getIndeterminateDrawable().setColorFilter(this.getColor(R.color.colorPrimary),
                     android.graphics.PorterDuff.Mode.MULTIPLY);
         } else {
-            progressLoading.getIndeterminateDrawable().setColorFilter(getResources().getColor(R.color.colorPrimaryDark),
+            progressLoading.getIndeterminateDrawable().setColorFilter(getResources().getColor(R.color.colorPrimary),
                     android.graphics.PorterDuff.Mode.MULTIPLY);
         }
 

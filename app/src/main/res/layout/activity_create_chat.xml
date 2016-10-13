@@ -114,7 +114,7 @@
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="5dp"
         android:layout_marginEnd="5dp"
-        fab:fab_colorNormal="@color/colorPrimaryDark"
+        fab:fab_colorNormal="@color/colorPrimary"
         fab:fab_colorPressed="@color/colorPrimaryLight"
         fab:fab_title="@string/title_button_upload_gist"
         fab:fab_icon="@mipmap/ic_continue"/>

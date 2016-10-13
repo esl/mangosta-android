@@ -647,8 +647,8 @@ public class XMPPSession {
 //                    String userName = "test.user";
 //                    String password = "9xpW9mmUenFgMjay";
 
-//                    String userName = "ramabit";
-                    String userName = "gardano";
+                    String userName = "ramabit";
+//                    String userName = "gardano";
 //                    String userName = "griveroa-inaka";
 
                     try {

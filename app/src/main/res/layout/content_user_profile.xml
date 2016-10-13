@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/purple_back_user_profile"
+    android:background="@color/blue_back_user_profile"
     android:orientation="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="inaka.com.gistoid.activities.UserProfileActivity">
+    tools:context="inaka.com.mangosta.activities.UserProfileActivity">
 
     <LinearLayout
         android:id="@+id/layoutNameUserOptions"
@@ -72,12 +72,12 @@
         android:layout_height="48dp"
         android:background="@android:color/white"
         android:textColor="@color/colorPrimary"
-        app:pstsDividerColor="@color/colorPrimaryDark"
+        app:pstsDividerColor="@color/colorPrimary"
         app:pstsIndicatorColor="@color/colorPrimary"
         app:pstsShouldExpand="true"
         app:pstsTabPaddingLeftRight="8dp"
         app:pstsTextAllCaps="true"
-        app:pstsUnderlineColor="@color/colorPrimaryDark" />
+        app:pstsUnderlineColor="@color/colorPrimary" />
 
     <android.support.v4.view.ViewPager
         android:id="@+id/viewpagerProfile"

@@ -15,15 +15,15 @@
         app:pstsShouldExpand="true"
         app:pstsTextAllCaps="true"
         android:textColor="@color/colorPrimary"
-        app:pstsDividerColor="@color/colorPrimaryDark"
-        app:pstsIndicatorColor="@color/colorPrimary"
-        app:pstsUnderlineColor="@color/colorPrimaryDark"
+        app:pstsDividerColor="@color/colorPrimary"
+        app:pstsIndicatorColor="@color/colorPrimaryLight"
+        app:pstsUnderlineColor="@color/colorPrimary"
         app:pstsTabPaddingLeftRight="8dp" />
 
     <android.support.v4.view.ViewPager
         android:id="@+id/viewpagerMainMenu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/purple_back_user_profile"/>
+        android:background="@color/blue_back_user_profile"/>
 
 </LinearLayout>
