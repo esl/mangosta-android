@@ -22,7 +22,6 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToUserProfile;
-import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -82,12 +81,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
         }
 
         public void bind(final User user, boolean showAdd, boolean showRemove) {
-            if (user.getAvatarUrl() != null) {
-                Picasso.with(mContext).load(user.getAvatarUrl()).noFade().fit().into(imageUserAvatar);
-            } else {
-                Picasso.with(mContext).load(R.mipmap.ic_user).noFade().fit().into(imageUserAvatar);
-            }
-
+            Picasso.with(mContext).load(R.mipmap.ic_user).noFade().fit().into(imageUserAvatar);
             textUserLogin.setText(user.getLogin());
 
             if (user.getName() != null) {

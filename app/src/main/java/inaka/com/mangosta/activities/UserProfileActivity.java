@@ -7,22 +7,16 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.astuetz.PagerSlidingTabStrip;
-import com.squareup.picasso.Picasso;
-
-import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.fragments.BlogsListFragment;
-import inaka.com.mangosta.fragments.UserProfileFragment;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class UserProfileActivity extends BaseActivity {
@@ -36,25 +30,18 @@ public class UserProfileActivity extends BaseActivity {
     @Bind(R.id.viewpagerProfile)
     ViewPager viewpagerProfile;
 
-    @Bind(R.id.textUserEmail)
-    TextView textUserEmail;
-
     @Bind(R.id.textNameUserProfile)
     TextView textNameUserProfile;
+
+    @Bind(R.id.textLoginUserProfile)
+    TextView textLoginUserProfile;
 
     @Bind(R.id.imageAvatarUserProfile)
     ImageView imageAvatarUserProfile;
 
-    @Bind(R.id.textCreatedAtUserProfile)
-    TextView textCreatedAtUserProfile;
-
-    @Bind(R.id.textLocationUserProfile)
-    TextView textLocationUserProfile;
-
     private User mUser;
     private boolean mIsAuthenticatedUser;
 
-    private UserProfileFragment mUserProfileFragment;
     private BlogsListFragment mBlogsFragment;
 
     @Override
@@ -73,15 +60,9 @@ public class UserProfileActivity extends BaseActivity {
 
         if (mUser != null) {
             setTitle(mUser.getLogin());
-
-            if (mUser.getAvatarUrl() != null) {
-                Picasso.with(this).load(mUser.getAvatarUrl()).noFade().fit().into(imageAvatarUserProfile);
-            }
+            textLoginUserProfile.setText(mUser.getLogin());
+            textNameUserProfile.setText(XMPPUtils.fromUserNameToJID(mUser.getLogin()));
         }
-
-        textCreatedAtUserProfile.setText(String.format(Locale.getDefault(), this.getResources().getString(R.string.label_created), TimeCalculation.getTimeStringAgoSinceStringDate(this, mUser.getCreatedAt())));
-
-        mUserProfileFragment = UserProfileFragment.newInstance(mUser, mIsAuthenticatedUser);
 
         mBlogsFragment = new BlogsListFragment();
 
@@ -102,12 +83,6 @@ public class UserProfileActivity extends BaseActivity {
         return true;
     }
 
-    private void textViewGoneifEmpty(TextView textView) {
-        if (textView.getText().toString().equals("")) {
-            textView.setVisibility(View.GONE);
-        }
-    }
-
     private boolean isTheAuthenticatedUser() {
         return mIsAuthenticatedUser || XMPPUtils.isAutenticatedUser(mUser);
     }
@@ -122,9 +97,6 @@ public class UserProfileActivity extends BaseActivity {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-                    return mUserProfileFragment;
-
-                case 1:
                     return mBlogsFragment;
 
                 default:
@@ -136,9 +108,6 @@ public class UserProfileActivity extends BaseActivity {
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return getText(R.string.title_tab_bio);
-
-                case 1:
                     return getText(R.string.title_tab_blogs);
 
                 default:
@@ -148,7 +117,7 @@ public class UserProfileActivity extends BaseActivity {
 
         @Override
         public int getCount() {
-            return isTheAuthenticatedUser() ? 2 : 1;
+            return isTheAuthenticatedUser() ? 1 : 0;
         }
     }
 }
