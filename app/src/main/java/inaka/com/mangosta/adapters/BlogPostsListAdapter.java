@@ -11,8 +11,6 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
 import java.util.List;
 
 import butterknife.Bind;
@@ -52,9 +50,6 @@ public class BlogPostsListAdapter extends RecyclerView.Adapter<BlogPostsListAdap
 
     public static class BlogPostViewHolder extends BlogPostsListAdapter.ViewHolder {
 
-        @Bind(R.id.blogPostOwnerImageView)
-        ImageView blogPostOwnerImageView;
-
         @Bind(R.id.blogPostOwnerTextView)
         TextView blogPostOwnerTextView;
 
@@ -76,7 +71,6 @@ public class BlogPostsListAdapter extends RecyclerView.Adapter<BlogPostsListAdap
 
         public void bind(final BlogPost blogPost) {
             blogPostOwnerTextView.setText(XMPPUtils.fromJIDToUserName(blogPost.getOwnerJid()));
-            Picasso.with(mContext).load(blogPost.getOwnerAvatarUrl()).noFade().fit().into(blogPostOwnerImageView);
             blogPostContentTextView.setText(blogPost.getContent());
             blogPostDateTextView.setText(TimeCalculation.getTimeStringAgoSinceDate(mContext, blogPost.getUpdated()));
 

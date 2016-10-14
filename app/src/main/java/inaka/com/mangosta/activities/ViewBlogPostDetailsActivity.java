@@ -9,11 +9,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.squareup.picasso.Picasso;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -41,9 +38,6 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
-
-    @Bind(R.id.imageBlogPostOwnerAvatar)
-    ImageView imageBlogPostOwnerAvatar;
 
     @Bind(R.id.textBlogPostOwnerName)
     TextView textBlogPostOwnerName;
@@ -79,7 +73,6 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
         toolbar.setTitle(mBlogPost.getContent());
         setSupportActionBar(toolbar);
 
-        Picasso.with(this).load(mBlogPost.getOwnerAvatarUrl()).noFade().fit().into(imageBlogPostOwnerAvatar);
         textBlogPostOwnerName.setText(XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()));
         textBlogPostTitle.setText(mBlogPost.getContent());
 
@@ -89,7 +82,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
 
         mBlogPostComments = new ArrayList<>();
 
-        commentsListAdapter = new BlogPostCommentsListAdapter(mBlogPost, mBlogPostComments, this);
+        commentsListAdapter = new BlogPostCommentsListAdapter(mBlogPostComments, this);
         recyclerviewComments.setAdapter(commentsListAdapter);
 
         buttonSendComment.setOnClickListener(new View.OnClickListener() {

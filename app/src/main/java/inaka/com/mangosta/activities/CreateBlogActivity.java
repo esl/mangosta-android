@@ -3,7 +3,6 @@ package inaka.com.mangosta.activities;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -11,6 +10,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
@@ -51,6 +51,7 @@ public class CreateBlogActivity extends BaseActivity {
         setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
+        createBlogFloatingButton.setIcon(R.drawable.ic_action_send_dark);
         createBlogFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

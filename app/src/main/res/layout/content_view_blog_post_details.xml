@@ -11,22 +11,17 @@
     tools:context="inaka.com.mangosta.activities.ViewBlogPostDetailsActivity"
     tools:showIn="@layout/activity_view_blog_post_details">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimaryLight"
+        android:orientation="vertical"
         android:padding="10dp">
-
-        <ImageView
-            android:id="@+id/imageBlogPostOwnerAvatar"
-            android:layout_width="50dp"
-            android:layout_height="50dp"/>
 
         <TextView
             android:id="@+id/textBlogPostOwnerName"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_toEndOf="@+id/imageBlogPostOwnerAvatar"
+            android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:padding="5dp"
             android:textColor="@color/white"
@@ -37,11 +32,9 @@
             android:id="@+id/textBlogPostTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/imageBlogPostOwnerAvatar"
-            android:gravity="center_horizontal"
             android:textColor="@color/white"/>
 
-    </RelativeLayout>
+    </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerviewComments"
