@@ -26,11 +26,11 @@
     <string name="action_change_room_name">Change room name</string>
     <string name="action_change_room_subject">Change room subject</string>
 
-    <string name="title_tab_all_gists">All</string>
-    <string name="title_tab_starred_gists">Starred</string>
+    <string name="title_tab_1_to_1_chats">1 to 1</string>
+    <string name="title_tab_muc_light_chats">MUC Light</string>
+    <string name="title_tab_muc_chats">MUC</string>
     <string name="title_tab_bio">Bio</string>
     <string name="title_tab_gists">Gists</string>
-    <string name="title_tab_chat">%1$s\'s chats</string>
     <string name="title_tab_blogs">Blogs</string>
 
     <string name="title_button_share">Share</string>

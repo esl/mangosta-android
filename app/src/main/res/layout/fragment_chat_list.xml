@@ -5,29 +5,29 @@
               android:gravity="top"
               android:orientation="vertical">
 
-    <RadioGroup
-        android:id="@+id/chatsTypeRadioGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryLight"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal"
-        android:padding="10dp">
+    <!--<RadioGroup-->
+        <!--android:id="@+id/chatsTypeRadioGroup"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:background="@color/colorPrimaryLight"-->
+        <!--android:gravity="center_horizontal"-->
+        <!--android:orientation="horizontal"-->
+        <!--android:padding="10dp">-->
 
-        <RadioButton
-            android:id="@+id/muclightChatsRadioButton"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
-            android:text="@string/muc_light_chat_type"
-            android:textColor="@color/white"/>
+        <!--<RadioButton-->
+            <!--android:id="@+id/muclightChatsRadioButton"-->
+            <!--android:layout_width="130dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/muc_light_chat_type"-->
+            <!--android:textColor="@color/white"/>-->
 
-        <RadioButton
-            android:id="@+id/mucChatsRadioButton"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
-            android:text="@string/muc_chat_type"
-            android:textColor="@color/white"/>
-    </RadioGroup>
+        <!--<RadioButton-->
+            <!--android:id="@+id/mucChatsRadioButton"-->
+            <!--android:layout_width="130dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/muc_chat_type"-->
+            <!--android:textColor="@color/white"/>-->
+    <!--</RadioGroup>-->
 
     <ProgressBar
         android:id="@+id/progressLoading"

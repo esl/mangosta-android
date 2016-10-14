@@ -23,6 +23,6 @@
         android:id="@+id/viewpagerMainMenu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/blue_back_user_profile"/>
+        android:background="@color/blue_light_background"/>
 
 </LinearLayout>

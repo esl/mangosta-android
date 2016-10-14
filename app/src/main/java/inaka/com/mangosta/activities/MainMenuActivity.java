@@ -11,8 +11,6 @@ import android.view.View;
 import com.astuetz.PagerSlidingTabStrip;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 
-import java.util.Locale;
-
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
@@ -49,9 +47,14 @@ public class MainMenuActivity extends BaseActivity {
 
         ButterKnife.bind(this);
 
-        String tabTitle = String.format(Locale.getDefault(), getResources().getString(R.string.title_tab_chat), XMPPUtils.getAuthenticatedUserName());
+        String tabTitles[] = new String[]{
+                getResources().getString(R.string.title_tab_1_to_1_chats),
+                getResources().getString(R.string.title_tab_muc_light_chats),
+                getResources().getString(R.string.title_tab_muc_chats)};
 
-        mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitle));
+//        String tabTitle = String.format(Locale.getDefault(), getResources().getString(R.string.title_tab_chat), XMPPUtils.getAuthenticatedUserName());
+
+        mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
@@ -144,7 +147,7 @@ public class MainMenuActivity extends BaseActivity {
                 mRoomsLoaded = true;
                 break;
             case GO_BACK_FROM_CHAT:
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).mChatsListFragment.loadChats();
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
                 break;
         }
     }

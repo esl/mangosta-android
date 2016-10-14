@@ -10,24 +10,36 @@ import inaka.com.mangosta.fragments.ChatsListFragment;
 
 public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
-    final int PAGE_COUNT = 1;
-
-    public ChatsListFragment mChatsListFragment;
+    private final int PAGE_COUNT = 3;
 
     private FragmentManager mFragmentManager;
 
-    private String mTabTitle;
+    private String mTabTitles[];
 
-    private String mChatFragmentTag;
+    public ChatsListFragment mOneToOneChatsFragment;
+    public ChatsListFragment mMUCLightChatsFragment;
+    public ChatsListFragment mMUCChatsFragment;
 
-    private String mFragmentListTags[] = new String[]{
-            mChatFragmentTag
+    private Fragment mFragmentList[] = new Fragment[]{
+            mOneToOneChatsFragment,
+            mMUCLightChatsFragment,
+            mMUCChatsFragment
     };
 
-    public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitle) {
+    private String mOneToOneChatsFragmentTag;
+    private String mMUCChatsFragmentTag;
+    private String mMUCLightChatsFragmentTag;
+
+    private String mFragmentListTags[] = new String[]{
+            mOneToOneChatsFragmentTag,
+            mMUCLightChatsFragmentTag,
+            mMUCChatsFragmentTag
+    };
+
+    public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitles[]) {
         super(fm);
         this.mFragmentManager = fm;
-        this.mTabTitle = tabTitle;
+        this.mTabTitles = tabTitles;
     }
 
     @Override
@@ -39,17 +51,17 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
 
         Fragment fragment;
-        if (mChatsListFragment == null) {
+        if (mFragmentList[position] == null) {
             ChatsListFragment chatsListFragment = new ChatsListFragment();
             chatsListFragment.loadChatsBackgroundTask();
-            mChatsListFragment = chatsListFragment;
-            fragment = mChatsListFragment;
+            mFragmentList[position] = chatsListFragment;
+            fragment = mFragmentList[position];
         } else {
             fragment = this.mFragmentManager.findFragmentByTag(mFragmentListTags[position]);
         }
 
         Bundle bundle = new Bundle();
-        bundle.putString("title", mTabTitle);
+        bundle.putString("title", mTabTitles[position]);
         bundle.putInt("position", position);
 
         fragment.setArguments(bundle);
@@ -59,7 +71,7 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return mTabTitle;
+        return mTabTitles[position];
     }
 
     @Override
@@ -74,11 +86,17 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
     }
 
     public Fragment getRegisteredFragment(int position) {
-        return mChatsListFragment;
+        return mFragmentList[position];
     }
 
     public void clearFragmentsList() {
-        mChatsListFragment = null;
+        mFragmentList = new Fragment[]{};
+    }
+
+    public void reloadChats() {
+        for (Fragment fragment : mFragmentList) {
+            ((ChatsListFragment) fragment).loadChats();
+        }
     }
 
 }

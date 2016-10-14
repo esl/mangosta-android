@@ -189,11 +189,8 @@ public class CreateChatActivity extends BaseActivity {
     }
 
     private void obtainUser(final String userName) {
-        Preferences preferences = Preferences.getInstance();
-
         User user = new User();
         user.setLogin(userName);
-
 
         mSearchUsers.clear();
         mSearchUsers.add(user);

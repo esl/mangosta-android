@@ -4,7 +4,7 @@
             xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/blue_back_user_profile"
+            android:background="@color/blue_light_background"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             tools:context="inaka.com.mangosta.activities.EditUserActivity"
             tools:showIn="@layout/activity_edit_user">

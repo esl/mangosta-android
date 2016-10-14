@@ -45,8 +45,8 @@ import rx.functions.Action1;
 
 public class ChatsListFragment extends BaseFragment {
 
-    @Bind(R.id.chatsTypeRadioGroup)
-    RadioGroup chatsTypeRadioGroup;
+//    @Bind(R.id.chatsTypeRadioGroup)
+//    RadioGroup chatsTypeRadioGroup;
 
     @Bind(R.id.chatListRecyclerView)
     RecyclerView chatListRecyclerView;
@@ -61,25 +61,34 @@ public class ChatsListFragment extends BaseFragment {
     Subscription mMessageSubscription;
     Subscription mMessageSentAlertSubscription;
 
-    public static int mChatsType = 0;
+    public final static int ONE_TO_ONE_CHATS_POSITION = 0;
+    public final static int MUC_LIGHT_CHATS_POSITION = 1;
+    public final static int MUC_CHATS_POSITION = 2;
+
+    public int mPosition = 0;
+
+//    public static int mChatsType = 0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat_list, container, false);
         ButterKnife.bind(this, view);
 
+        Bundle bundle = getArguments();
+        mPosition = bundle.getInt("position");
+
         mChats = new ArrayList<>();
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(getActivity()));
 
-        chatsTypeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                mChatsType = checkedId;
-                progressLoading.setVisibility(View.VISIBLE);
-                loadChatsBackgroundTask();
-            }
-        });
+//        chatsTypeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(RadioGroup group, int checkedId) {
+//                mChatsType = checkedId;
+//                progressLoading.setVisibility(View.VISIBLE);
+//                loadChatsBackgroundTask();
+//            }
+//        });
 
         mChatListAdapter = getChatListAdapter();
 
@@ -102,8 +111,8 @@ public class ChatsListFragment extends BaseFragment {
             }
         });
 
-        chatsTypeRadioGroup.check(R.id.muclightChatsRadioButton);
-        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
+//        chatsTypeRadioGroup.check(R.id.muclightChatsRadioButton);
+//        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
         progressLoading.setVisibility(View.VISIBLE);
         loadChatsBackgroundTask();
 
@@ -125,7 +134,7 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public void loadChats() {
-        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
+//        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
         if (getActivity() == null) {
             changeChatsList();
         } else {
@@ -141,12 +150,19 @@ public class ChatsListFragment extends BaseFragment {
     private void changeChatsList() {
         mChats.clear();
 
-        if (mChatsType == R.id.muclightChatsRadioButton) { // load muclights
-            mChats.addAll(RealmManager.getMUCLights(getRealm()));
-        } else if (mChatsType == R.id.mucChatsRadioButton) { // load mucs
-            mChats.addAll(RealmManager.getMUCs(getRealm()));
+        switch (mPosition) {
+            case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats
+                mChats.addAll(RealmManager.get1to1Chats(getRealm()));
+                break;
+
+            case MUC_LIGHT_CHATS_POSITION: // load muc chats
+                mChats.addAll(RealmManager.getMUCLights(getRealm()));
+                break;
+
+            case MUC_CHATS_POSITION: // load muc light chats
+                mChats.addAll(RealmManager.getMUCs(getRealm()));
+                break;
         }
-        mChats.addAll(RealmManager.get1to1Chats(getRealm()));
 
         Collections.sort(mChats, new ChatOrderComparator());
 
@@ -176,11 +192,12 @@ public class ChatsListFragment extends BaseFragment {
         Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                switch (mChatsType) {
-                    case R.id.muclightChatsRadioButton:
+                switch (mPosition) {
+                    case MUC_LIGHT_CHATS_POSITION: // load muc chats
                         mRoomManager.loadMUCLightRooms();
                         break;
-                    case R.id.mucChatsRadioButton:
+
+                    case MUC_CHATS_POSITION: // load muc light chats
                         mRoomManager.loadMUCRooms();
                         break;
                 }

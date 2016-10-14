@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fab="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="inaka.com.gistoid.activities.CreateChatActivity"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    tools:context="inaka.com.mangosta.activities.CreateChatActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -32,19 +32,21 @@
             android:id="@+id/createChatSearchUserLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/complete_white"
+            android:background="@color/blue_light_background"
+            android:orientation="horizontal"
             android:paddingEnd="@dimen/activity_horizontal_margin"
             android:paddingStart="@dimen/activity_horizontal_margin"
             android:paddingTop="@dimen/activity_horizontal_margin"
-            android:orientation="horizontal"
             android:weightSum="1">
 
             <EditText
                 android:id="@+id/createChatSearchUserEditText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:hint="@string/search_user_hint"
-                android:layout_weight="1"/>
+                android:textColor="@color/colorAccent"
+                android:textColorHint="@color/colorAccent"/>
 
             <FrameLayout
                 android:layout_width="wrap_content"
@@ -101,9 +103,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/createChatMembersTitleLayout"
-            android:paddingTop="@dimen/activity_horizontal_margin"
+            android:paddingEnd="@dimen/activity_horizontal_margin"
             android:paddingStart="@dimen/activity_horizontal_margin"
-            android:paddingEnd="@dimen/activity_horizontal_margin"/>
+            android:paddingTop="@dimen/activity_horizontal_margin"/>
 
     </RelativeLayout>
 
@@ -116,7 +118,7 @@
         android:layout_marginEnd="5dp"
         fab:fab_colorNormal="@color/colorPrimary"
         fab:fab_colorPressed="@color/colorPrimaryLight"
-        fab:fab_title="@string/title_button_upload_gist"
-        fab:fab_icon="@mipmap/ic_continue"/>
+        fab:fab_icon="@mipmap/ic_continue"
+        fab:fab_title="@string/title_button_upload_gist"/>
 
 </android.support.design.widget.CoordinatorLayout>
