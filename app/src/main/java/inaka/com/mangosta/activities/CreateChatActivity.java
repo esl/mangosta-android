@@ -171,7 +171,7 @@ public class CreateChatActivity extends BaseActivity {
             @Override
             public void run() {
                 new AlertDialog.Builder(CreateChatActivity.this)
-                        .setTitle(getString(R.string.invite_to_gistoid))
+                        .setTitle(getString(R.string.invite_to_mangosta))
                         .setMessage(message)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {

@@ -487,11 +487,13 @@ public class ChatActivity extends BaseActivity {
         linearLayout.setOrientation(LinearLayout.VERTICAL);
 
         final EditText roomNameEditText = new EditText(this);
+
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(10, 0, 10, 0);
         roomNameEditText.setLayoutParams(lp);
+        roomNameEditText.setText(getSupportActionBar().getTitle());
 
         linearLayout.addView(roomNameEditText);
 
@@ -554,6 +556,7 @@ public class ChatActivity extends BaseActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(10, 0, 10, 0);
         roomSubjectEditText.setLayoutParams(lp);
+        roomSubjectEditText.setText(getSupportActionBar().getSubtitle());
 
         linearLayout.addView(roomSubjectEditText);
 

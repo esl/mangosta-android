@@ -3,11 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainMenuActivity">
     <item
-        android:id="@+id/actionFilterLists"
-        android:title="@string/action_filter"
-        android:icon="@drawable/ic_action_filter_dark"
-        app:showAsAction="ifRoom" />
-    <item
         android:id="@+id/actionUserOptions"
         android:title="@string/action_settings"
         android:icon="@drawable/ic_action_user_dark"

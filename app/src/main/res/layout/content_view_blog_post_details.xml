@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:weightSum="1"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="inaka.com.gistoid.activities.ViewBlogPostDetailsActivity"
+    tools:context="inaka.com.mangosta.activities.ViewBlogPostDetailsActivity"
     tools:showIn="@layout/activity_view_blog_post_details">
 
     <RelativeLayout

@@ -43,16 +43,16 @@
             android:id="@+id/createNewBlogFloatingButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            fab:fab_colorNormal="@color/cyan"
-            fab:fab_colorPressed="@color/cyan_light"
+            fab:fab_colorNormal="@color/colorPrimaryLight"
+            fab:fab_colorPressed="@color/colorPrimary"
             fab:fab_title="@string/title_button_create_blog"/>
 
         <com.getbase.floatingactionbutton.FloatingActionButton
             android:id="@+id/createNewChatFloatingButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            fab:fab_colorNormal="@color/brown_create_chat"
-            fab:fab_colorPressed="@color/brown_create_chat_light"
+            fab:fab_colorNormal="@color/colorPrimaryLight"
+            fab:fab_colorPressed="@color/colorPrimary"
             fab:fab_title="@string/title_button_create_chat"/>
 
     </com.getbase.floatingactionbutton.FloatingActionsMenu>

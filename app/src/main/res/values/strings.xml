@@ -107,16 +107,14 @@
     <string name="error_create_chat">ERROR! Could not create chat.</string>
     <string name="error_send_message">ERROR! Could not send the message.</string>
 
-    <string name="gists_files_path">"/Documents/Gistoid"</string>
-
     <string name="search_user_hint">Search user</string>
     <string name="title_chat_members">Chat members</string>
     <string name="add_user_to_chat">Add</string>
     <string name="remove_user_from_chat">Remove</string>
     <string name="chat_last_message">%1$s: %2$s</string>
     <string name="chat_last_message_sticker">%1$s sent a sticker</string>
-    <string name="user_doesnt_exist">User \'%1$s\' doesn\'t exist on Gistoid. Send invitation?</string>
-    <string name="invite_to_gistoid">Invite to Gistoid</string>
+    <string name="user_doesnt_exist">User \'%1$s\' doesn\'t exist in Mangosta. Send invitation?</string>
+    <string name="invite_to_mangosta">Invite to Mangosta</string>
     <string name="add_people_to_create_chat">You have to add people to create a chat.</string>
     <string name="chat_with">Chat with %1$s</string>
     <string name="room_name">Room name</string>

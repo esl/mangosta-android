@@ -12,7 +12,7 @@
         android:id="@+id/blockSearchUserLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/complete_white"
+        android:background="@color/colorAccent"
         android:orientation="horizontal"
         android:paddingEnd="@dimen/activity_horizontal_margin"
         android:paddingStart="@dimen/activity_horizontal_margin"

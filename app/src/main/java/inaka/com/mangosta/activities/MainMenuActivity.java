@@ -52,8 +52,6 @@ public class MainMenuActivity extends BaseActivity {
                 getResources().getString(R.string.title_tab_muc_light_chats),
                 getResources().getString(R.string.title_tab_muc_chats)};
 
-//        String tabTitle = String.format(Locale.getDefault(), getResources().getString(R.string.title_tab_chat), XMPPUtils.getAuthenticatedUserName());
-
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
 

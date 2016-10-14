@@ -113,19 +113,19 @@ public class BlockUsersActivity extends BaseActivity {
     }
 
     private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(BlockUsersActivity.this, new BackgroundWork<String>() {
+        Tasks.executeInBackground(BlockUsersActivity.this, new BackgroundWork<Boolean>() {
             @Override
-            public String doInBackground() throws Exception {
-                if (XMPPUtils.userExists(user)) {
+            public Boolean doInBackground() throws Exception {
+                return XMPPUtils.userExists(user);
+            }
+        }, new Completion<Boolean>() {
+            @Override
+            public void onSuccess(Context context, Boolean userExists) {
+                if (userExists) {
                     obtainUser(user, true);
                 } else {
                     showNotFoundDialog(user);
                 }
-                return user;
-            }
-        }, new Completion<String>() {
-            @Override
-            public void onSuccess(Context context, String userName) {
                 if (blockSearchUserButton != null && blockSearchUserProgressBar != null) {
                     blockSearchUserProgressBar.setVisibility(View.GONE);
                     blockSearchUserButton.setVisibility(View.VISIBLE);
@@ -296,7 +296,7 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlockUsersActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
         });

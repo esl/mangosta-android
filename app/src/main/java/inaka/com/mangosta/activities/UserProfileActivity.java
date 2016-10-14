@@ -6,7 +6,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -87,6 +87,19 @@ public class UserProfileActivity extends BaseActivity {
 
         viewpagerProfile.setAdapter(new UserPagerAdapter(getSupportFragmentManager()));
         slidingTabStrip.setViewPager(viewpagerProfile);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id) {
+            case android.R.id.home:
+                finish();
+                break;
+        }
+
+        return true;
     }
 
     private void textViewGoneifEmpty(TextView textView) {

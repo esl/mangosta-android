@@ -233,7 +233,7 @@ public class EditChatMemberActivity extends BaseActivity {
         String message = String.format(Locale.getDefault(), getString(R.string.user_doesnt_exist), user);
 
         new AlertDialog.Builder(EditChatMemberActivity.this)
-                .setTitle(getString(R.string.invite_to_gistoid))
+                .setTitle(getString(R.string.invite_to_mangosta))
                 .setMessage(message)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
