@@ -20,7 +20,7 @@ public class NavigateToUserProfile {
     }
 
     public static void go(User user, Context context) {
-        boolean isAuthenticatedUser =  XMPPUtils.isAutenticatedUser(user);
+        boolean isAuthenticatedUser = XMPPUtils.isAutenticatedUser(user);
         NavigateToUserProfile.openUser(context, user, isAuthenticatedUser);
     }
 

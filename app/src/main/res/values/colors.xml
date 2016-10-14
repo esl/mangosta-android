@@ -4,21 +4,10 @@
     <color name="colorPrimaryLight">#00bbdc</color>
     <color name="colorAccent">#fafafa</color>
 
-    <color name="yellow_star">#ffdd03</color>
-    <color name="blue">#6db6ff</color>
-    <color name="orange">#ffb66d</color>
     <color name="red">#ff6a62</color>
     <color name="green">#7ae272</color>
     <color name="green_comment">#d9f9d7</color>
     <color name="green_send">#52b94a</color>
-    <color name="purple_share">#a84ab9</color>
-    <color name="purple_share_light">#aaa84ab9</color>
-
-    <color name="cyan">#1cc6ff</color>
-    <color name="cyan_light">#aa1cc6ff</color>
-
-    <color name="brown_create_chat">#b17c32</color>
-    <color name="brown_create_chat_light">#aab17c32</color>
 
     <color name="white">#fafafa</color>
     <color name="complete_white">#ffffff</color>

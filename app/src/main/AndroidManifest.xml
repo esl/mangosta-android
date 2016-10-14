@@ -60,7 +60,7 @@
         </activity>
         <activity
             android:name=".activities.ViewBlogPostDetailsActivity"
-            android:label="@string/title_activity_edit_room_members"
+            android:label="@string/title_activity_blog_post_details"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>

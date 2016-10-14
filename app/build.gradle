@@ -50,6 +50,7 @@ android {
 
     lintOptions {
         disable 'InvalidPackage', 'ContentDescription', 'LabelFor'
+        abortOnError false
     }
 }
 

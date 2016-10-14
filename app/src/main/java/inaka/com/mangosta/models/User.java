@@ -3,9 +3,6 @@ package inaka.com.mangosta.models;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-
 public class User implements Parcelable {
 
     public User() {
