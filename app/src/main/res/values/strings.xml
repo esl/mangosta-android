@@ -75,4 +75,8 @@
 
     <string name="blog_post_published">Blog post published</string>
     <string name="blog_post_publishing">Publishing blog post</string>
+
+    <string name="title_login">Log in</string>
+    <string name="hint_password">password</string>
+    <string name="hint_user_name">user_name</string>
 </resources>

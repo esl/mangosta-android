@@ -144,11 +144,11 @@ public class XMPPSession {
     private static final boolean XMPP_DEBUG_MODE = true;
     private static final String XMPP_TAG = "XMPP";
 
+    public static final String SERVER_NAME = "xmpp.erlang-solutions.com";
     public static final String SERVICE_NAME = "erlang-solutions.com";
     public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
-    private String passwordOfOtherUsers = "6fsp2u9y";
 
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
@@ -180,15 +180,13 @@ public class XMPPSession {
     }
 
     private XMPPSession() {
-        String serverName = "xmpp.erlang-solutions.com";
-
         SmackConfiguration.setDefaultPacketReplyTimeout(15000);
         XMPPTCPConnectionConfiguration config = null;
         try {
             XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder()
                     .setDebuggerEnabled(XMPP_DEBUG_MODE)
                     .setXmppDomain(JidCreate.from(SERVICE_NAME).asDomainBareJid())
-                    .setHost(serverName)
+                    .setHost(SERVER_NAME)
                     .setPort(5222)
                     .setSendPresence(true)
                     .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
@@ -214,6 +212,7 @@ public class XMPPSession {
             @Override
             public void authenticated(XMPPConnection connection, boolean resumed) {
                 super.authenticated(connection, resumed);
+                Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
                 RoomManager.notShowMUCs();
@@ -225,7 +224,7 @@ public class XMPPSession {
             @Override
             public void connected(XMPPConnection connection) {
                 Log.w(XMPP_TAG, "Connection Successful");
-                backgroundLogin();
+                backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
                 sendPresence(Presence.Type.available);
                 activeCSI();
@@ -357,6 +356,13 @@ public class XMPPSession {
         addExtensions();
 
         receiveBlogPosts();
+    }
+
+    private void backgroundRelogin() {
+        Preferences preferences = Preferences.getInstance();
+        if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+            backgroundLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
+        }
     }
 
     /**
@@ -628,16 +634,16 @@ public class XMPPSession {
         }
     }
 
-    public void backgroundLogin() {
+    public void backgroundLogin(final String userName, final String password) {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                login();
+                login(userName, password);
             }
         }).start();
     }
 
-    public void login() {
+    public void login(String userName, String password) {
         try {
             mXMPPConnection.connect();
         } catch (SmackException.AlreadyConnectedException ace) {
@@ -647,40 +653,31 @@ public class XMPPSession {
         }
 
         Preferences preferences = Preferences.getInstance();
-        if (preferences.isLoggedIn()) {
+        try {
+            String resourceString = Settings.Secure.getString(MangostaApplication.getInstance().getContentResolver(), Settings.Secure.ANDROID_ID);
+            Resourcepart resourcepart = Resourcepart.from(resourceString);
 
-            // TODO change this
-//                    String userName = "test.user";
-//                    String password = "9xpW9mmUenFgMjay";
-
-            String userName = "ramabit";
-//                    String userName = "gardano";
-//                    String userName = "griveroa-inaka";
-
-            try {
-                String resourceString = Settings.Secure.getString(MangostaApplication.getInstance().getContentResolver(), Settings.Secure.ANDROID_ID);
-                Resourcepart resourcepart = Resourcepart.from(resourceString);
-
-                // login
-                if (connectionDoneOnce && !preferences.getXmppOauthAccessToken().isEmpty() && tokenSetMinutesAgo(30)) {
-                    mXMPPConnection.login(preferences.getXmppOauthAccessToken(), resourcepart);
-                } else {
-                    mXMPPConnection.login(userName, passwordOfOtherUsers, resourcepart);
-                }
-
-                preferences.setUserXMPPJid(XMPPUtils.fromUserNameToJID(userName));
-
-                mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                sendPresence(Presence.Type.available);
-
-            } catch (SmackException.AlreadyLoggedInException ale) {
-                mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                sendPresence(Presence.Type.available);
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            // login
+            if (connectionDoneOnce && !preferences.getXmppOauthAccessToken().isEmpty() && tokenSetMinutesAgo(30)) {
+                mXMPPConnection.login(preferences.getXmppOauthAccessToken(), resourcepart);
+            } else {
+                mXMPPConnection.login(userName, password, resourcepart);
             }
+
+            preferences.setUserXMPPJid(XMPPUtils.fromUserNameToJID(userName));
+            preferences.setUserXMPPPassword(password);
+
+            mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+            sendPresence(Presence.Type.available);
+
+        } catch (SmackException.AlreadyLoggedInException ale) {
+            mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+            sendPresence(Presence.Type.available);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+
     }
 
     private boolean tokenSetMinutesAgo(int minutes) throws ParseException {
