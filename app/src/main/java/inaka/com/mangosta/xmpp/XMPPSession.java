@@ -358,7 +358,7 @@ public class XMPPSession {
         receiveBlogPosts();
     }
 
-    private void backgroundRelogin() {
+    public void backgroundRelogin() {
         Preferences preferences = Preferences.getInstance();
         if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
             backgroundLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());

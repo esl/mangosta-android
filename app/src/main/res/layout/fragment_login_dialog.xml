@@ -3,11 +3,23 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="@color/blue_light_background"
+              android:minWidth="350dp"
               android:orientation="vertical"
               android:padding="10dp">
 
-    <LinearLayout
+    <TextView
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingEnd="5dp"
+        android:paddingStart="5dp"
+        android:text="@string/title_user_name"
+        android:textColor="@color/colorPrimary"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:background="@color/colorAccent"
@@ -17,21 +29,35 @@
             android:id="@+id/loginUserNameEditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="100dp"
+            android:backgroundTint="@android:color/transparent"
+            android:gravity="end"
             android:hint="@string/hint_user_name"
-            android:padding="5dp"
-            android:gravity="end"/>
+            android:paddingBottom="5dp"
+            android:paddingStart="5dp"
+            android:paddingTop="5dp"/>
 
         <EditText
             android:id="@+id/loginJidCompletionEditText"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="\@erlang-solutions.com"
-            android:inputType="text"
             android:enabled="false"
-            android:padding="5dp"/>
+            android:inputType="text"
+            android:paddingBottom="5dp"
+            android:paddingEnd="5dp"
+            android:paddingTop="5dp"/>
 
     </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingEnd="5dp"
+        android:paddingStart="5dp"
+        android:text="@string/title_password"
+        android:textColor="@color/colorPrimary"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
 
     <EditText
         android:id="@+id/loginPasswordEditText"
@@ -43,6 +69,17 @@
         android:inputType="textPassword"
         android:padding="5dp"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:paddingEnd="5dp"
+        android:paddingStart="5dp"
+        android:text="@string/title_server"
+        android:textColor="@color/colorPrimary"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+
     <EditText
         android:id="@+id/loginServerEditText"
         android:layout_width="match_parent"
@@ -50,18 +87,17 @@
         android:layout_margin="5dp"
         android:background="@color/colorAccent"
         android:enabled="false"
-        android:padding="5dp"
-        android:text="xmpp.erlang-solutions.com"/>
+        android:padding="5dp"/>
 
     <Button
         android:id="@+id/loginButton"
         android:layout_width="150dp"
         android:layout_height="50dp"
+        android:layout_gravity="center_horizontal"
         android:layout_margin="5dp"
         android:background="@color/colorPrimary"
         android:text="@string/title_login"
         android:textAllCaps="false"
-        android:layout_gravity="center_horizontal"
         android:textColor="@color/colorAccent"
         android:textSize="18sp"
         android:textStyle="bold"/>

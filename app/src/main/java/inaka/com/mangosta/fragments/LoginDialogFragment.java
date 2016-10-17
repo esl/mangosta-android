@@ -1,5 +1,6 @@
 package inaka.com.mangosta.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.nanotasks.BackgroundWork;
@@ -57,6 +59,7 @@ public class LoginDialogFragment extends DialogFragment {
         ButterKnife.bind(this, view);
 
         loginUserNameEditText.setText(mUserName);
+        loginUserNameEditText.setSelection(mUserName.length());
         loginJidCompletionEditText.setText("@" + XMPPSession.SERVICE_NAME);
         loginPasswordEditText.setText(mPassword);
         loginServerEditText.setText(XMPPSession.SERVER_NAME);
@@ -72,6 +75,8 @@ public class LoginDialogFragment extends DialogFragment {
     }
 
     private void loginAndStart(final String userName, final String password) {
+        final ProgressDialog progress = ProgressDialog.show(getActivity(), getString(R.string.loading), null, true);
+
         Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
@@ -81,11 +86,13 @@ public class LoginDialogFragment extends DialogFragment {
         }, new Completion<Object>() {
             @Override
             public void onSuccess(Context context, Object result) {
+                progress.dismiss();
                 startApplication();
             }
 
             @Override
             public void onError(Context context, Exception e) {
+                progress.dismiss();
                 Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
