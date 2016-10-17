@@ -2,7 +2,6 @@ package inaka.com.mangosta.fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
@@ -10,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.nanotasks.BackgroundWork;
@@ -20,7 +18,7 @@ import com.nanotasks.Tasks;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.activities.MainMenuActivity;
+import inaka.com.mangosta.activities.SplashActivity;
 import inaka.com.mangosta.xmpp.XMPPSession;
 
 public class LoginDialogFragment extends DialogFragment {
@@ -87,7 +85,7 @@ public class LoginDialogFragment extends DialogFragment {
             @Override
             public void onSuccess(Context context, Object result) {
                 progress.dismiss();
-                startApplication();
+                ((SplashActivity) getActivity()).startApplication();
             }
 
             @Override
@@ -96,13 +94,6 @@ public class LoginDialogFragment extends DialogFragment {
                 Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    private void startApplication() {
-        Intent mainMenuIntent = new Intent(getActivity(), MainMenuActivity.class);
-        mainMenuIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(mainMenuIntent);
-        getActivity().finish();
     }
 
 }
