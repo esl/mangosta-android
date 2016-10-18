@@ -73,7 +73,7 @@ public class XMPPUtils {
 
     public static String fromJIDToUserName(String jid) {
         int position = jid.indexOf("@");
-        return jid.substring(0, position);
+        return (position >= 0 && !jid.equals("")) ? jid.substring(0, position) : null;
     }
 
     public static String fromUserNameToJID(String userName) {
