@@ -30,7 +30,6 @@ import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,14 +38,20 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
+import inaka.com.mangosta.interfaces.MongooseService;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.requests.AddUserRequest;
+import inaka.com.mangosta.network.MongooseAPI;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class EditChatMemberActivity extends BaseActivity {
@@ -300,18 +305,21 @@ public class EditChatMemberActivity extends BaseActivity {
     }
 
     private void removeFromMUCLight(User user) {
-        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
-        try {
-            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
 
-            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+        if (mongooseService != null) {
+            Call<Object> call = mongooseService.removeUserFromMUCLight(mChatJID.split("@")[0], XMPPUtils.fromUserNameToJID(user.getLogin()));
+            call.enqueue(new Callback<Object>() {
+                @Override
+                public void onResponse(Call<Object> call, Response<Object> response) {
+                }
 
-            HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
-            affiliations.put(jid, MUCLightAffiliation.none);
-
-            mucLight.changeAffiliations(affiliations);
-        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
-            e.printStackTrace();
+                @Override
+                public void onFailure(Call<Object> call, Throwable t) {
+                    Context context = MangostaApplication.getInstance();
+                    Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
@@ -339,18 +347,21 @@ public class EditChatMemberActivity extends BaseActivity {
     }
 
     private void addToMUCLight(User user) {
-        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
-        try {
-            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
 
-            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+        if (mongooseService != null) {
+            final Call<Object> callAddUser = mongooseService.addUserToMUCLight(mChatJID.split("@")[0], new AddUserRequest(XMPPUtils.fromUserNameToJID(user.getLogin())));
+            callAddUser.enqueue(new Callback<Object>() {
+                @Override
+                public void onResponse(Call<Object> call, Response<Object> response) {
+                }
 
-            HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
-            affiliations.put(jid, MUCLightAffiliation.member);
-
-            mucLight.changeAffiliations(affiliations);
-        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
-            e.printStackTrace();
+                @Override
+                public void onFailure(Call<Object> call, Throwable t) {
+                    Context context = MangostaApplication.getInstance();
+                    Toast.makeText(context, context.getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
