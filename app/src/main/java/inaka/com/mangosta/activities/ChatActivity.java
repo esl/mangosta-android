@@ -54,22 +54,27 @@ import inaka.com.mangosta.adapters.StickersAdapter;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomManagerListener;
+import inaka.com.mangosta.interfaces.MongooseService;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.models.MongooseMUCLight;
 import inaka.com.mangosta.models.MongooseMUCLightMessage;
 import inaka.com.mangosta.models.MongooseMessage;
+import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
-import inaka.com.mangosta.xmpp.muclight.MUCLightRoomConfiguration;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import rx.Subscription;
 import rx.functions.Action1;
 
@@ -271,34 +276,41 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void manageRoomNameAndSubject() {
-        Tasks.executeInBackground(this, new BackgroundWork<MUCLightRoomConfiguration>() {
-            @Override
-            public MUCLightRoomConfiguration doInBackground() throws Exception {
-                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                return multiUserChatLight.getConfiguration();
-            }
-        }, new Completion<MUCLightRoomConfiguration>() {
-            @Override
-            public void onSuccess(Context context, MUCLightRoomConfiguration mucLightRoomConfiguration) {
-                Realm realm = getRealm();
-                realm.beginTransaction();
-                mChat.setName(mucLightRoomConfiguration.getRoomName());
-                mChat.setSubject(mucLightRoomConfiguration.getSubject());
-                realm.copyToRealmOrUpdate(mChat);
-                realm.commitTransaction();
-                realm.close();
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
 
-                if (mChat.getSubject() != null) {
-                    getSupportActionBar().setSubtitle(mChat.getSubject());
+        if (mongooseService != null) {
+            Call<MongooseMUCLight> call = mongooseService.getMUCLightDetails(mChatJID.split("@")[0]);
+            call.enqueue(new Callback<MongooseMUCLight>() {
+                @Override
+                public void onResponse(Call<MongooseMUCLight> call, Response<MongooseMUCLight> response) {
+                    MongooseMUCLight mongooseMUCLight = response.body();
+
+                    if (mongooseMUCLight != null) {
+                        Realm realm = getRealm();
+                        realm.beginTransaction();
+
+                        mChat = getChatFromRealm();
+                        mChat.setName(mongooseMUCLight.getName());
+                        mChat.setSubject(mongooseMUCLight.getSubject());
+
+                        realm.copyToRealmOrUpdate(mChat);
+                        realm.commitTransaction();
+
+                        if (mChat.getSubject() != null) {
+                            getSupportActionBar().setSubtitle(mChat.getSubject());
+                        }
+
+                        realm.close();
+                    }
+
                 }
-            }
 
-            @Override
-            public void onError(Context context, Exception e) {
-                e.printStackTrace();
-            }
-        });
-
+                @Override
+                public void onFailure(Call<MongooseMUCLight> call, Throwable t) {
+                    Toast.makeText(ChatActivity.this, ChatActivity.this.getString(R.string.error), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void setShowChat() {
@@ -713,7 +725,6 @@ public class ChatActivity extends BaseActivity {
                         break;
 
                     case Chat.TYPE_MUC_LIGHT:
-
                         realm.close();
                         disconnectRoomFromServer();
                         mRoomManager.leaveMUCLight(mChatJID);

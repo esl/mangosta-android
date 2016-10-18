@@ -61,7 +61,6 @@ import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.bob.BoBHash;
 import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
-import inaka.com.mangosta.xmpp.muclight.MUCLightRoomConfiguration;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
@@ -220,16 +219,6 @@ public class RoomManager {
                 mListener.onRoomsLoaded();
             }
 
-        }
-    }
-
-    private void getSubject(Chat chatRoom) {
-        try {
-            MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(chatRoom.getJid()).asEntityBareJidIfPossible());
-            MUCLightRoomConfiguration configuration = multiUserChatLight.getConfiguration();
-            chatRoom.setSubject(configuration.getSubject());
-        } catch (XmppStringprepException | SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException | InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
@@ -657,28 +646,38 @@ public class RoomManager {
     }
 
     public void leaveMUCLight(final String jid) {
-
-        MultiUserChatLightManager manager = XMPPSession.getInstance().getMUCLightManager();
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        String authenticatedUser = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid().toString();
 
         try {
-            MultiUserChatLight multiUserChatLight = manager.getMultiUserChatLight(JidCreate.from(jid).asEntityBareJidIfPossible());
-            multiUserChatLight.leave();
+            if (mongooseService != null) {
 
-            Realm realm = RealmManager.getRealm();
-            realm.beginTransaction();
+                Call<Object> call = mongooseService.removeUserFromMUCLight(jid.split("@")[0], authenticatedUser);
+                call.enqueue(new Callback<Object>() {
+                    @Override
+                    public void onResponse(Call<Object> call, Response<Object> response) {
+                        Realm realm = RealmManager.getRealm();
+                        realm.beginTransaction();
 
-            Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
-            if (chat != null) {
-                chat.setShow(false);
-                chat.deleteFromRealm();
+                        Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
+                        if (chat != null) {
+                            chat.setShow(false);
+                            chat.deleteFromRealm();
+                        }
+
+                        realm.commitTransaction();
+                        realm.close();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Object> call, Throwable t) {
+                        Context context = MangostaApplication.getInstance();
+                        Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
+                        mListener.onError(t.getLocalizedMessage());
+                    }
+                });
             }
 
-            realm.commitTransaction();
-            realm.close();
-        } catch (Exception e) {
-            Context context = MangostaApplication.getInstance();
-            Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
-            mListener.onError(e.getLocalizedMessage());
         } finally {
             mListener.onRoomLeft();
         }

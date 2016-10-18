@@ -19,26 +19,27 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
-import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
+import inaka.com.mangosta.interfaces.MongooseService;
 import inaka.com.mangosta.models.Chat;
+import inaka.com.mangosta.models.MongooseMUCLight;
+import inaka.com.mangosta.models.MongooseParticipant;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ChatMembersActivity extends BaseActivity {
 
@@ -131,16 +132,28 @@ public class ChatMembersActivity extends BaseActivity {
     }
 
     private void loadMUCLightMembers(String roomJid) throws XmppStringprepException, SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException {
-        MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-        MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(roomJid).asEntityBareJidIfPossible());
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
 
-        HashMap<Jid, MUCLightAffiliation> occupants = multiUserChatLight.getAffiliations();
+        if (mongooseService != null) {
+            Call<MongooseMUCLight> call = mongooseService.getMUCLightDetails(roomJid.split("@")[0]);
+            call.enqueue(new Callback<MongooseMUCLight>() {
+                @Override
+                public void onResponse(Call<MongooseMUCLight> call, Response<MongooseMUCLight> response) {
+                    MongooseMUCLight mongooseMUCLight = response.body();
 
-        for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
-            Jid jid = pair.getKey();
-            if (jid != null) {
-                obtainUser(XMPPUtils.fromJIDToUserName(jid.toString()));
-            }
+                    if (mongooseMUCLight != null) {
+                        List<MongooseParticipant> mongooseParticipants = mongooseMUCLight.getParticipants();
+                        for (MongooseParticipant participant : mongooseParticipants) {
+                            obtainUser(XMPPUtils.fromJIDToUserName(participant.getUser()));
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<MongooseMUCLight> call, Throwable t) {
+
+                }
+            });
         }
     }
 
