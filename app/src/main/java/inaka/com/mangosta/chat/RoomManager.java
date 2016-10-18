@@ -1,5 +1,6 @@
 package inaka.com.mangosta.chat;
 
+import android.app.Activity;
 import android.content.Context;
 import android.widget.Toast;
 
@@ -23,11 +24,11 @@ import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jxmpp.jid.EntityBareJid;
-import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,12 +47,15 @@ import inaka.com.mangosta.models.MongooseMUCLight;
 import inaka.com.mangosta.models.MongooseMUCLightMessage;
 import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.requests.AddUserRequest;
 import inaka.com.mangosta.models.requests.CreateMUCLightMessageRequest;
+import inaka.com.mangosta.models.requests.CreateMUCLightRequest;
 import inaka.com.mangosta.models.requests.CreateMessageRequest;
 import inaka.com.mangosta.models.responses.MongooseIdResponse;
 import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
+import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -62,6 +66,7 @@ import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
 import io.realm.RealmResults;
+import okio.Buffer;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -269,33 +274,77 @@ public class RoomManager {
         return muc;
     }
 
-    public static MultiUserChatLight createMUCLight(List<User> users, String roomName) {
-        List<Jid> occupants = new ArrayList<>();
+    public static void createMUCLightAndGo(List<User> users, final String roomName, final Activity context) {
+        final List<String> occupants = new ArrayList<>();
 
         for (User user : users) {
             String jid = XMPPUtils.fromUserNameToJID(user.getLogin());
-            try {
-                occupants.add(JidCreate.from(jid));
-            } catch (XmppStringprepException e) {
-                e.printStackTrace();
-            }
+            occupants.add(jid);
         }
 
-        XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
-        MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(connection);
+        final MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
 
-        String roomId = UUID.randomUUID().toString();
-        String roomJid = roomId + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
-        MultiUserChatLight multiUserChatLight = null;
+        if (mongooseService != null) {
 
+            Call<MongooseIdResponse> callCreate = mongooseService.createMUCLight(new CreateMUCLightRequest("", roomName));
+            callCreate.enqueue(new Callback<MongooseIdResponse>() {
+                @Override
+                public void onResponse(Call<MongooseIdResponse> call, Response<MongooseIdResponse> response) {
+                    final MongooseIdResponse idResponse = response.body();
+
+                    if (idResponse != null) {
+                        final String lastOccupant = occupants.get(occupants.size() - 1);
+                        for (String jid : occupants) {
+                            addOccupant(idResponse.getId(), lastOccupant, jid);
+                        }
+                    }
+
+                }
+
+                private void addOccupant(final String mucLightId, final String lastOccupant, String jid) {
+                    final Call<Object> callAddUser = mongooseService.addUserToMUCLight(mucLightId, new AddUserRequest(jid));
+                    callAddUser.enqueue(new Callback<Object>() {
+                        @Override
+                        public void onResponse(Call<Object> call, Response<Object> response) {
+                            String body = bodyToString(callAddUser.request().body());
+                            if (body.substring(body.lastIndexOf(":") + 2, body.length() - 2).equals(lastOccupant)) {
+                                context.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        NavigateToChat.go(mucLightId + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME, roomName, context);
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<Object> call, Throwable t) {
+                            Toast.makeText(context, context.getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(Call<MongooseIdResponse> call, Throwable t) {
+                    Toast.makeText(context, context.getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+    }
+
+    private static String bodyToString(final okhttp3.RequestBody request) {
         try {
-            multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(roomJid).asEntityBareJidIfPossible());
-            multiUserChatLight.create(roomName, occupants);
-        } catch (Exception e) {
-            e.printStackTrace();
+            final okhttp3.RequestBody copy = request;
+            final Buffer buffer = new Buffer();
+            if (copy != null)
+                copy.writeTo(buffer);
+            else
+                return "";
+            return buffer.readUtf8();
+        } catch (final IOException e) {
+            return "";
         }
-
-        return multiUserChatLight;
     }
 
     public static void sendInvitations(MultiUserChat multiUserChat, String roomName, List<User> users) {

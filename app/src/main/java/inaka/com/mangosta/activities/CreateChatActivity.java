@@ -39,7 +39,6 @@ import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 
 public class CreateChatActivity extends BaseActivity {
 
@@ -290,14 +289,7 @@ public class CreateChatActivity extends BaseActivity {
                         int radioButtonId = radioGroup.getCheckedRadioButtonId();
 
                         if (radioButtonId == radioButtonMUCLight.getId()) {
-                            MultiUserChatLight multiUserChatLight = RoomManager.createMUCLight(memberUsers, chatName);
-
-                            if (multiUserChatLight != null) {
-                                NavigateToChat.go(multiUserChatLight.getRoom().toString(), chatName, CreateChatActivity.this);
-                            } else {
-                                Toast.makeText(CreateChatActivity.this, getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
-                            }
-
+                            RoomManager.createMUCLightAndGo(memberUsers, chatName, CreateChatActivity.this);
                         }
 
                         if (radioButtonId == radioButtonMUC.getId()) {
