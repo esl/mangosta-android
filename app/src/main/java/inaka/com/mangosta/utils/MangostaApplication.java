@@ -9,7 +9,6 @@ import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;
 
 import inaka.com.mangosta.xmpp.XMPPSession;
-import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class MangostaApplication extends Application {
 

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@color/blue_light_background"
+              android:background="@color/colorAccent"
               android:minWidth="350dp"
               android:orientation="vertical"
               android:padding="10dp">
@@ -22,7 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:background="@color/colorAccent"
+        android:background="@color/blue_light_background"
         android:orientation="horizontal">
 
         <EditText
@@ -34,7 +34,9 @@
             android:hint="@string/hint_user_name"
             android:paddingBottom="5dp"
             android:paddingStart="5dp"
-            android:paddingTop="5dp"/>
+            android:paddingTop="5dp"
+            android:textColor="@color/colorAccent"
+            android:textColorHint="@color/colorAccent"/>
 
         <EditText
             android:id="@+id/loginJidCompletionEditText"
@@ -44,7 +46,9 @@
             android:inputType="text"
             android:paddingBottom="5dp"
             android:paddingEnd="5dp"
-            android:paddingTop="5dp"/>
+            android:paddingTop="5dp"
+            android:textColor="@color/colorAccent"
+            android:textColorHint="@color/colorAccent"/>
 
     </LinearLayout>
 
@@ -64,10 +68,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:background="@color/colorAccent"
+        android:background="@color/blue_light_background"
         android:hint="@string/hint_password"
         android:inputType="textPassword"
-        android:padding="5dp"/>
+        android:padding="5dp"
+        android:textColor="@color/colorAccent"
+        android:textColorHint="@color/colorAccent"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -85,9 +91,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
-        android:background="@color/colorAccent"
+        android:background="@color/blue_light_background"
         android:enabled="false"
-        android:padding="5dp"/>
+        android:padding="5dp"
+        android:textColor="@color/colorAccent"
+        android:textColorHint="@color/colorAccent"/>
 
     <Button
         android:id="@+id/loginButton"
