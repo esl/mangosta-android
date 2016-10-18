@@ -1,113 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/colorAccent"
-              android:minWidth="350dp"
-              android:orientation="vertical"
-              android:padding="10dp">
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:paddingEnd="5dp"
-        android:paddingStart="5dp"
-        android:text="@string/title_user_name"
-        android:textColor="@color/colorPrimary"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
+        android:minWidth="350dp"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:minWidth="350dp"
+            android:titleTextColor="@color/colorAccent"
+            app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+    </android.support.design.widget.AppBarLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:background="@color/blue_light_background"
-        android:orientation="horizontal">
+        android:layout_marginTop="?attr/actionBarSize"
+        android:minWidth="350dp"
+        android:orientation="vertical"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp">
 
-        <EditText
-            android:id="@+id/loginUserNameEditText"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/transparent"
-            android:gravity="end"
-            android:hint="@string/hint_user_name"
-            android:paddingBottom="5dp"
+            android:paddingEnd="5dp"
             android:paddingStart="5dp"
-            android:paddingTop="5dp"
-            android:textColor="@color/colorAccent"
-            android:textColorHint="@color/colorAccent"/>
+            android:text="@string/title_user_name"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
 
-        <EditText
-            android:id="@+id/loginJidCompletionEditText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false"
-            android:inputType="text"
-            android:paddingBottom="5dp"
+            android:layout_margin="5dp"
+            android:background="@color/blue_light_background"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/loginUserNameEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@android:color/transparent"
+                android:gravity="end"
+                android:hint="@string/hint_user_name"
+                android:paddingBottom="5dp"
+                android:paddingStart="5dp"
+                android:paddingTop="5dp"
+                android:textColor="@color/colorAccent"/>
+
+            <EditText
+                android:id="@+id/loginJidCompletionEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:inputType="text"
+                android:paddingBottom="5dp"
+                android:paddingEnd="5dp"
+                android:paddingTop="5dp"
+                android:textColor="@color/colorPrimary"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
             android:paddingEnd="5dp"
-            android:paddingTop="5dp"
+            android:paddingStart="5dp"
+            android:text="@string/title_password"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <EditText
+            android:id="@+id/loginPasswordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@color/blue_light_background"
+            android:hint="@string/hint_password"
+            android:inputType="textPassword"
+            android:padding="5dp"
+            android:textColor="@color/colorAccent"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:paddingEnd="5dp"
+            android:paddingStart="5dp"
+            android:text="@string/title_server"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <EditText
+            android:id="@+id/loginServerEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="@color/blue_light_background"
+            android:enabled="false"
+            android:padding="5dp"
+            android:textColor="@color/colorPrimary"/>
+
+        <Button
+            android:id="@+id/loginButton"
+            android:layout_width="150dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginEnd="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="10dp"
+            android:background="@color/colorPrimary"
+            android:text="@string/button_enter"
+            android:textAllCaps="false"
             android:textColor="@color/colorAccent"
-            android:textColorHint="@color/colorAccent"/>
+            android:textSize="18sp"
+            android:textStyle="bold"/>
 
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:paddingEnd="5dp"
-        android:paddingStart="5dp"
-        android:text="@string/title_password"
-        android:textColor="@color/colorPrimary"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
-
-    <EditText
-        android:id="@+id/loginPasswordEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:background="@color/blue_light_background"
-        android:hint="@string/hint_password"
-        android:inputType="textPassword"
-        android:padding="5dp"
-        android:textColor="@color/colorAccent"
-        android:textColorHint="@color/colorAccent"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:paddingEnd="5dp"
-        android:paddingStart="5dp"
-        android:text="@string/title_server"
-        android:textColor="@color/colorPrimary"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
-
-    <EditText
-        android:id="@+id/loginServerEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:background="@color/blue_light_background"
-        android:enabled="false"
-        android:padding="5dp"
-        android:textColor="@color/colorAccent"
-        android:textColorHint="@color/colorAccent"/>
-
-    <Button
-        android:id="@+id/loginButton"
-        android:layout_width="150dp"
-        android:layout_height="50dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="5dp"
-        android:background="@color/colorPrimary"
-        android:text="@string/title_login"
-        android:textAllCaps="false"
-        android:textColor="@color/colorAccent"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
-
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

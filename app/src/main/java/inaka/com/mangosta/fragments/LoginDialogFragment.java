@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +43,9 @@ public class LoginDialogFragment extends DialogFragment {
     @Bind(R.id.loginButton)
     Button loginButton;
 
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
+
     // TODO change this
     private String mPassword = "6fsp2u9y";
     private String mUserName = "ramabit";
@@ -55,6 +59,8 @@ public class LoginDialogFragment extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login_dialog, container, false);
         ButterKnife.bind(this, view);
+
+        toolbar.setTitle(getString(R.string.title_login));
 
         loginUserNameEditText.setText(mUserName);
         loginUserNameEditText.setSelection(mUserName.length());
