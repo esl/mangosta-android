@@ -638,12 +638,16 @@ public class XMPPSession {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                login(userName, password);
+                try {
+                    login(userName, password);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }
 
-    public void login(String userName, String password) {
+    public void login(String userName, String password) throws Exception {
         try {
             mXMPPConnection.connect();
         } catch (SmackException.AlreadyConnectedException ace) {
@@ -673,9 +677,6 @@ public class XMPPSession {
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
             sendPresence(Presence.Type.available);
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
 
     }
