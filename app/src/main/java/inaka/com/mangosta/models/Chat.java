@@ -20,7 +20,7 @@ public class Chat extends RealmObject {
     private int type;
     private boolean show;
     private Date dateCreated;
-    private String lastRetrievedFromMAM;
+    private long lastTimestampRetrieved;
 
     public Chat() {
     }
@@ -85,12 +85,12 @@ public class Chat extends RealmObject {
         this.show = show;
     }
 
-    public String getLastRetrievedFromMAM() {
-        return lastRetrievedFromMAM;
+    public long getLastTimestampRetrieved() {
+        return lastTimestampRetrieved;
     }
 
-    public void setLastRetrievedFromMAM(String lastRetrievedFromMAM) {
-        this.lastRetrievedFromMAM = lastRetrievedFromMAM;
+    public void setLastTimestampRetrieved(long lastTimestampRetrieved) {
+        this.lastTimestampRetrieved = lastTimestampRetrieved;
     }
 
     public String getSubject() {

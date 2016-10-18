@@ -3,16 +3,11 @@ package inaka.com.mangosta.chat;
 import android.content.Context;
 import android.widget.Toast;
 
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
-
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smackx.chatstates.ChatState;
@@ -29,15 +24,25 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import inaka.com.mangosta.R;
+import inaka.com.mangosta.interfaces.MongooseService;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.MongooseMUCLight;
+import inaka.com.mangosta.models.MongooseMUCLightMessage;
+import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
@@ -45,12 +50,14 @@ import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.bob.BoBHash;
 import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
-import inaka.com.mangosta.xmpp.mam.MamManager;
 import inaka.com.mangosta.xmpp.muclight.MUCLightRoomConfiguration;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
 import io.realm.RealmResults;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class RoomManager {
@@ -150,55 +157,57 @@ public class RoomManager {
     }
 
     public void loadMUCLightRooms() {
-
         final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
 
-        if (connection.isAuthenticated()) {
+        if (connection.isAuthenticated() && mongooseService != null) {
 
-            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCLightItems();
+            Call<List<MongooseMUCLight>> call = mongooseService.getMUCLights();
 
-            if (discoverItems != null) {
-                List<DiscoverItems.Item> items = discoverItems.getItems();
+            try {
+                List<MongooseMUCLight> rooms = call.execute().body();
 
-                try {
-                    for (DiscoverItems.Item item : items) {
-                        String itemJid = item.getEntityID().toString();
+                if (rooms != null) {
 
-                        if (itemJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
-                            Realm realm = RealmManager.getRealm();
+                    for (MongooseMUCLight room : rooms) {
+                        String itemJid = room.getId() + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
+
+                        Realm realm = RealmManager.getRealm();
+                        realm.beginTransaction();
+                        Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
+
+                        if (chatRoom == null) {
+                            chatRoom = new Chat();
+                            chatRoom.setJid(itemJid);
+                            chatRoom.setType(Chat.TYPE_MUC_LIGHT);
+                        }
+
+                        chatRoom.setShow(true);
+                        chatRoom.setName(room.getName());
+                        chatRoom.setSubject(room.getSubject());
+
+                        realm.copyToRealmOrUpdate(chatRoom);
+                        realm.commitTransaction();
+
+                        // set last retrieved from MAM
+                        ChatMessage chatMessage = RealmManager.getLastMessageForChat(chatRoom.getJid());
+                        if (chatMessage != null) {
                             realm.beginTransaction();
-                            Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
-
-                            if (chatRoom == null) {
-                                chatRoom = new Chat();
-                                chatRoom.setJid(item.getEntityID().toString());
-                                chatRoom.setType(Chat.TYPE_MUC_LIGHT);
-
-                                getSubject(chatRoom);
-                            }
-                            chatRoom.setShow(true);
-                            chatRoom.setName(item.getName());
-
+                            chatRoom.setLastTimestampRetrieved(chatMessage.getDate().getTime());
                             realm.copyToRealmOrUpdate(chatRoom);
                             realm.commitTransaction();
-
-                            // set last retrieved from MAM
-                            ChatMessage chatMessage = RealmManager.getLastMessageForChat(chatRoom.getJid());
-                            if (chatMessage != null) {
-                                realm.beginTransaction();
-                                chatRoom.setLastRetrievedFromMAM(chatMessage.getMessageId());
-                                realm.copyToRealmOrUpdate(chatRoom);
-                                realm.commitTransaction();
-                            }
-
-                            realm.close();
                         }
+
+                        realm.close();
                     }
-                } finally {
-                    mListener.onRoomsLoaded();
                 }
 
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                mListener.onRoomsLoaded();
             }
+
         }
     }
 
@@ -361,64 +370,210 @@ public class RoomManager {
     }
 
     public void loadArchivedMessages(final String chatJid) {
-        Tasks.executeInBackground(MangostaApplication.getInstance(), new BackgroundWork<Stanza>() {
-            @Override
-            public Stanza doInBackground() throws Exception {
-                Realm realm = RealmManager.getRealm();
-                Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
-                MamManager mamManager = XMPPSession.getInstance().getMamManager();
-                int pageSize = 15;
+        Realm realm = RealmManager.getRealm();
+        Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 
-                Jid jid = JidCreate.from(chatJid);
-                MamManager.MamQueryResult mamQueryResult;
-                if (chat == null || chat.getLastRetrievedFromMAM() == null) {
-                    mamQueryResult = mamManager.queryArchive(pageSize, null, null, jid, null);
-                } else {
-                    mamQueryResult = mamManager.pageAfter(jid, chat.getLastRetrievedFromMAM(), pageSize);
-                }
+        long timestamp = chat.getLastTimestampRetrieved();
+        int chatType = chat.getType();
 
-                while (!mamQueryResult.mamFin.isComplete()) {
-                    mamQueryResult = mamManager.pageNext(mamQueryResult, pageSize);
-                }
+        realm.close();
 
-                if (mamQueryResult.forwardedMessages.size() > 0) {
+        switch (chatType) {
+            case Chat.TYPE_MUC_LIGHT:
+                getMUCLightMessages(chatJid);
+                break;
 
-                    if (chat == null || !chat.isValid()) {
-                        loadMUCLightRooms();
-                    } else {
-                        if (!realm.isInTransaction()) {
-                            realm.beginTransaction();
+            case Chat.TYPE_1_T0_1:
+                getMessages(chatJid, timestamp);
+                break;
+        }
+
+    }
+
+    private void getMessages(final String jid, long timestamp) {
+        final int pageSize = 15;
+
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+
+        if (mongooseService != null) {
+
+            Call<List<MongooseMessage>> call;
+            if (timestamp == 0) {
+                call = mongooseService.getMessages(jid, pageSize);
+            } else {
+                call = mongooseService.getMessages(jid, pageSize, timestamp);
+            }
+
+            call.enqueue(new Callback<List<MongooseMessage>>() {
+                @Override
+                public void onResponse(Call<List<MongooseMessage>> call, Response<List<MongooseMessage>> response) {
+                    List<MongooseMessage> messages = response.body();
+
+                    if (messages != null) {
+                        long lastTimestamp = 0;
+                        if (messages.size() > 0) {
+                            lastTimestamp = messages.get(0).getTimestamp();
                         }
-                        chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
-                        chat.setLastRetrievedFromMAM(mamQueryResult.mamFin.getRSMSet().getLast());
-                        realm.copyToRealmOrUpdate(chat);
-                        realm.commitTransaction();
+
+                        if (lastTimestamp != 0) {
+                            setLastTimestamp(lastTimestamp);
+                        }
+
+                        saveMessages(messages, jid);
+
+                        if (messages.size() == pageSize) { // get more pages
+                            getMessages(jid, lastTimestamp);
+                        } else { // show list
+                            XMPPSession.getInstance().publishQueryArchive(null);
+                        }
+                    } else {
+                        XMPPSession.getInstance().publishQueryArchive(null);
                     }
 
                 }
 
+                private void setLastTimestamp(long lastTimestamp) {
+                    Realm realm = RealmManager.getRealm();
+                    Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
+                    realm.beginTransaction();
+                    chat.setLastTimestampRetrieved(lastTimestamp);
+                    realm.copyToRealmOrUpdate(chat);
+                    realm.commitTransaction();
+                    realm.close();
+                }
+
+                @Override
+                public void onFailure(Call<List<MongooseMessage>> call, Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+        }
+
+    }
+
+    private void getMUCLightMessages(final String jid) {
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+
+        if (mongooseService != null) {
+            Call<List<MongooseMUCLightMessage>> call = mongooseService.getMUCLightMessages(jid.split("@")[0]);
+            call.enqueue(new Callback<List<MongooseMUCLightMessage>>() {
+                @Override
+                public void onResponse(Call<List<MongooseMUCLightMessage>> call, Response<List<MongooseMUCLightMessage>> response) {
+                    List<MongooseMUCLightMessage> messages = response.body();
+
+                    if (messages != null) {
+                        saveMUCLightMessages(messages, jid);
+                    }
+
+                    XMPPSession.getInstance().publishQueryArchive(null);
+                }
+
+                @Override
+                public void onFailure(Call<List<MongooseMUCLightMessage>> call, Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+        }
+
+    }
+
+    private void saveMessages(List<MongooseMessage> messages, String roomJid) {
+
+        for (MongooseMessage message : messages) {
+
+            if (!RealmManager.chatMessageExists(message.getId()) &&
+                    !message.getTo().equals("undefined") &&
+                    !message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
+
+                String jidTo = message.getTo().split("/")[0];
+                String me = XMPPSession.getInstance().getXMPPConnection().getUser().toString().split("/")[0];
+
+                Realm realm = RealmManager.getRealm();
+                realm.beginTransaction();
+
+                ChatMessage chatMessage = makeChatMessage(message, roomJid);
+
+                if (jidTo.equals(me)) {
+                    chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(roomJid));
+                } else {
+                    chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(me));
+                }
+
+                realm.copyToRealmOrUpdate(chatMessage);
+                realm.commitTransaction();
                 realm.close();
 
-                if (mamQueryResult.forwardedMessages.size() > 0) {
-                    return mamQueryResult.forwardedMessages.get(mamQueryResult.forwardedMessages.size() - 1).getForwardedStanza();
-                } else {
-                    return null;
-                }
+                XMPPSession.getInstance().mMongooseMessagePublisher.onNext(message);
             }
-        }, new Completion<Stanza>() {
-            @Override
-            public void onSuccess(Context context, Stanza result) {
-                XMPPSession.getInstance().loadCorrectionMessages();
-                XMPPSession.getInstance().publishQueryArchive(result);
-            }
+        }
 
-            @Override
-            public void onError(Context context, Exception e) {
-                XMPPSession.getInstance().loadCorrectionMessages();
-                XMPPSession.getInstance().publishQueryArchive(null);
-            }
-        });
     }
+
+    private void saveMUCLightMessages(List<MongooseMUCLightMessage> messages, String roomJid) {
+
+        for (MongooseMUCLightMessage message : messages) {
+
+            if (!RealmManager.chatMessageExists(message.getId()) &&
+                    message.getType().equals("message") &&
+                    !message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
+
+                String userFrom = message.getFrom().split("/")[0];
+
+                Realm realm = RealmManager.getRealm();
+                realm.beginTransaction();
+
+                ChatMessage chatMessage = makeMUCLightMessage(message, userFrom, roomJid);
+
+                realm.copyToRealmOrUpdate(chatMessage);
+                realm.commitTransaction();
+                realm.close();
+
+                XMPPSession.getInstance().mMongooseMUCLightMessagePublisher.onNext(message);
+            }
+        }
+
+    }
+
+    private ChatMessage makeChatMessage(MongooseMessage message, String roomJid) {
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setMessageId(message.getId());
+        chatMessage.setRoomJid(roomJid);
+        chatMessage.setStatus(ChatMessage.STATUS_SENT);
+        chatMessage.setUnread(true);
+        chatMessage.setContent(message.getBody());
+        chatMessage.setType(ChatMessage.TYPE_CHAT);
+        chatMessage.setDate(getDate(message.getTimestamp()));
+        return chatMessage;
+    }
+
+    private ChatMessage makeMUCLightMessage(MongooseMUCLightMessage message, String userFrom, String roomJid) {
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setMessageId(message.getId());
+        chatMessage.setRoomJid(roomJid);
+        chatMessage.setStatus(ChatMessage.STATUS_SENT);
+        chatMessage.setUnread(true);
+        chatMessage.setContent(message.getBody());
+        chatMessage.setType(ChatMessage.TYPE_CHAT);
+        chatMessage.setDate(getDate(message.getTimestamp()));
+        chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(userFrom));
+        return chatMessage;
+    }
+
+    private Date getDate(long time) {
+        Calendar cal = Calendar.getInstance();
+        TimeZone tz = cal.getTimeZone(); // get the local time zone.
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault());
+        sdf.setTimeZone(tz); // set time zone.
+        String localTime = sdf.format(new Date(time));
+        Date date = new Date();
+        try {
+            date = sdf.parse(localTime); // get local date
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
 
     public void leaveMUC(final String jid) {
 

@@ -86,6 +86,8 @@ import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.MongooseMUCLightMessage;
+import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
@@ -149,9 +151,10 @@ public class XMPPSession {
     public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
-
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
+    public PublishSubject<MongooseMessage> mMongooseMessagePublisher = PublishSubject.create();
+    public PublishSubject<MongooseMUCLightMessage> mMongooseMUCLightMessagePublisher = PublishSubject.create();
     private PublishSubject<Presence> mPresencePublisher = PublishSubject.create();
     private PublishSubject<ChatConnection> mConnectionPublisher = PublishSubject.create();
     private PublishSubject<String> mArchiveQueryPublisher = PublishSubject.create();
@@ -735,6 +738,48 @@ public class XMPPSession {
         return mMessagePublisher.subscribe(subscriber);
     }
 
+    // Room Mongoose Message Subscription
+    public Subscription subscribeRoomToMongooseMessages(final String roomJid, final MongooseMessageSubscriber subscriber) {
+        return mMongooseMessagePublisher
+                .filter(
+                        new Func1<MongooseMessage, Boolean>() {
+                            @Override
+                            public Boolean call(MongooseMessage message) {
+                                return message.getFrom().startsWith(roomJid);
+                            }
+                        }
+                )
+                .subscribe(
+                        new Action1<MongooseMessage>() {
+                            @Override
+                            public void call(MongooseMessage message) {
+                                subscriber.onMessageReceived(message);
+                            }
+                        }
+                );
+    }
+
+    // Room Mongoose MUC Light Message Subscription
+    public Subscription subscribeRoomToMUCLightMongooseMessages(final String roomJid, final MongooseMUCLightMessageSubscriber subscriber) {
+        return mMongooseMUCLightMessagePublisher
+                .filter(
+                        new Func1<MongooseMUCLightMessage, Boolean>() {
+                            @Override
+                            public Boolean call(MongooseMUCLightMessage message) {
+                                return message.getFrom().startsWith(roomJid);
+                            }
+                        }
+                )
+                .subscribe(
+                        new Action1<MongooseMUCLightMessage>() {
+                            @Override
+                            public void call(MongooseMUCLightMessage message) {
+                                subscriber.onMessageReceived(message);
+                            }
+                        }
+                );
+    }
+
     // Presence Subscription
     public Subscription subscribeToPresence(Action1<Presence> subscriber) {
         return mPresencePublisher.subscribe(subscriber);
@@ -766,6 +811,14 @@ public class XMPPSession {
 
     public interface MessageSubscriber {
         void onMessageReceived(Message message);
+    }
+
+    public interface MongooseMessageSubscriber {
+        void onMessageReceived(MongooseMessage message);
+    }
+
+    public interface MongooseMUCLightMessageSubscriber {
+        void onMessageReceived(MongooseMUCLightMessage message);
     }
 
     public boolean isConnectedAndAuthenticated() {

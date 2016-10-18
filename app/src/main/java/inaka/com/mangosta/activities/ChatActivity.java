@@ -57,6 +57,8 @@ import inaka.com.mangosta.chat.RoomManagerListener;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.models.MongooseMUCLightMessage;
+import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -121,6 +123,8 @@ public class ChatActivity extends BaseActivity {
     LinearLayoutManager mLayoutManagerStickers;
 
     private Subscription mMessageSubscription;
+    private Subscription mMongooseMessageSubscription;
+    private Subscription mMongooseMUCLightMessageSubscription;
     private Subscription mConnectionSubscription;
     private Subscription mArchiveQuerySubscription;
     private Subscription mErrorArchiveQuerySubscription;
@@ -389,6 +393,21 @@ public class ChatActivity extends BaseActivity {
 
         });
 
+        mMongooseMessageSubscription = XMPPSession.getInstance().subscribeRoomToMongooseMessages(mChatJID, new XMPPSession.MongooseMessageSubscriber() {
+            @Override
+            public void onMessageReceived(MongooseMessage message) {
+                refreshMessagesAndScrollToEnd();
+            }
+        });
+
+        mMongooseMUCLightMessageSubscription = XMPPSession.getInstance().subscribeRoomToMUCLightMongooseMessages(mChatJID,
+                new XMPPSession.MongooseMUCLightMessageSubscriber() {
+                    @Override
+                    public void onMessageReceived(MongooseMUCLightMessage message) {
+                        refreshMessagesAndScrollToEnd();
+                    }
+                });
+
         mConnectionSubscription = XMPPSession.getInstance().subscribeToConnection(new Action1<ChatConnection>() {
             @Override
             public void call(ChatConnection chatConnection) {
@@ -623,6 +642,14 @@ public class ChatActivity extends BaseActivity {
 
         if (mErrorArchiveQuerySubscription != null) {
             mErrorArchiveQuerySubscription.unsubscribe();
+        }
+
+        if (mMongooseMessageSubscription != null) {
+            mMongooseMessageSubscription.unsubscribe();
+        }
+
+        if (mMongooseMUCLightMessageSubscription != null) {
+            mMongooseMUCLightMessageSubscription.unsubscribe();
         }
 
     }
