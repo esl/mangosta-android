@@ -42,6 +42,8 @@
     <string name="sending_request">Sending the request &#8230;</string>
     <string name="empty_message">Empty message</string>
     <string name="error_create_chat">ERROR! Could not create chat.</string>
+    <string name="error_send_message">Error sending message</string>
+    <string name="message_sent">Message sent</string>
 
     <string name="search_user_hint">Search user</string>
     <string name="title_chat_members">Chat members</string>

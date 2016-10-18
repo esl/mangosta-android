@@ -3,6 +3,10 @@ package inaka.com.mangosta.chat;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.nanotasks.BackgroundWork;
+import com.nanotasks.Completion;
+import com.nanotasks.Tasks;
+
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
@@ -42,6 +46,9 @@ import inaka.com.mangosta.models.MongooseMUCLight;
 import inaka.com.mangosta.models.MongooseMUCLightMessage;
 import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.requests.CreateMUCLightMessageRequest;
+import inaka.com.mangosta.models.requests.CreateMessageRequest;
+import inaka.com.mangosta.models.responses.MongooseIdResponse;
 import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
@@ -574,7 +581,6 @@ public class RoomManager {
         return date;
     }
 
-
     public void leaveMUC(final String jid) {
 
         try {
@@ -689,42 +695,76 @@ public class RoomManager {
     }
 
     public void sendTextMessage(String messageId, String jid, String content, int chatType) {
-        sendMessage(messageId, jid, content, chatType, false);
+        if (chatType == Chat.TYPE_MUC) {
+            Message message = new Message();
+            message.setBody(content);
+            message.setStanzaId(messageId);
+            sendXMPPMessageDependingOnType(message, jid, chatType);
+        } else {
+            sendRestMessageDependingOnType(content, jid, chatType);
+        }
     }
 
-    public void sendStickerMessage(String messageId, String jid, String content, int chatType) {
-        sendMessage(messageId, jid, content, chatType, true);
-    }
-
-    private void sendMessage(final String messageId, final String jid, final String content, final int chatType, final boolean isSticker) {
-        new Thread(new Runnable() {
+    public void sendStickerMessage(final String messageId, final String jid, final String content, final int chatType) {
+        Tasks.executeInBackground(MangostaApplication.getInstance(), new BackgroundWork<Object>() {
             @Override
-            public void run() {
-                Message message;
-
-                try {
-                    message = new Message(JidCreate.from(jid), content);
-                    manageBoBExtension(message);
-                } catch (XmppStringprepException e) {
-                    e.printStackTrace();
-                    mListener.onError(e.getLocalizedMessage());
-                    return;
-                }
-
+            public Object doInBackground() throws Exception {
+                Message message = new Message(JidCreate.from(jid), content);
+                BoBHash bobHash = new BoBHash(Base64.encode(content), "base64");
+                message.addExtension(new BoBExtension(bobHash, null, null));
                 message.setStanzaId(messageId);
-                sendMessageDependingOnType(message, jid, chatType);
+                sendXMPPMessageDependingOnType(message, jid, chatType);
+                return null;
+            }
+        }, new Completion<Object>() {
+            @Override
+            public void onSuccess(Context context, Object result) {
+                mListener.onMessageSent(null);
             }
 
-            private void manageBoBExtension(Message message) {
-                if (isSticker) {
-                    BoBHash bobHash = new BoBHash(Base64.encode(content), "base64");
-                    message.addExtension(new BoBExtension(bobHash, null, null));
-                }
+            @Override
+            public void onError(Context context, Exception e) {
+                mListener.onError(e.getLocalizedMessage());
             }
-        }).start();
+        });
     }
 
-    private void sendMessageDependingOnType(Message message, String jid, int chatType) {
+    private void sendRestMessageDependingOnType(final String content, final String jid, int chatType) {
+
+        try {
+            MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+
+            if (mongooseService != null) {
+
+                Call<MongooseIdResponse> call;
+                if (chatType == Chat.TYPE_MUC_LIGHT) {
+                    call = mongooseService.sendMessageToMUCLight(jid.split("@")[0], new CreateMUCLightMessageRequest(content));
+                } else {
+                    call = mongooseService.sendMessage(new CreateMessageRequest(jid, content));
+                }
+
+                call.enqueue(new Callback<MongooseIdResponse>() {
+                    @Override
+                    public void onResponse(Call<MongooseIdResponse> call, Response<MongooseIdResponse> response) {
+                        MongooseIdResponse idResponse = response.body();
+                        if (idResponse != null) {
+                            saveMessageLocally(jid, content, idResponse.getId());
+                            Toast.makeText(MangostaApplication.getInstance(), R.string.message_sent, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<MongooseIdResponse> call, Throwable t) {
+                        Toast.makeText(MangostaApplication.getInstance(), R.string.error_send_message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        } finally {
+            mListener.onMessageSent(null);
+        }
+    }
+
+    private void sendXMPPMessageDependingOnType(Message message, String jid, int chatType) {
         if (chatType == Chat.TYPE_MUC) {
             MultiUserChatManager manager = XMPPSession.getInstance().getMUCManager();
 
@@ -762,24 +802,38 @@ public class RoomManager {
     }
 
     public void updateTypingStatus(final ChatState chatState, final String jid, final int chatType) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Message message = new Message(JidCreate.from(jid));
-                    message.addExtension(new ChatStateExtension(chatState));
-
-                    if (chatType == Chat.TYPE_1_T0_1) {
-                        message.setType(Message.Type.chat);
-                    } else {
-                        message.setType(Message.Type.groupchat);
-                    }
-
-                    sendMessageDependingOnType(message, jid, chatType);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        try {
+            Message message = new Message(JidCreate.from(jid));
+            message.addExtension(new ChatStateExtension(chatState));
+            sendXMPPMessageDependingOnType(message, jid, chatType);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+    private String saveMessageLocally(String chatJid, String content, String messageId) {
+        RoomManager.createChatIfNotExists(chatJid, true);
+
+        Realm realm = RealmManager.getRealm();
+        Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
+
+        ChatMessage chatMessage = new ChatMessage();
+
+        chatMessage.setMessageId(messageId);
+        chatMessage.setRoomJid(chat.getJid());
+        chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+        chatMessage.setStatus(ChatMessage.STATUS_SENDING);
+        chatMessage.setDate(new Date());
+        chatMessage.setType(ChatMessage.TYPE_CHAT);
+        chatMessage.setContent(content);
+
+        realm.beginTransaction();
+        realm.copyToRealmOrUpdate(chatMessage);
+        realm.commitTransaction();
+
+        realm.close();
+
+        return messageId;
+    }
+
 }

@@ -659,9 +659,8 @@ public class ChatActivity extends BaseActivity {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
 
             if (!TextUtils.isEmpty(content)) {
-                String messageId = saveMessageLocally(content, ChatMessage.TYPE_CHAT);
                 mChat = getChatFromRealm();
-                mRoomManager.sendTextMessage(messageId, mChatJID, content, mChat.getType());
+                mRoomManager.sendTextMessage(UUID.randomUUID().toString(), mChatJID, content, mChat.getType());
                 chatSendMessageEditText.setText("");
                 refreshMessagesAndScrollToEnd();
             }
