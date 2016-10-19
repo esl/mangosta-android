@@ -149,7 +149,6 @@ public class XMPPSession {
     public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
-
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
     private PublishSubject<Presence> mPresencePublisher = PublishSubject.create();

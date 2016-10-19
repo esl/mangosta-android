@@ -15,9 +15,13 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
+import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterEntry;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -129,7 +133,6 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public void loadChats() {
-//        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
         if (getActivity() == null) {
             changeChatsList();
         } else {
@@ -279,6 +282,20 @@ public class ChatsListFragment extends BaseFragment {
                 return date2.compareTo(date1);
             }
         }
+    }
+
+    public void loadFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
+        Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+        if (!roster.isLoaded()) {
+            roster.reloadAndWait();
+        }
+
+        Collection<RosterEntry> entries = roster.getEntries();
+
+        for (RosterEntry entry : entries) {
+            // use roster to load chats
+        }
+
     }
 
 }
