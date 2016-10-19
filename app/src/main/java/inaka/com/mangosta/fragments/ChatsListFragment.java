@@ -3,12 +3,12 @@ package inaka.com.mangosta.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.nanotasks.BackgroundWork;
@@ -44,14 +44,11 @@ import rx.functions.Action1;
 
 public class ChatsListFragment extends BaseFragment {
 
-//    @Bind(R.id.chatsTypeRadioGroup)
-//    RadioGroup chatsTypeRadioGroup;
-
     @Bind(R.id.chatListRecyclerView)
     RecyclerView chatListRecyclerView;
 
-    @Bind(R.id.progressLoading)
-    ProgressBar progressLoading;
+    @Bind(R.id.swipeRefreshLayout)
+    public SwipeRefreshLayout swipeRefreshLayout;
 
     private RoomManager mRoomManager;
     private List<Chat> mChats;
@@ -66,8 +63,6 @@ public class ChatsListFragment extends BaseFragment {
 
     public int mPosition = 0;
 
-//    public static int mChatsType = 0;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat_list, container, false);
@@ -79,15 +74,6 @@ public class ChatsListFragment extends BaseFragment {
         mChats = new ArrayList<>();
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(getActivity()));
-
-//        chatsTypeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(RadioGroup group, int checkedId) {
-//                mChatsType = checkedId;
-//                progressLoading.setVisibility(View.VISIBLE);
-//                loadChatsBackgroundTask();
-//            }
-//        });
 
         mChatListAdapter = getChatListAdapter();
 
@@ -110,9 +96,19 @@ public class ChatsListFragment extends BaseFragment {
             }
         });
 
-//        chatsTypeRadioGroup.check(R.id.muclightChatsRadioButton);
-//        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
-        progressLoading.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Refresh items
+                loadChatsBackgroundTask();
+            }
+        });
+
+        swipeRefreshLayout.setColorSchemeResources(
+                R.color.blue_light_background,
+                R.color.colorPrimaryLight,
+                R.color.colorPrimary);
+
         loadChatsBackgroundTask();
 
         return view;
@@ -170,7 +166,7 @@ public class ChatsListFragment extends BaseFragment {
         }
 
         mChatListAdapter.notifyDataSetChanged();
-        progressLoading.setVisibility(View.GONE);
+        swipeRefreshLayout.setRefreshing(false);
     }
 
     private void loadChatsAfterRoomLeft() {
@@ -188,6 +184,10 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public void loadChatsBackgroundTask() {
+        if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(true);
+        }
+
         Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
