@@ -112,8 +112,6 @@ public class EditChatMemberActivity extends BaseActivity {
         mMemberUsers = new ArrayList<>();
         mSearchUsers = new ArrayList<>();
 
-        getChatMembers();
-
         mSearchAdapter = new UsersListAdapter(this, mSearchUsers, true, false);
         mMembersAdapter = new UsersListAdapter(this, mMemberUsers, false, true);
 
@@ -131,22 +129,24 @@ public class EditChatMemberActivity extends BaseActivity {
         });
 
         createChatFloatingButton.setVisibility(View.INVISIBLE);
+
+        getChatMembers();
     }
 
     private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(EditChatMemberActivity.this, new BackgroundWork<String>() {
+        Tasks.executeInBackground(EditChatMemberActivity.this, new BackgroundWork<Boolean>() {
             @Override
-            public String doInBackground() throws Exception {
-                if (XMPPUtils.userExists(user)) {
+            public Boolean doInBackground() throws Exception {
+                return XMPPUtils.userExists(user);
+            }
+        }, new Completion<Boolean>() {
+            @Override
+            public void onSuccess(Context context, Boolean userExists) {
+                if (userExists) {
                     searchObtainUser(user);
                 } else {
                     showInviteDialog(user);
                 }
-                return user;
-            }
-        }, new Completion<String>() {
-            @Override
-            public void onSuccess(Context context, String userName) {
                 createChatSearchUserProgressBar.setVisibility(View.GONE);
                 createChatSearchUserButton.setVisibility(View.VISIBLE);
             }

@@ -116,7 +116,6 @@
         android:layout_marginEnd="5dp"
         fab:fab_colorNormal="@color/colorPrimary"
         fab:fab_colorPressed="@color/colorPrimaryLight"
-        fab:fab_icon="@mipmap/ic_continue"
-        fab:fab_title="@string/title_button_upload_gist"/>
+        fab:fab_icon="@mipmap/ic_continue"/>
 
 </android.support.design.widget.CoordinatorLayout>
