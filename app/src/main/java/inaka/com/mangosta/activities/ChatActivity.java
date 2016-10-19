@@ -497,7 +497,7 @@ public class ChatActivity extends BaseActivity {
 
         linearLayout.addView(roomNameEditText);
 
-        new android.app.AlertDialog.Builder(ChatActivity.this)
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(ChatActivity.this)
                 .setTitle(getString(R.string.room_name))
                 .setMessage(getString(R.string.enter_new_room_name))
                 .setView(linearLayout)
@@ -544,6 +544,8 @@ public class ChatActivity extends BaseActivity {
                     }
                 })
                 .show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
     private void changeMUCLightRoomSubject() {
@@ -560,7 +562,7 @@ public class ChatActivity extends BaseActivity {
 
         linearLayout.addView(roomSubjectEditText);
 
-        new android.app.AlertDialog.Builder(ChatActivity.this)
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(ChatActivity.this)
                 .setTitle(getString(R.string.room_subject))
                 .setMessage(getString(R.string.enter_new_room_subject))
                 .setView(linearLayout)
@@ -606,6 +608,8 @@ public class ChatActivity extends BaseActivity {
                     }
                 })
                 .show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
     private void disconnectRoomFromServer() {
@@ -709,7 +713,9 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-        builder.show();
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
     private void destroyChat() {
@@ -735,7 +741,9 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-        builder.show();
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
     private void loadArchivedMessages() {

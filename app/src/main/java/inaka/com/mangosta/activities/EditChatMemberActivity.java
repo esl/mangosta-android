@@ -232,7 +232,7 @@ public class EditChatMemberActivity extends BaseActivity {
     private void showInviteDialog(String user) {
         String message = String.format(Locale.getDefault(), getString(R.string.user_doesnt_exist), user);
 
-        new AlertDialog.Builder(EditChatMemberActivity.this)
+        AlertDialog dialog = new AlertDialog.Builder(EditChatMemberActivity.this)
                 .setTitle(getString(R.string.invite_to_mangosta))
                 .setMessage(message)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -246,6 +246,8 @@ public class EditChatMemberActivity extends BaseActivity {
                     }
                 })
                 .show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
     private void searchObtainUser(final String userName) {
