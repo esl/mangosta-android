@@ -3,23 +3,18 @@
     <color name="colorPrimary">#009ab5</color>
     <color name="colorPrimaryLight">#00bbdc</color>
     <color name="colorAccent">#fafafa</color>
-
     <color name="red">#ff6a62</color>
     <color name="green">#7ae272</color>
     <color name="green_comment">#d9f9d7</color>
     <color name="green_send">#52b94a</color>
-
     <color name="white">#fafafa</color>
     <color name="complete_white">#ffffff</color>
     <color name="white_pressed">#f1f1f1</color>
     <color name="half_black">#808080</color>
-
+    <color name="half_black_light">#dddddd</color>
     <color name="black_semi_transparent">#B2000000</color>
-
     <color name="blue_light_background">#cc58cfe4</color>
-
     <color name="background_chat">#bb3ba6b9</color>
-
     <color name="grey_me_message_text">#888888</color>
     <color name="grey_me_message_back">#f4f4f4</color>
 </resources>
