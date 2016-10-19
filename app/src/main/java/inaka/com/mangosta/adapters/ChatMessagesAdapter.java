@@ -234,7 +234,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
             linearLayout.addView(messageEditText);
 
-            new AlertDialog.Builder(mContext)
+            AlertDialog dialog = new AlertDialog.Builder(mContext)
                     .setTitle(mContext.getString(R.string.correct_message))
                     .setMessage(mContext.getString(R.string.enter_new_message))
                     .setView(linearLayout)
@@ -282,6 +282,8 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                         }
                     })
                     .show();
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(mContext.getResources().getColor(R.color.colorPrimary));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(mContext.getResources().getColor(R.color.colorPrimary));
         }
     }
 

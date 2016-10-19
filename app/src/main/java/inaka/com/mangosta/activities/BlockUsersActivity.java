@@ -145,7 +145,7 @@ public class BlockUsersActivity extends BaseActivity {
 
     private void showNotFoundDialog(String user) {
         String message = String.format(Locale.getDefault(), getString(R.string.user_doesnt_exist), user);
-        new AlertDialog.Builder(BlockUsersActivity.this)
+        AlertDialog dialog = new AlertDialog.Builder(BlockUsersActivity.this)
                 .setTitle(getString(R.string.user_not_found))
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -154,6 +154,8 @@ public class BlockUsersActivity extends BaseActivity {
                     }
                 })
                 .show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
     private void obtainUser(final String userName, final boolean isSearch) {

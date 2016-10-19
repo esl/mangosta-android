@@ -60,8 +60,8 @@ public class CreateChatActivity extends BaseActivity {
     @Bind(R.id.createChatMembersRecyclerView)
     RecyclerView createChatMembersRecyclerView;
 
-    @Bind(R.id.createChatFloatingButton)
-    FloatingActionButton createChatFloatingButton;
+    @Bind(R.id.continueFloatingButton)
+    FloatingActionButton continueFloatingButton;
 
     private List<User> mSearchUsers;
     private List<User> mMemberUsers;
@@ -106,7 +106,7 @@ public class CreateChatActivity extends BaseActivity {
             }
         });
 
-        createChatFloatingButton.setOnClickListener(new View.OnClickListener() {
+        continueFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 createChat(mMemberUsers);
@@ -169,7 +169,7 @@ public class CreateChatActivity extends BaseActivity {
         CreateChatActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                new AlertDialog.Builder(CreateChatActivity.this)
+                AlertDialog dialog = new AlertDialog.Builder(CreateChatActivity.this)
                         .setTitle(getString(R.string.invite_to_mangosta))
                         .setMessage(message)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -183,6 +183,8 @@ public class CreateChatActivity extends BaseActivity {
                             }
                         })
                         .show();
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
             }
         });
     }
@@ -277,7 +279,7 @@ public class CreateChatActivity extends BaseActivity {
 
         radioGroup.check(radioButtonMUCLight.getId());
 
-        new AlertDialog.Builder(CreateChatActivity.this)
+        AlertDialog dialog = new AlertDialog.Builder(CreateChatActivity.this)
                 .setTitle(getString(R.string.room_name))
                 .setMessage(getString(R.string.enter_room_name))
                 .setView(linearLayout)
@@ -305,6 +307,8 @@ public class CreateChatActivity extends BaseActivity {
                     }
                 })
                 .show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
 
     }
 
