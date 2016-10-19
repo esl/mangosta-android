@@ -37,7 +37,6 @@ import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import io.realm.Realm;
 import rx.Subscription;
 import rx.functions.Action1;
 
@@ -169,16 +168,12 @@ public class ChatsListFragment extends BaseFragment {
         swipeRefreshLayout.setRefreshing(false);
     }
 
-    private void loadChatsAfterRoomLeft() {
+    private void loadChatsAfterRoomLeft(final String roomJid) {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Realm realm = getRealm();
-                realm.beginTransaction();
-                realm.where(Chat.class).equalTo("type", Chat.TYPE_MUC_LIGHT).findAll().deleteAllFromRealm();
-                realm.commitTransaction();
-                realm.close();
-                mRoomManager.loadMUCLightRooms();
+                RealmManager.deleteChat(roomJid);
+                mRoomManager.loadMUCLightRoomsInBackground();
             }
         });
     }
@@ -244,8 +239,8 @@ public class ChatsListFragment extends BaseFragment {
         }
 
         @Override
-        public void onRoomLeft() {
-            loadChatsAfterRoomLeft();
+        public void onRoomLeft(String roomJid) {
+            loadChatsAfterRoomLeft(roomJid);
         }
 
         @Override

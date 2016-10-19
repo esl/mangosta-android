@@ -221,12 +221,28 @@ public class RealmManager {
                 .equalTo("messageId", messageId)
                 .findFirst();
 
-        if (chatMessage != null) {
+        if (chatMessage != null && chatMessage.isValid()) {
             realm.beginTransaction();
             chatMessage.deleteFromRealm();
             realm.commitTransaction();
         }
 
+        realm.close();
+    }
+
+    public static void deleteChat(String chatJid) {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+
+        Chat chat = realm.where(Chat.class)
+                .equalTo("jid", chatJid)
+                .findFirst();
+
+        if (chat != null && chat.isValid()) {
+            chat.deleteFromRealm();
+        }
+
+        realm.commitTransaction();
         realm.close();
     }
 

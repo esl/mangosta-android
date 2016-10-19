@@ -27,7 +27,7 @@ public class RoomManagerListener {
 
     }
 
-    public void onRoomLeft() {
+    public void onRoomLeft(String roomJid) {
     }
 
     public void onInvitationAccepted(String roomJid) {

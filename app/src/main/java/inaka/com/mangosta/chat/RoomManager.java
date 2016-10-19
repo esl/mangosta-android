@@ -177,42 +177,7 @@ public class RoomManager {
 
             try {
                 List<MongooseMUCLight> rooms = call.execute().body();
-
-                if (rooms != null) {
-
-                    for (MongooseMUCLight room : rooms) {
-                        String itemJid = room.getId() + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
-
-                        Realm realm = RealmManager.getRealm();
-                        realm.beginTransaction();
-                        Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
-
-                        if (chatRoom == null) {
-                            chatRoom = new Chat();
-                            chatRoom.setJid(itemJid);
-                            chatRoom.setType(Chat.TYPE_MUC_LIGHT);
-                        }
-
-                        chatRoom.setShow(true);
-                        chatRoom.setName(room.getName());
-                        chatRoom.setSubject(room.getSubject());
-
-                        realm.copyToRealmOrUpdate(chatRoom);
-                        realm.commitTransaction();
-
-                        // set last retrieved from MAM
-                        ChatMessage chatMessage = RealmManager.getLastMessageForChat(chatRoom.getJid());
-                        if (chatMessage != null) {
-                            realm.beginTransaction();
-                            chatRoom.setLastTimestampRetrieved(chatMessage.getDate().getTime());
-                            realm.copyToRealmOrUpdate(chatRoom);
-                            realm.commitTransaction();
-                        }
-
-                        realm.close();
-                    }
-                }
-
+                processMUCLightRooms(rooms);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -220,6 +185,68 @@ public class RoomManager {
             }
 
         }
+    }
+
+    public void loadMUCLightRoomsInBackground() {
+        final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
+        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+
+        if (connection.isAuthenticated() && mongooseService != null) {
+            Call<List<MongooseMUCLight>> call = mongooseService.getMUCLights();
+            call.enqueue(new Callback<List<MongooseMUCLight>>() {
+                @Override
+                public void onResponse(Call<List<MongooseMUCLight>> call, Response<List<MongooseMUCLight>> response) {
+                    processMUCLightRooms(response.body());
+                    mListener.onRoomsLoaded();
+                }
+
+                @Override
+                public void onFailure(Call<List<MongooseMUCLight>> call, Throwable t) {
+                    t.printStackTrace();
+                    mListener.onRoomsLoaded();
+                }
+            });
+        }
+    }
+
+    private void processMUCLightRooms(List<MongooseMUCLight> rooms) {
+
+        if (rooms != null) {
+
+            for (MongooseMUCLight room : rooms) {
+                String itemJid = room.getId() + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
+
+                Realm realm = RealmManager.getRealm();
+                realm.beginTransaction();
+
+                Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
+
+                if (chatRoom == null) {
+                    chatRoom = new Chat();
+                    chatRoom.setJid(itemJid);
+                    chatRoom.setType(Chat.TYPE_MUC_LIGHT);
+                }
+
+                chatRoom.setShow(true);
+                chatRoom.setName(room.getName());
+                chatRoom.setSubject(room.getSubject());
+
+                realm.copyToRealmOrUpdate(chatRoom);
+                realm.commitTransaction();
+
+                // set last retrieved from MAM
+                ChatMessage chatMessage = RealmManager.getLastMessageForChat(chatRoom.getJid());
+                if (chatMessage != null) {
+                    realm.beginTransaction();
+                    chatRoom.setLastTimestampRetrieved(chatMessage.getDate().getTime());
+                    realm.copyToRealmOrUpdate(chatRoom);
+                    realm.commitTransaction();
+                }
+
+                realm.close();
+            }
+        }
+
     }
 
     public static String createCommonChat(User user) {
@@ -640,7 +667,7 @@ public class RoomManager {
         } catch (Exception e) {
             mListener.onError(e.getLocalizedMessage());
         } finally {
-            mListener.onRoomLeft();
+            mListener.onRoomLeft(jid);
         }
 
     }
@@ -679,7 +706,7 @@ public class RoomManager {
             }
 
         } finally {
-            mListener.onRoomLeft();
+            mListener.onRoomLeft(jid);
         }
     }
 
@@ -693,7 +720,7 @@ public class RoomManager {
         realm.commitTransaction();
         realm.close();
 
-        mListener.onRoomLeft();
+        mListener.onRoomLeft(chatJid);
     }
 
     public void destroyMUCLight(final String jid) {
@@ -710,7 +737,7 @@ public class RoomManager {
                     Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
                     mListener.onError(e.getLocalizedMessage());
                 } finally {
-                    mListener.onRoomLeft();
+                    mListener.onRoomLeft(jid);
                 }
 
             }
