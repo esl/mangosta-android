@@ -105,7 +105,7 @@ public class ChatsListFragment extends BaseFragment {
         });
 
         swipeRefreshLayout.setColorSchemeResources(
-                R.color.colorAccent,
+                R.color.blue_light_background,
                 R.color.colorPrimaryLight,
                 R.color.colorPrimary);
 
@@ -184,7 +184,7 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public void loadChatsBackgroundTask() {
-        if (!swipeRefreshLayout.isRefreshing()) {
+        if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
             swipeRefreshLayout.setRefreshing(true);
         }
 

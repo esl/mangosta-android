@@ -26,6 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="?attr/actionBarSize"
+        android:background="@color/blue_light_background"
         android:minWidth="350dp"
         android:orientation="vertical"
         android:paddingBottom="10dp"
@@ -44,9 +45,12 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:background="@color/blue_light_background"
-            android:orientation="horizontal">
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginStart="5dp"
+            android:background="@color/colorAccent"
+            android:orientation="horizontal"
+            android:padding="0dp">
 
             <EditText
                 android:id="@+id/loginUserNameEditText"
@@ -55,20 +59,19 @@
                 android:backgroundTint="@android:color/transparent"
                 android:gravity="end"
                 android:hint="@string/hint_user_name"
-                android:paddingBottom="5dp"
+                android:padding="0dp"
                 android:paddingStart="5dp"
-                android:paddingTop="5dp"
-                android:textColor="@color/colorAccent"/>
+                android:textColor="@color/colorPrimary"/>
 
             <EditText
                 android:id="@+id/loginJidCompletionEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/blue_light_background"
                 android:enabled="false"
                 android:inputType="text"
-                android:paddingBottom="5dp"
+                android:padding="5dp"
                 android:paddingEnd="5dp"
-                android:paddingTop="5dp"
                 android:textColor="@color/colorPrimary"/>
 
         </LinearLayout>
@@ -88,12 +91,14 @@
             android:id="@+id/loginPasswordEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:background="@color/blue_light_background"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginStart="5dp"
+            android:background="@color/colorAccent"
             android:hint="@string/hint_password"
             android:inputType="textPassword"
             android:padding="5dp"
-            android:textColor="@color/colorAccent"/>
+            android:textColor="@color/colorPrimary"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -110,8 +115,9 @@
             android:id="@+id/loginServerEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:background="@color/blue_light_background"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginStart="5dp"
             android:enabled="false"
             android:padding="5dp"
             android:textColor="@color/colorPrimary"/>
