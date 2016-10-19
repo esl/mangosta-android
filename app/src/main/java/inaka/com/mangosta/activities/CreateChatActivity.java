@@ -61,8 +61,8 @@ public class CreateChatActivity extends BaseActivity {
     @Bind(R.id.createChatMembersRecyclerView)
     RecyclerView createChatMembersRecyclerView;
 
-    @Bind(R.id.createChatFloatingButton)
-    FloatingActionButton createChatFloatingButton;
+    @Bind(R.id.continueFloatingButton)
+    FloatingActionButton continueFloatingButton;
 
     private List<User> mSearchUsers;
     private List<User> mMemberUsers;
@@ -107,7 +107,7 @@ public class CreateChatActivity extends BaseActivity {
             }
         });
 
-        createChatFloatingButton.setOnClickListener(new View.OnClickListener() {
+        continueFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 createChat(mMemberUsers);
