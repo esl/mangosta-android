@@ -206,6 +206,7 @@ public class XMPPSession {
 
         Roster roster = Roster.getInstanceFor(mXMPPConnection);
         roster.setRosterLoadedAtLogin(false);
+        roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
 
         mXMPPConnection.addConnectionListener(new AbstractConnectionClosedListener() {
             @Override

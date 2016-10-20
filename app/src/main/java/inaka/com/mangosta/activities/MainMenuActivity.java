@@ -36,6 +36,9 @@ public class MainMenuActivity extends BaseActivity {
     @Bind(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
+    @Bind(R.id.manageFriendsFloatingButton)
+    FloatingActionButton manageFriendsFloatingButton;
+
     public boolean mRoomsLoaded = false;
 
     @Override
@@ -70,6 +73,14 @@ public class MainMenuActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainMenuActivity.this, CreateBlogActivity.class);
+                MainMenuActivity.this.startActivity(intent);
+            }
+        });
+
+        manageFriendsFloatingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
                 MainMenuActivity.this.startActivity(intent);
             }
         });

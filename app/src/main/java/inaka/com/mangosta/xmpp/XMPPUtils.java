@@ -71,9 +71,21 @@ public class XMPPUtils {
         return false;
     }
 
-    public static String fromJIDToUserName(String jid) {
-        int position = jid.indexOf("@");
-        return (position >= 0 && !jid.equals("")) ? jid.substring(0, position) : null;
+    public static String fromJIDToUserName(String jidString) {
+        int position = jidString.indexOf("@");
+
+        if (position >= 0 && !jidString.equals("")) {
+
+            if (jidString.substring(position + 1).equals(XMPPSession.SERVICE_NAME)) {
+                return jidString.substring(0, position);
+            } else {
+                return jidString;
+            }
+
+        } else {
+            return null;
+        }
+
     }
 
     public static String fromUserNameToJID(String userName) {
@@ -97,10 +109,6 @@ public class XMPPUtils {
 
     public static boolean isAutenticatedUser(User user) {
         return user.getLogin().equals(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
-    }
-
-    public static String getAuthenticatedUserName() {
-        return XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getXMPPConnection().getUser().toString());
     }
 
 }
