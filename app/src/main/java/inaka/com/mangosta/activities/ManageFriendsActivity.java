@@ -234,6 +234,9 @@ public class ManageFriendsActivity extends AppCompatActivity {
             @Override
             public Object doInBackground() throws Exception {
                 Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+                if (!roster.isLoaded()) {
+                    roster.reloadAndWait();
+                }
                 BareJid jid = JidCreate.bareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
                 String name = user.getLogin();
                 String[] groups = new String[]{"Buddies"};
@@ -274,6 +277,9 @@ public class ManageFriendsActivity extends AppCompatActivity {
             @Override
             public Object doInBackground() throws Exception {
                 Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+                if (!roster.isLoaded()) {
+                    roster.reloadAndWait();
+                }
                 BareJid jid = JidCreate.bareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
                 roster.removeEntry(roster.getEntry(jid));
                 return null;
@@ -312,6 +318,9 @@ public class ManageFriendsActivity extends AppCompatActivity {
             @Override
             public List<RosterEntry> doInBackground() throws Exception {
                 Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+                if (!roster.isLoaded()) {
+                    roster.reloadAndWait();
+                }
                 return roster.getGroup("Buddies").getEntries();
             }
         }, new Completion<List<RosterEntry>>() {
@@ -349,6 +358,9 @@ public class ManageFriendsActivity extends AppCompatActivity {
             @Override
             public Object doInBackground() throws Exception {
                 Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+                if (!roster.isLoaded()) {
+                    roster.reloadAndWait();
+                }
                 for (RosterEntry entry : roster.getEntries()) {
                     roster.removeEntry(entry);
                 }

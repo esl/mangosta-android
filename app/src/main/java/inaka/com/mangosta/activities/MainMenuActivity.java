@@ -169,7 +169,7 @@ public class MainMenuActivity extends BaseActivity {
 
     private void reloadChats() {
         ChatsListFragment mChatsListFragment = (ChatsListFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
-                .getRegisteredFragment(0);
+                .getRegisteredFragment(mViewpagerMainMenu.getCurrentItem());
         if (mChatsListFragment != null) {
             mChatsListFragment.loadChats();
         }
