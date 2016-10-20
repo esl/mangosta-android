@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -40,7 +39,7 @@ import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
-public class ManageFriendsActivity extends AppCompatActivity {
+public class ManageFriendsActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;

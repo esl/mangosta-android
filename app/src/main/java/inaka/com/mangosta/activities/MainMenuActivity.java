@@ -60,6 +60,7 @@ public class MainMenuActivity extends BaseActivity {
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
         createNewBlogFloatingButton.setIcon(R.mipmap.ic_add_blog);
+        manageFriendsFloatingButton.setIcon(R.mipmap.ic_friends);
 
         createNewChatFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
