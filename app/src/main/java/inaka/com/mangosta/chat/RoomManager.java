@@ -640,7 +640,14 @@ public class RoomManager {
             roster.reloadAndWait();
         }
 
-        RosterGroup group = roster.getGroup("Buddies");
+        String groupName = "Buddies";
+
+        RosterGroup group = roster.getGroup(groupName);
+
+        if (group == null) {
+            roster.createGroup(groupName);
+            group = roster.getGroup(groupName);
+        }
 
         for (RosterEntry entry : group.getEntries()) {
             String userJid = entry.getJid().toString();

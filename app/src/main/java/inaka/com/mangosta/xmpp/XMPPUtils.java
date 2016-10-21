@@ -76,7 +76,7 @@ public class XMPPUtils {
 
         if (position >= 0 && !jidString.equals("")) {
 
-            if (jidString.substring(position + 1).equals(XMPPSession.SERVICE_NAME)) {
+            if (jidString.substring(position + 1).startsWith(XMPPSession.SERVICE_NAME)) {
                 return jidString.substring(0, position);
             } else {
                 return jidString;

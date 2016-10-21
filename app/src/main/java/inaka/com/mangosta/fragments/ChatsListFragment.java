@@ -9,7 +9,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
@@ -184,7 +183,8 @@ public class ChatsListFragment extends BaseFragment {
 
     public void loadChatsBackgroundTask() {
         if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(true);
+            swipeRefreshLayout.
+                    setRefreshing(true);
         }
 
         if (mRoomManager == null) {
@@ -217,7 +217,6 @@ public class ChatsListFragment extends BaseFragment {
 
             @Override
             public void onError(Context context, Exception e) {
-                Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
                 loadChats();
             }
         });

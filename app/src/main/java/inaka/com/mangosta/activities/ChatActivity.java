@@ -214,11 +214,8 @@ public class ChatActivity extends BaseActivity {
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 if (charSequence.length() > 0) { // compose message
                     mPauseComposeTimer.cancel();
-
                     mRoomManager.updateTypingStatus(ChatState.composing, mChatJID, mChat.getType());
-
                     schedulePauseTimer();
-
                 } else { // delete or send message
                     mPauseComposeTimer.cancel();
                     mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
