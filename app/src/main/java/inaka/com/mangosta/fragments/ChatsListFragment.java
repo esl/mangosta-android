@@ -36,7 +36,6 @@ import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import io.realm.Realm;
 import rx.Subscription;
 import rx.functions.Action1;
 
@@ -168,23 +167,17 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     private void loadChatsAfterRoomLeft() {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Realm realm = getRealm();
-                realm.beginTransaction();
-                realm.where(Chat.class).equalTo("type", Chat.TYPE_MUC_LIGHT).findAll().deleteAllFromRealm();
-                realm.commitTransaction();
-                realm.close();
-                mRoomManager.loadMUCLightRooms();
-            }
-        });
+        loadChatsBackgroundTask();
     }
 
     public void loadChatsBackgroundTask() {
         if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.
-                    setRefreshing(true);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(true);
+                }
+            });
         }
 
         if (mRoomManager == null) {
@@ -212,12 +205,22 @@ public class ChatsListFragment extends BaseFragment {
         }, new Completion<Object>() {
             @Override
             public void onSuccess(Context context, Object object) {
-                loadChats();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadChats();
+                    }
+                });
             }
 
             @Override
             public void onError(Context context, Exception e) {
-                loadChats();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadChats();
+                    }
+                });
             }
         });
     }
