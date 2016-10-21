@@ -187,6 +187,10 @@ public class ChatsListFragment extends BaseFragment {
             swipeRefreshLayout.setRefreshing(true);
         }
 
+        if (mRoomManager == null) {
+            return;
+        }
+
         Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {

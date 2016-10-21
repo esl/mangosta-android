@@ -230,4 +230,34 @@ public class RealmManager {
         realm.close();
     }
 
+    public static void removeAllMUCChats() {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.where(Chat.class)
+                .equalTo("type", Chat.TYPE_MUC)
+                .findAll().deleteAllFromRealm();
+        realm.commitTransaction();
+        realm.close();
+    }
+
+    public static void removeAllMUCLightChats() {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.where(Chat.class)
+                .equalTo("type", Chat.TYPE_MUC_LIGHT)
+                .findAll().deleteAllFromRealm();
+        realm.commitTransaction();
+        realm.close();
+    }
+
+    public static void removeAllOneToOneChats() {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.where(Chat.class)
+                .equalTo("type", Chat.TYPE_1_T0_1)
+                .findAll().deleteAllFromRealm();
+        realm.commitTransaction();
+        realm.close();
+    }
+
 }

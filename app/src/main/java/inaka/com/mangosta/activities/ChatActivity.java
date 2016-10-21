@@ -200,6 +200,11 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
+        // Not enable MAM refresh with MUC
+        if (mChat.getType() == Chat.TYPE_MUC) {
+            loadMessagesSwipeRefreshLayout.setEnabled(false);
+        }
+
         chatSendMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {

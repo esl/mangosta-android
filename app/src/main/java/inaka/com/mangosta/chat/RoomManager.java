@@ -80,12 +80,13 @@ public class RoomManager {
 
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
             if (discoverItems != null) {
+                RealmManager.removeAllMUCChats();
+
                 List<DiscoverItems.Item> items = discoverItems.getItems();
+                Realm realm = RealmManager.getRealm();
 
                 try {
                     for (DiscoverItems.Item item : items) {
-                        Realm realm = RealmManager.getRealm();
-
                         String itemJid = item.getEntityID().toString();
                         String userJid = Preferences.getInstance().getUserXMPPJid();
 
@@ -120,7 +121,6 @@ public class RoomManager {
                             }
                             realm.commitTransaction();
                         }
-                        realm.close();
 
                         try {
                             Presence presence = new Presence(Presence.Type.available);
@@ -131,6 +131,7 @@ public class RoomManager {
                         }
                     }
                 } finally {
+                    realm.close();
                     mListener.onRoomsLoaded();
                 }
 
@@ -161,14 +162,16 @@ public class RoomManager {
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCLightItems();
 
             if (discoverItems != null) {
+                RealmManager.removeAllMUCLightChats();
                 List<DiscoverItems.Item> items = discoverItems.getItems();
+                Realm realm = RealmManager.getRealm();
 
                 try {
                     for (DiscoverItems.Item item : items) {
                         String itemJid = item.getEntityID().toString();
 
                         if (itemJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
-                            Realm realm = RealmManager.getRealm();
+
                             realm.beginTransaction();
                             Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
 
@@ -194,10 +197,10 @@ public class RoomManager {
                                 realm.commitTransaction();
                             }
 
-                            realm.close();
                         }
                     }
                 } finally {
+                    realm.close();
                     mListener.onRoomsLoaded();
                 }
 
