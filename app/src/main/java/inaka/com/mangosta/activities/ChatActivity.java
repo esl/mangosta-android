@@ -1018,7 +1018,7 @@ public class ChatActivity extends BaseActivity {
 
                     Jid key = pair.getKey();
                     if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
-                        MenuItem destroyItem = menu.getItem(4);
+                        MenuItem destroyItem = menu.findItem(R.id.actionDestroyChat);
                         mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
                         destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
                     }
