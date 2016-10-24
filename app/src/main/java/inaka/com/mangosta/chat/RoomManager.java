@@ -96,15 +96,16 @@ public class RoomManager {
 
                             try {
 
-                                realm.beginTransaction();
                                 if (chatRoom == null) {
                                     chatRoom = new Chat();
                                     chatRoom.setJid(item.getEntityID().toString());
                                     chatRoom.setName(item.getName());
                                     chatRoom.setType(Chat.TYPE_MUC);
+
+                                    realm.beginTransaction();
+                                    realm.copyToRealmOrUpdate(chatRoom);
+                                    realm.commitTransaction();
                                 }
-                                realm.copyToRealmOrUpdate(chatRoom);
-                                realm.commitTransaction();
 
                                 if (!chatRoom.isShow()) {
                                     String userName = XMPPUtils.fromJIDToUserName(userJid);
@@ -166,13 +167,14 @@ public class RoomManager {
 
                             Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
 
-                            realm.beginTransaction();
                             if (chatRoom == null) {
                                 chatRoom = new Chat();
                                 chatRoom.setJid(item.getEntityID().toString());
                                 chatRoom.setType(Chat.TYPE_MUC_LIGHT);
                                 getSubject(chatRoom);
                             }
+
+                            realm.beginTransaction();
                             chatRoom.setShow(true);
                             chatRoom.setName(item.getName());
                             realm.copyToRealmOrUpdate(chatRoom);
