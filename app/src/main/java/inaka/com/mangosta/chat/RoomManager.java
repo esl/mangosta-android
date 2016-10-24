@@ -53,7 +53,6 @@ import inaka.com.mangosta.xmpp.muclight.MUCLightRoomConfiguration;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
-import io.realm.RealmResults;
 
 
 public class RoomManager {
@@ -80,7 +79,7 @@ public class RoomManager {
 
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
             if (discoverItems != null) {
-                RealmManager.removeAllMUCChats();
+                RealmManager.hideAllMUCChats();
 
                 List<DiscoverItems.Item> items = discoverItems.getItems();
                 Realm realm = RealmManager.getRealm();
@@ -93,33 +92,41 @@ public class RoomManager {
                         if (itemJid.contains(XMPPSession.MUC_SERVICE_NAME)) {
                             EntityBareJid jid = item.getEntityID().asEntityBareJidIfPossible();
                             MultiUserChat multiUserChat = MultiUserChatManager.getInstanceFor(connection).getMultiUserChat(jid);
-                            realm.beginTransaction();
+
                             Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
+
                             try {
+
+                                realm.beginTransaction();
                                 if (chatRoom == null) {
                                     chatRoom = new Chat();
                                     chatRoom.setJid(item.getEntityID().toString());
                                     chatRoom.setName(item.getName());
                                     chatRoom.setType(Chat.TYPE_MUC);
-                                    realm.copyToRealmOrUpdate(chatRoom);
                                 }
+                                realm.copyToRealmOrUpdate(chatRoom);
+                                realm.commitTransaction();
 
                                 if (!chatRoom.isShow()) {
                                     String userName = XMPPUtils.fromJIDToUserName(userJid);
                                     multiUserChat.join(Resourcepart.from(userName));
-                                    chatRoom.setShow(true);
-                                }
 
-                                realm.copyToRealmOrUpdate(chatRoom);
+                                    realm.beginTransaction();
+                                    chatRoom.setShow(true);
+                                    realm.copyToRealmOrUpdate(chatRoom);
+                                    realm.commitTransaction();
+                                }
 
                             } catch (Exception e) {
                                 e.printStackTrace();
 
                                 if (chatRoom != null) {
+                                    realm.beginTransaction();
                                     chatRoom.setShow(false);
+                                    realm.copyToRealmOrUpdate(chatRoom);
+                                    realm.commitTransaction();
                                 }
                             }
-                            realm.commitTransaction();
                         }
 
                         try {
@@ -139,20 +146,6 @@ public class RoomManager {
         }
     }
 
-    public static void notShowMUCs() {
-        Realm realm = RealmManager.getRealm();
-        realm.beginTransaction();
-
-        RealmResults<Chat> mucs = realm.where(Chat.class).equalTo("type", Chat.TYPE_MUC).findAll();
-        for (Chat chat : mucs) {
-            chat.setShow(false);
-        }
-
-        realm.copyToRealmOrUpdate(mucs);
-        realm.commitTransaction();
-        realm.close();
-    }
-
     public void loadMUCLightRooms() {
 
         final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
@@ -162,7 +155,7 @@ public class RoomManager {
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCLightItems();
 
             if (discoverItems != null) {
-                RealmManager.removeAllMUCLightChats();
+                RealmManager.hideAllMUCLightChats();
                 List<DiscoverItems.Item> items = discoverItems.getItems();
                 Realm realm = RealmManager.getRealm();
 
@@ -172,19 +165,17 @@ public class RoomManager {
 
                         if (itemJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
 
-                            realm.beginTransaction();
                             Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
 
+                            realm.beginTransaction();
                             if (chatRoom == null) {
                                 chatRoom = new Chat();
                                 chatRoom.setJid(item.getEntityID().toString());
                                 chatRoom.setType(Chat.TYPE_MUC_LIGHT);
-
                                 getSubject(chatRoom);
                             }
                             chatRoom.setShow(true);
                             chatRoom.setName(item.getName());
-
                             realm.copyToRealmOrUpdate(chatRoom);
                             realm.commitTransaction();
 
@@ -199,6 +190,7 @@ public class RoomManager {
 
                         }
                     }
+
                 } finally {
                     realm.close();
                     mListener.onRoomsLoaded();

@@ -161,7 +161,7 @@ public class MainMenuActivity extends BaseActivity {
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
                 break;
             case GO_BACK_FROM_MANAGE_FRIENDS:
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:
                 goToMyProfile();

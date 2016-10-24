@@ -260,4 +260,29 @@ public class RealmManager {
         realm.close();
     }
 
+    public static void hideAllChatsOfType(int type) {
+        Realm realm = getRealm();
+
+        RealmResults<Chat> chats = realm.where(Chat.class)
+                .equalTo("type", type)
+                .findAll();
+
+        for (Chat chat : chats) {
+            realm.beginTransaction();
+            chat.setShow(false);
+            realm.copyToRealmOrUpdate(chat);
+            realm.commitTransaction();
+        }
+
+        realm.close();
+    }
+
+    public static void hideAllMUCChats() {
+        hideAllChatsOfType(Chat.TYPE_MUC);
+    }
+
+    public static void hideAllMUCLightChats() {
+        hideAllChatsOfType(Chat.TYPE_MUC_LIGHT);
+    }
+
 }
