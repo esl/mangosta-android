@@ -97,12 +97,11 @@ public class MainMenuActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        Preferences preferences = Preferences.getInstance();
 
         switch (id) {
 
             case R.id.actionSignOut: {
-                preferences.deleteAll();
+                Preferences.getInstance().deleteAll();
 
                 getRealm().beginTransaction();
                 getRealm().deleteAll();
@@ -121,20 +120,7 @@ public class MainMenuActivity extends BaseActivity {
             }
 
             case R.id.actionUserOptions: {
-
-                Intent userOptionsActivityIntent = new Intent(this, UserProfileActivity.class);
-
-                User user = new User();
-                user.setLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()));
-
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("auth_user", true);
-                bundle.putParcelable("user", user);
-
-                userOptionsActivityIntent.putExtras(bundle);
-
-                this.startActivity(userOptionsActivityIntent);
-
+                goToMyProfile();
                 return true;
             }
 
@@ -149,6 +135,21 @@ public class MainMenuActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void goToMyProfile() {
+        Intent userOptionsActivityIntent = new Intent(this, UserProfileActivity.class);
+
+        User user = new User();
+        user.setLogin(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(UserProfileActivity.AUTH_USER_PARAMETER, true);
+        bundle.putParcelable(UserProfileActivity.USER_PARAMETER, user);
+
+        userOptionsActivityIntent.putExtras(bundle);
+
+        this.startActivity(userOptionsActivityIntent);
+    }
+
     // receives events from EventBus
     @Override
     public void onEvent(Event event) {
@@ -158,6 +159,12 @@ public class MainMenuActivity extends BaseActivity {
                 break;
             case GO_BACK_FROM_CHAT:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
+                break;
+            case GO_BACK_FROM_MANAGE_FRIENDS:
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
+                break;
+            case BLOG_POST_CREATED:
+                goToMyProfile();
                 break;
         }
     }

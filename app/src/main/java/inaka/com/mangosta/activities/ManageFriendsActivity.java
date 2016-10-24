@@ -34,6 +34,7 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -191,6 +192,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
+                EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_MANAGE_FRIENDS));
                 finish();
                 break;
         }
@@ -388,6 +390,12 @@ public class ManageFriendsActivity extends BaseActivity {
             }
         });
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_MANAGE_FRIENDS));
+        super.onBackPressed();
     }
 
 }

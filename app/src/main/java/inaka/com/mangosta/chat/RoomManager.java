@@ -486,7 +486,7 @@ public class RoomManager {
         Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 
         realm.beginTransaction();
-        chat.setShow(false);
+        chat.deleteFromRealm();
         realm.commitTransaction();
         realm.close();
 

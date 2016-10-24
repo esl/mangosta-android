@@ -44,9 +44,10 @@ public class BlogsListFragment extends Fragment {
         return view;
     }
 
-    private void loadBlogPosts() {
+    public void loadBlogPosts() {
         mBlogPosts.clear();
         mBlogPosts.addAll(RealmManager.getBlogPosts());
         mBlogPostsListAdapter.notifyDataSetChanged();
     }
+
 }

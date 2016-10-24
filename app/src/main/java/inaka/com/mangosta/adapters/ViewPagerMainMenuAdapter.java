@@ -95,7 +95,10 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     public void reloadChats() {
         for (Fragment fragment : mFragmentList) {
-            ((ChatsListFragment) fragment).loadChats();
+            ChatsListFragment chatsListFragment = ((ChatsListFragment) fragment);
+            if (chatsListFragment != null) {
+                chatsListFragment.loadChatsBackgroundTask();
+            }
         }
     }
 

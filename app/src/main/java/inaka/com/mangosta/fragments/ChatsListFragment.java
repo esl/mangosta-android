@@ -241,7 +241,10 @@ public class ChatsListFragment extends BaseFragment {
     public void onEvent(Event event) {
         switch (event.getType()) {
             case GO_BACK_FROM_CHAT:
-                loadChats();
+                loadChatsBackgroundTask();
+                break;
+            case GO_BACK_FROM_MANAGE_FRIENDS:
+                loadChatsBackgroundTask();
                 break;
         }
     }
