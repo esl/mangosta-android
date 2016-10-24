@@ -1,0 +1,89 @@
+package inaka.com.mangosta.models;
+
+import java.util.Date;
+
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
+
+public class BlogPostComment extends RealmObject {
+
+    @PrimaryKey
+    private String id;
+    private String content;
+    private String authorName;
+    private String authorAvatarUrl;
+    private String authorJid;
+    private Date published;
+    private String blogPostId;
+
+    public BlogPostComment() {
+
+    }
+
+    public BlogPostComment(String id, String blogPostId, String content, String authorName, String authorJid, String authorAvatarUrl, Date published) {
+        this.id = id;
+        this.blogPostId = blogPostId;
+        this.content = content;
+        this.authorJid = authorJid;
+        this.authorName = authorName;
+        this.authorAvatarUrl = authorAvatarUrl;
+        this.published = published;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
+    }
+
+    public String getAuthorJid() {
+        return authorJid;
+    }
+
+    public void setAuthorJid(String authorJid) {
+        this.authorJid = authorJid;
+    }
+
+    public Date getPublished() {
+        return published;
+    }
+
+    public void setPublished(Date published) {
+        this.published = published;
+    }
+
+    public String getBlogPostId() {
+        return blogPostId;
+    }
+
+    public void setBlogPostId(String blogPostId) {
+        this.blogPostId = blogPostId;
+    }
+
+    public String getAuthorAvatarUrl() {
+        return authorAvatarUrl;
+    }
+
+    public void setAuthorAvatarUrl(String authorAvatarUrl) {
+        this.authorAvatarUrl = authorAvatarUrl;
+    }
+
+}

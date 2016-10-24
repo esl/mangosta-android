@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainMenuActivity">
+    <item
+        android:id="@+id/actionUserOptions"
+        android:title="@string/action_settings"
+        android:icon="@drawable/ic_action_user_dark"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/actionBlockUsers"
+        android:title="@string/action_block_users"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/actionSignOut"
+        android:title="@string/action_signout"
+        app:showAsAction="never" />
+</menu>

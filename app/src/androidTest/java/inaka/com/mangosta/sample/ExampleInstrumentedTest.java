@@ -1,4 +1,4 @@
-package inaka.com.mangosta;
+package inaka.com.mangosta.sample;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

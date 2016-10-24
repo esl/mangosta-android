@@ -1,0 +1,30 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context=".activities.ChatActivity">
+    <item
+        android:id="@+id/actionChatMembers"
+        android:title="@string/action_chat_members"
+        android:icon="@mipmap/ic_groupchat"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/actionChangeRoomName"
+        android:title="@string/action_change_room_name"
+        android:icon="@mipmap/ic_groupchat"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/actionChangeSubject"
+        android:title="@string/action_change_room_subject"
+        android:icon="@mipmap/ic_groupchat"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/actionLeaveChat"
+        android:title="@string/action_leave_chat"
+        android:icon="@mipmap/ic_leave_chat"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/actionDestroyChat"
+        android:title="@string/action_destroy_chat"
+        android:icon="@drawable/ic_action_delete"
+        app:showAsAction="never" />
+</menu>
