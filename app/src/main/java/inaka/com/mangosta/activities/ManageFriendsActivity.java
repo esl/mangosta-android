@@ -20,10 +20,7 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
-import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
-import org.jxmpp.jid.BareJid;
-import org.jxmpp.jid.impl.JidCreate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +34,7 @@ import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.UserEvent;
-import inaka.com.mangosta.xmpp.XMPPSession;
+import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class ManageFriendsActivity extends BaseActivity {
@@ -234,14 +231,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-                if (!roster.isLoaded()) {
-                    roster.reloadAndWait();
-                }
-                BareJid jid = JidCreate.bareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
-                String name = user.getLogin();
-                String[] groups = new String[]{"Buddies"};
-                roster.createEntry(jid, name, groups);
+                RosterManager.addToBuddies(user);
                 return null;
             }
         }, new Completion<Object>() {
@@ -277,12 +267,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-                if (!roster.isLoaded()) {
-                    roster.reloadAndWait();
-                }
-                BareJid jid = JidCreate.bareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
-                roster.removeEntry(roster.getEntry(jid));
+                RosterManager.removeFromBuddies(user);
                 return null;
             }
         }, new Completion<Object>() {
@@ -318,11 +303,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<List<RosterEntry>>() {
             @Override
             public List<RosterEntry> doInBackground() throws Exception {
-                Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-                if (!roster.isLoaded()) {
-                    roster.reloadAndWait();
-                }
-                return roster.getGroup("Buddies").getEntries();
+                return RosterManager.getBuddies();
             }
         }, new Completion<List<RosterEntry>>() {
             @Override
@@ -358,13 +339,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-                if (!roster.isLoaded()) {
-                    roster.reloadAndWait();
-                }
-                for (RosterEntry entry : roster.getEntries()) {
-                    roster.removeEntry(entry);
-                }
+                RosterManager.removeAllFriends();
                 return null;
             }
         }, new Completion<Object>() {

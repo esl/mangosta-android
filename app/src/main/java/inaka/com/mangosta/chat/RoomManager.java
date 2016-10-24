@@ -13,9 +13,7 @@ import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
-import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
-import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smackx.chatstates.ChatState;
@@ -44,6 +42,7 @@ import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
+import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.bob.BoBHash;
@@ -627,21 +626,7 @@ public class RoomManager {
     }
 
     public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
-        Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-        if (!roster.isLoaded()) {
-            roster.reloadAndWait();
-        }
-
-        String groupName = "Buddies";
-
-        RosterGroup group = roster.getGroup(groupName);
-
-        if (group == null) {
-            roster.createGroup(groupName);
-            group = roster.getGroup(groupName);
-        }
-
-        for (RosterEntry entry : group.getEntries()) {
+        for (RosterEntry entry : RosterManager.getBuddies()) {
             String userJid = entry.getJid().toString();
             RoomManager.createChatIfNotExists(userJid, true);
         }

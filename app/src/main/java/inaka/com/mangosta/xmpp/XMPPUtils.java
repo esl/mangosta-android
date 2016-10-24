@@ -41,7 +41,6 @@ public class XMPPUtils {
                     return false;
                 }
 
-                //answerForm.setAnswer("search", jid);
                 ReportedData data;
                 try {
                     data = searchManager.getSearchResults(answerForm, services.get(0));
@@ -89,7 +88,11 @@ public class XMPPUtils {
     }
 
     public static String fromUserNameToJID(String userName) {
-        return userName + "@" + XMPPSession.SERVICE_NAME;
+        if (userName.contains("@")) {
+            return userName;
+        } else {
+            return userName + "@" + XMPPSession.SERVICE_NAME;
+        }
     }
 
     public static String getChatName(Chat chat) {

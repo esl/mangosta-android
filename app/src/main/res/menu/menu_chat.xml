@@ -4,27 +4,35 @@
       tools:context=".activities.ChatActivity">
     <item
         android:id="@+id/actionChatMembers"
-        android:title="@string/action_chat_members"
         android:icon="@mipmap/ic_groupchat"
-        app:showAsAction="never" />
+        android:title="@string/action_chat_members"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/actionChangeRoomName"
-        android:title="@string/action_change_room_name"
         android:icon="@mipmap/ic_groupchat"
-        app:showAsAction="never" />
+        android:title="@string/action_change_room_name"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/actionChangeSubject"
-        android:title="@string/action_change_room_subject"
         android:icon="@mipmap/ic_groupchat"
-        app:showAsAction="never" />
+        android:title="@string/action_change_room_subject"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/actionAddToFriends"
+        android:title="@string/action_add_to_friends"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/actionRemoveFromFriends"
+        android:title="@string/action_remove_from_friends"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/actionLeaveChat"
-        android:title="@string/action_leave_chat"
         android:icon="@mipmap/ic_leave_chat"
-        app:showAsAction="never" />
+        android:title="@string/action_leave_chat"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/actionDestroyChat"
-        android:title="@string/action_destroy_chat"
         android:icon="@drawable/ic_action_delete"
-        app:showAsAction="never" />
+        android:title="@string/action_destroy_chat"
+        app:showAsAction="never"/>
 </menu>
