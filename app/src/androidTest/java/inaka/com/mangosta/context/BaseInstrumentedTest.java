@@ -5,20 +5,22 @@ import android.support.test.espresso.IdlingResource;
 
 public class BaseInstrumentedTest {
 
-    public IdlingResource startTiming(long time) {
+    protected IdlingResource startTiming(long time) {
         IdlingResource idlingResource = new ElapsedTimeIdlingResource(time);
         Espresso.registerIdlingResources(idlingResource);
         return idlingResource;
     }
-    public void stopTiming(IdlingResource idlingResource) {
+
+    protected void stopTiming(IdlingResource idlingResource) {
         Espresso.unregisterIdlingResources(idlingResource);
     }
-    public class ElapsedTimeIdlingResource implements IdlingResource {
+
+    private class ElapsedTimeIdlingResource implements IdlingResource {
         private long mStartTime;
         private final long mWaitingTime;
         private ResourceCallback mResourceCallback;
 
-        public ElapsedTimeIdlingResource(long waitingTime) {
+        private ElapsedTimeIdlingResource(long waitingTime) {
             this.mStartTime = System.currentTimeMillis();
             this.mWaitingTime = waitingTime;
         }
