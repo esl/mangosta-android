@@ -7,6 +7,7 @@ import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,23 +26,19 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
             new ActivityTestRule<>(SplashActivity.class);
 
     @Test
-    public void checkXMPPServerAndService() throws Exception {
+    public void checkXMPPServerAndServiceInLogin() throws Exception {
+        // run this test if the user is not logged in
+        Assume.assumeFalse(Preferences.getInstance().isLoggedIn());
 
-        // if the user is not logged in
-        if (!Preferences.getInstance().isLoggedIn()) {
+        IdlingResource resource = startTiming(mSplashActivityTestRule.getActivity().WAIT_TIME);
 
-            IdlingResource resource = startTiming(mSplashActivityTestRule.getActivity().WAIT_TIME);
+        Espresso.onView(ViewMatchers.withId(R.id.loginJidCompletionEditText))
+                .check(ViewAssertions.matches(ViewMatchers.withText("@" + XMPPSession.SERVICE_NAME)));
 
-            Espresso.onView(ViewMatchers.withId(R.id.loginJidCompletionEditText))
-                    .check(ViewAssertions.matches(ViewMatchers.withText("@" + XMPPSession.SERVICE_NAME)));
+        Espresso.onView(ViewMatchers.withId(R.id.loginServerEditText))
+                .check(ViewAssertions.matches(ViewMatchers.withText(XMPPSession.SERVER_NAME)));
 
-            Espresso.onView(ViewMatchers.withId(R.id.loginServerEditText))
-                    .check(ViewAssertions.matches(ViewMatchers.withText(XMPPSession.SERVER_NAME)));
-
-            stopTiming(resource);
-
-        }
-
+        stopTiming(resource);
     }
 
 }
