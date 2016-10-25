@@ -11,30 +11,48 @@
     tools:context="inaka.com.mangosta.activities.ViewBlogPostDetailsActivity"
     tools:showIn="@layout/activity_view_blog_post_details">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimaryLight"
         android:orientation="vertical"
         android:padding="10dp">
 
-        <TextView
-            android:id="@+id/textBlogPostOwnerName"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/blogPostOwnerLayout"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:padding="5dp"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
+            android:orientation="horizontal"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/textBlogPostOwnerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textBlogPostDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:textColor="@color/white"
+                android:textSize="12sp"/>
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textBlogPostTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/blogPostOwnerLayout"
+            android:paddingEnd="5dp"
+            android:paddingStart="5dp"
             android:textColor="@color/white"/>
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerviewComments"

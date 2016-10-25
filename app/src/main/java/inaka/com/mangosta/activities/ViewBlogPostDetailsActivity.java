@@ -30,6 +30,7 @@ import inaka.com.mangosta.adapters.BlogPostCommentsListAdapter;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.BlogPostComment;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
@@ -41,6 +42,9 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
 
     @Bind(R.id.textBlogPostOwnerName)
     TextView textBlogPostOwnerName;
+
+    @Bind(R.id.textBlogPostDate)
+    TextView textBlogPostDate;
 
     @Bind(R.id.textBlogPostTitle)
     TextView textBlogPostTitle;
@@ -74,6 +78,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
         setSupportActionBar(toolbar);
 
         textBlogPostOwnerName.setText(XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()));
+        textBlogPostDate.setText(TimeCalculation.getTimeStringAgoSinceDate(this, mBlogPost.getUpdated()));
         textBlogPostTitle.setText(mBlogPost.getContent());
 
         recyclerviewComments.setHasFixedSize(true);

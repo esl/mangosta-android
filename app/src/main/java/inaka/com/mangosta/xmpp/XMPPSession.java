@@ -210,6 +210,7 @@ public class XMPPSession {
 
         Roster roster = Roster.getInstanceFor(mXMPPConnection);
         roster.setRosterLoadedAtLogin(false);
+        roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
 
         mXMPPConnection.addConnectionListener(new AbstractConnectionClosedListener() {
             @Override
@@ -218,7 +219,7 @@ public class XMPPSession {
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
-                RoomManager.notShowMUCs();
+                RealmManager.hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;

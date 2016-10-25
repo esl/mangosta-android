@@ -3,9 +3,7 @@ package inaka.com.mangosta.activities;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
@@ -24,18 +22,13 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mRealm = RealmManager.getRealm();
-
-        String message = getIntent().getStringExtra("notification_message");
-        if (!TextUtils.isEmpty(message)) {
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-        }
     }
 
     @Override
     protected void onDestroy() {
         ButterKnife.unbind(this);
+        EventBus.getDefault().unregister(this);
 
         if (mRealm != null) {
             mRealm.close();
@@ -68,7 +61,10 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        EventBus.getDefault().register(this);
+
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
 
         mSessionDepth++;
 
@@ -84,7 +80,6 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        EventBus.getDefault().unregister(this);
 
         if (isRegistered()) {
             MangostaApplication.bus.unregister(this);

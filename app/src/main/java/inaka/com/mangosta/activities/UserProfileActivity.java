@@ -41,8 +41,10 @@ public class UserProfileActivity extends BaseActivity {
 
     private User mUser;
     private boolean mIsAuthenticatedUser;
-
     private BlogsListFragment mBlogsFragment;
+
+    public final static String AUTH_USER_PARAMETER = "auth_user";
+    public final static String USER_PARAMETER = "user";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +57,8 @@ public class UserProfileActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         Bundle bundle = getIntent().getExtras();
-        mIsAuthenticatedUser = bundle.getBoolean("auth_user");
-        mUser = bundle.getParcelable("user");
+        mIsAuthenticatedUser = bundle.getBoolean(AUTH_USER_PARAMETER);
+        mUser = bundle.getParcelable(USER_PARAMETER);
 
         if (mUser != null) {
             setTitle(mUser.getLogin());
@@ -65,7 +67,6 @@ public class UserProfileActivity extends BaseActivity {
         }
 
         mBlogsFragment = new BlogsListFragment();
-
         viewpagerProfile.setAdapter(new UserPagerAdapter(getSupportFragmentManager()));
         slidingTabStrip.setViewPager(viewpagerProfile);
     }
@@ -120,4 +121,11 @@ public class UserProfileActivity extends BaseActivity {
             return isTheAuthenticatedUser() ? 1 : 0;
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mBlogsFragment.loadBlogPosts();
+    }
+
 }

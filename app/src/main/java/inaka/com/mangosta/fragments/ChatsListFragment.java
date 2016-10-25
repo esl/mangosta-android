@@ -9,7 +9,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
@@ -128,7 +127,6 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public void loadChats() {
-//        mChatsType = chatsTypeRadioGroup.getCheckedRadioButtonId();
         if (getActivity() == null) {
             changeChatsList();
         } else {
@@ -180,7 +178,16 @@ public class ChatsListFragment extends BaseFragment {
 
     public void loadChatsBackgroundTask() {
         if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(true);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(true);
+                }
+            });
+        }
+
+        if (mRoomManager == null) {
+            return;
         }
 
         Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
@@ -194,19 +201,32 @@ public class ChatsListFragment extends BaseFragment {
                     case MUC_CHATS_POSITION: // load muc light chats
                         mRoomManager.loadMUCRooms();
                         break;
+
+                    case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats from friends
+                        mRoomManager.loadRosterFriendsChats();
+                        break;
                 }
                 return null;
             }
         }, new Completion<Object>() {
             @Override
             public void onSuccess(Context context, Object object) {
-                loadChats();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadChats();
+                    }
+                });
             }
 
             @Override
             public void onError(Context context, Exception e) {
-                Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
-                loadChats();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadChats();
+                    }
+                });
             }
         });
     }
@@ -228,6 +248,9 @@ public class ChatsListFragment extends BaseFragment {
         switch (event.getType()) {
             case GO_BACK_FROM_CHAT:
                 loadChats();
+                break;
+            case GO_BACK_FROM_MANAGE_FRIENDS:
+                loadChatsBackgroundTask();
                 break;
         }
     }

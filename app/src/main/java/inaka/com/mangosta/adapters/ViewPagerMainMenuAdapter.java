@@ -93,9 +93,21 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
         mFragmentList = new Fragment[]{};
     }
 
+    public void syncChats() {
+        for (Fragment fragment : mFragmentList) {
+            ChatsListFragment chatsListFragment = ((ChatsListFragment) fragment);
+            if (chatsListFragment != null) {
+                chatsListFragment.loadChatsBackgroundTask();
+            }
+        }
+    }
+
     public void reloadChats() {
         for (Fragment fragment : mFragmentList) {
-            ((ChatsListFragment) fragment).loadChats();
+            ChatsListFragment chatsListFragment = ((ChatsListFragment) fragment);
+            if (chatsListFragment != null) {
+                chatsListFragment.loadChats();
+            }
         }
     }
 

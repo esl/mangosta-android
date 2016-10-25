@@ -4,9 +4,10 @@ public class Event {
 
     public enum Type {
         ROOMS_LOADED,
-        ROOM_LEFT,
+        STICKER_SENT,
         GO_BACK_FROM_CHAT,
-        STICKER_SENT
+        GO_BACK_FROM_MANAGE_FRIENDS,
+        BLOG_POST_CREATED
     }
 
     private Type mType;

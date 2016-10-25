@@ -13,8 +13,8 @@ public class NavigateToUserProfile {
     private static void openUser(Context context, User user, boolean isAutheticadedUser) {
         Intent userOptionsActivityIntent = new Intent(context, UserProfileActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putBoolean("auth_user", isAutheticadedUser);
-        bundle.putParcelable("user", user);
+        bundle.putBoolean(UserProfileActivity.AUTH_USER_PARAMETER, isAutheticadedUser);
+        bundle.putParcelable(UserProfileActivity.USER_PARAMETER, user);
         userOptionsActivityIntent.putExtras(bundle);
         context.startActivity(userOptionsActivityIntent);
     }
