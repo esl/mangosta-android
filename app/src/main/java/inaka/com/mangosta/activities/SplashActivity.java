@@ -28,7 +28,7 @@ public class SplashActivity extends FragmentActivity {
     @Bind(R.id.progressLoading)
     ProgressBar progressLoading;
 
-    final int WAIT_TIME = 2000;
+    public final int WAIT_TIME = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

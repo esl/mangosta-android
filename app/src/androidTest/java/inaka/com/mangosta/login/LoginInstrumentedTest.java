@@ -25,12 +25,12 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
             new ActivityTestRule<>(SplashActivity.class);
 
     @Test
-    public void checkXMPPServerAndServiceNames() throws Exception {
+    public void checkXMPPServerAndService() throws Exception {
 
         // if the user is not logged in
         if (!Preferences.getInstance().isLoggedIn()) {
 
-            IdlingResource resource = startTiming(3000);
+            IdlingResource resource = startTiming(mSplashActivityTestRule.getActivity().WAIT_TIME);
 
             Espresso.onView(ViewMatchers.withId(R.id.loginJidCompletionEditText))
                     .check(ViewAssertions.matches(ViewMatchers.withText("@" + XMPPSession.SERVICE_NAME)));
