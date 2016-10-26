@@ -8,6 +8,7 @@ import org.jivesoftware.smackx.search.UserSearch;
 import org.jivesoftware.smackx.search.UserSearchManager;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jxmpp.jid.DomainBareJid;
+import org.jxmpp.jid.Jid;
 
 import java.util.List;
 
@@ -112,6 +113,16 @@ public class XMPPUtils {
 
     public static boolean isAutenticatedUser(User user) {
         return user.getLogin().equals(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+    }
+
+    public static boolean isAutenticatedUser(String userName) {
+        User user = new User();
+        user.setLogin(userName);
+        return isAutenticatedUser(user);
+    }
+
+    public static boolean isAutenticatedJid(Jid jid) {
+        return jid.equals(XMPPSession.getInstance().getXMPPConnection().getUser().asBareJid());
     }
 
 }
