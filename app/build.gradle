@@ -85,6 +85,9 @@ dependencies {
     // JUnit
     testCompile 'junit:junit:4.12'
 
+    // Mockito
+    testCompile 'org.mockito:mockito-core:2.2.9'
+
     // Android
     compile 'com.android.support:appcompat-v7:25.0.0'
     compile 'com.android.support:support-v13:25.0.0'

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.joda.time.Period;
 
 import java.util.Date;
@@ -59,18 +60,16 @@ public class TimeCalculation {
         return String.format(Locale.getDefault(), date, count);
     }
 
-    public static int compareDates(String date1, String date2) {
-        DateTime dateTime1 = new DateTime(date1, DateTimeZone.getDefault());
-        DateTime dateTime2 = new DateTime(date2, DateTimeZone.getDefault());
-        return dateTime1.compareTo(dateTime2);
+    public static boolean isMinutesDiffMax(DateTime dateTime1, DateTime dateTime2, int maxMinutes) {
+        Period period = new Period(dateTime1, dateTime2);
+        Duration duration = period.toDurationFrom(dateTime1);
+        return Math.abs(duration.toStandardMinutes().getMinutes()) <= maxMinutes;
     }
 
     public static boolean wasMinutesAgoMax(Date date, int maxMinutes) {
         DateTime now = new DateTime(DateTimeZone.getDefault());
         DateTime dateTime = new DateTime(date, DateTimeZone.getDefault());
-        Period period = new Period(dateTime, now);
-        return period.getYears() == 0 && period.getMonths() == 0 && period.getWeeks() == 0 && period.getDays() == 0
-                && period.getHours() == 0 && period.getMinutes() <= maxMinutes;
+        return isMinutesDiffMax(dateTime, now, maxMinutes);
     }
 
 }
