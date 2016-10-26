@@ -1,6 +1,7 @@
 package inaka.com.mangosta.utils;
 
 import android.content.Context;
+import android.support.annotation.VisibleForTesting;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -16,19 +17,18 @@ public class TimeCalculation {
 
     public static String getTimeStringAgoSinceStringDate(Context context, String date) {
         DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
-        return getTimeStrigAgoSinceDateTime(context, postDate);
+        return getTimeStringAgoSinceDateTime(context, postDate);
     }
 
     public static String getTimeStringAgoSinceDate(Context context, Date date) {
         DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
-        return getTimeStrigAgoSinceDateTime(context, postDate);
+        return getTimeStringAgoSinceDateTime(context, postDate);
     }
 
-    private static String getTimeStrigAgoSinceDateTime(Context context, DateTime dateTime) {
+
+    private static String getTimeStringAgoSinceDateTime(Context context, DateTime dateTime) {
         DateTime now = new DateTime(DateTimeZone.getDefault());
-
         Period period = new Period(dateTime, now);
-
         String date;
         int count;
 
@@ -60,7 +60,8 @@ public class TimeCalculation {
         return String.format(Locale.getDefault(), date, count);
     }
 
-    public static boolean isMinutesDiffMax(DateTime dateTime1, DateTime dateTime2, int maxMinutes) {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    static boolean isMinutesDiffMax(DateTime dateTime1, DateTime dateTime2, int maxMinutes) {
         Period period = new Period(dateTime1, dateTime2);
         Duration duration = period.toDurationFrom(dateTime1);
         return Math.abs(duration.toStandardMinutes().getMinutes()) <= maxMinutes;
