@@ -15,16 +15,10 @@ import inaka.com.mangosta.R;
 
 public class TimeCalculation {
 
-    public static String getTimeStringAgoSinceStringDate(Context context, String date) {
-        DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
-        return getTimeStringAgoSinceDateTime(context, postDate);
-    }
-
     public static String getTimeStringAgoSinceDate(Context context, Date date) {
         DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
         return getTimeStringAgoSinceDateTime(context, postDate);
     }
-
 
     private static String getTimeStringAgoSinceDateTime(Context context, DateTime dateTime) {
         DateTime now = new DateTime(DateTimeZone.getDefault());
