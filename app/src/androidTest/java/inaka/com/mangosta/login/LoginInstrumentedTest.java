@@ -17,7 +17,6 @@ import org.jxmpp.jid.Jid;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.SplashActivity;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
-import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
@@ -31,7 +30,7 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void checkXMPPServerAndServiceInLogin() throws Exception {
-        Assume.assumeFalse(Preferences.getInstance().isLoggedIn());
+        Assume.assumeFalse(isUserLoggedIn());
 
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 
@@ -46,7 +45,7 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void checkXMPPLoggedUserSaved() throws Exception {
-        Assume.assumeTrue(Preferences.getInstance().isLoggedIn());
+        Assume.assumeTrue(isUserLoggedIn());
 
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 

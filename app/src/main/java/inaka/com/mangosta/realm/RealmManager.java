@@ -36,9 +36,10 @@ public class RealmManager {
         realm.close();
     }
 
-    public static List<Chat> getMUCs(Realm realm) {
+    public static List<Chat> getMUCs() {
         List<Chat> chatList = new ArrayList<>();
 
+        Realm realm = getRealm();
         RealmResults<Chat> chats = realm.where(Chat.class)
                 .equalTo("show", true)
                 .equalTo("type", Chat.TYPE_MUC)
@@ -51,9 +52,10 @@ public class RealmManager {
         return chatList;
     }
 
-    public static List<Chat> getMUCLights(Realm realm) {
+    public static List<Chat> getMUCLights() {
         List<Chat> chatList = new ArrayList<>();
 
+        Realm realm = getRealm();
         RealmResults<Chat> chats = realm.where(Chat.class)
                 .equalTo("show", true)
                 .equalTo("type", Chat.TYPE_MUC_LIGHT)
@@ -66,9 +68,10 @@ public class RealmManager {
         return chatList;
     }
 
-    public static List<Chat> get1to1Chats(Realm realm) {
+    public static List<Chat> get1to1Chats() {
         List<Chat> chatList = new ArrayList<>();
 
+        Realm realm = getRealm();
         RealmResults<Chat> chats = realm.where(Chat.class)
                 .equalTo("show", true)
                 .equalTo("type", Chat.TYPE_1_T0_1)

@@ -13,13 +13,11 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.MainMenuActivity;
 import inaka.com.mangosta.activities.SplashActivity;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
-import inaka.com.mangosta.utils.Preferences;
 
 @RunWith(AndroidJUnit4.class)
 public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
@@ -29,7 +27,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
             new ActivityTestRule<>(MainMenuActivity.class);
 
     @Test
-    public void checkMenuItemsAvailability() throws Exception {
+    public void menuItemsAvailability() throws Exception {
         Espresso.onView(ViewMatchers.withId(R.id.actionUserOptions))
                 .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
                 .check(ViewAssertions.matches(ViewMatchers.isEnabled()))
@@ -48,8 +46,8 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void checkGoToUserProfileWithMenuItem() throws Exception {
-        Assume.assumeTrue(Preferences.getInstance().isLoggedIn());
+    public void goToUserProfileWithMenuItem() throws Exception {
+        Assume.assumeTrue(isUserLoggedIn());
 
         Espresso.onView(ViewMatchers.withId(R.id.actionUserOptions))
                 .check(ViewAssertions.matches(ViewMatchers.isClickable()))
@@ -66,7 +64,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void checkGoToBlockingPageWithMenuItem() throws Exception {
+    public void goToBlockingPageWithMenuItem() throws Exception {
         Espresso.openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
         Espresso.onView(ViewMatchers.withText(R.string.action_block_users))
@@ -86,8 +84,8 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void checkLogoutWithMenuItem() throws Exception {
-        Assume.assumeTrue(Preferences.getInstance().isLoggedIn());
+    public void logoutWithMenuItem() throws Exception {
+        Assume.assumeTrue(isUserLoggedIn());
 
         Espresso.openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 

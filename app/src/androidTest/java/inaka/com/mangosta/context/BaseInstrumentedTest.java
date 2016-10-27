@@ -3,6 +3,8 @@ package inaka.com.mangosta.context;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
 
+import inaka.com.mangosta.utils.Preferences;
+
 public class BaseInstrumentedTest {
 
     protected IdlingResource startTiming(long time) {
@@ -45,4 +47,9 @@ public class BaseInstrumentedTest {
             this.mResourceCallback = resourceCallback;
         }
     }
+
+    protected boolean isUserLoggedIn() {
+        return Preferences.getInstance().isLoggedIn();
+    }
+
 }
