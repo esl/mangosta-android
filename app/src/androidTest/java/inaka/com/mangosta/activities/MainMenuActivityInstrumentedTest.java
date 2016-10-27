@@ -1,11 +1,9 @@
 package inaka.com.mangosta.activities;
 
-import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
-import android.support.test.espresso.action.ViewActions;
-import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -19,12 +17,48 @@ import inaka.com.mangosta.context.BaseInstrumentedTest;
 import inaka.com.mangosta.fragments.ChatsListFragment;
 import inaka.com.mangosta.realm.RealmManager;
 
+import static org.hamcrest.Matchers.allOf;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.swipeLeft;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+
 @RunWith(AndroidJUnit4.class)
 public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =
             new ActivityTestRule<>(MainMenuActivity.class);
+
+    @Test
+    public void chatListVisibility() throws Exception {
+
+        IdlingResource resource = startTiming(10000);
+
+        // check chat list visibility in 1st tab
+//        onView(allOf(withId(R.id.button), isDescendantOfA(firstChildOf(withId(R.id.viewpager))))
+//                withId(R.id.chatListRecyclerView))
+//                .check(matches(isDisplayed()));
+
+        // move to the 2nd tab
+        onView(withId(R.id.viewpagerMainMenu))
+                .perform(swipeLeft());
+
+        // check chat list visibility in 2nd tab
+        onView(withId(R.id.chatListRecyclerView))
+                .check(matches(isDisplayed()));
+
+        // move to the 3rd tab
+        onView(withId(R.id.viewpagerMainMenu))
+                .perform(swipeLeft());
+
+        // check chat list visibility in 3rd tab
+        onView(withId(R.id.chatListRecyclerView))
+                .check(matches(isDisplayed()));
+
+        stopTiming(resource);
+    }
 
     @Test
     public void initializeOneToOneChatsList() throws Exception {
@@ -46,8 +80,8 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         Assume.assumeTrue(isUserLoggedIn());
 
         // move to the 2nd tab
-        Espresso.onView(ViewMatchers.withId(R.id.viewpagerMainMenu))
-                .perform(ViewActions.swipeLeft());
+        onView(withId(R.id.viewpagerMainMenu))
+                .perform(swipeLeft());
 
         IdlingResource resource = startTiming(10000);
 
@@ -64,10 +98,10 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     public void initializeMUCList() throws Exception {
         Assume.assumeTrue(isUserLoggedIn());
 
-        // move to the 2nd tab
-        Espresso.onView(ViewMatchers.withId(R.id.viewpagerMainMenu))
-                .perform(ViewActions.swipeLeft())
-                .perform(ViewActions.swipeLeft());
+        // move to the 3rd tab
+        onView(withId(R.id.viewpagerMainMenu))
+                .perform(swipeLeft())
+                .perform(swipeLeft());
 
         IdlingResource resource = startTiming(10000);
 
