@@ -33,7 +33,7 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
     public void checkXMPPServerAndServiceInLogin() throws Exception {
         Assume.assumeFalse(Preferences.getInstance().isLoggedIn());
 
-        IdlingResource resource = startTiming(mSplashActivityTestRule.getActivity().WAIT_TIME);
+        IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 
         Espresso.onView(ViewMatchers.withId(R.id.loginJidCompletionEditText))
                 .check(ViewAssertions.matches(ViewMatchers.withText("@" + XMPPSession.SERVICE_NAME)));
@@ -48,7 +48,7 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
     public void checkXMPPLoggedUserSaved() throws Exception {
         Assume.assumeTrue(Preferences.getInstance().isLoggedIn());
 
-        IdlingResource resource = startTiming(mSplashActivityTestRule.getActivity().WAIT_TIME);
+        IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 
         Assume.assumeNotNull(XMPPSession.getInstance().getXMPPConnection());
         Assume.assumeNotNull(XMPPSession.getInstance().getXMPPConnection().getUser());
