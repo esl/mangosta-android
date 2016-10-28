@@ -20,9 +20,9 @@ import java.util.List;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
-import inaka.com.mangosta.context.RecyclerViewInteraction;
 import inaka.com.mangosta.fragments.ChatsListFragment;
 import inaka.com.mangosta.models.Chat;
+import inaka.com.mangosta.models.RecyclerViewInteraction;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.ChatOrderComparator;
 

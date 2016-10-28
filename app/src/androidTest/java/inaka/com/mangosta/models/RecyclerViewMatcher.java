@@ -1,4 +1,4 @@
-package inaka.com.mangosta.context;
+package inaka.com.mangosta.models;
 
 import android.content.res.Resources;
 import android.support.v7.widget.RecyclerView;
