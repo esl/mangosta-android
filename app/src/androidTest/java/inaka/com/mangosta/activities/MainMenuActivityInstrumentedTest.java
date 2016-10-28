@@ -135,13 +135,13 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void oneToOneChatsInRecyclerView() throws Throwable {
+    public void oneToOneChatsInRecyclerView() throws Exception {
         Assume.assumeTrue(isUserLoggedIn());
         checkRecyclerViewContent(mOneToOneChatNames);
     }
 
     @Test
-    public void mucLightsInRecyclerView() throws Throwable {
+    public void mucLightsInRecyclerView() throws Exception {
         Assume.assumeTrue(isUserLoggedIn());
 
         // move to the 2nd tab
@@ -152,7 +152,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void mucsInRecyclerView() throws Throwable {
+    public void mucsInRecyclerView() throws Exception {
         Assume.assumeTrue(isUserLoggedIn());
 
         // move to the 3rd tab
@@ -163,7 +163,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         checkRecyclerViewContent(mMUCNames);
     }
 
-    private void checkRecyclerViewContent(final List<String> chatNames) throws Throwable {
+    private void checkRecyclerViewContent(final List<String> chatNames) {
         RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.chatListRecyclerView), ViewMatchers.isDisplayed()))
                 .withItems(chatNames)
                 .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
