@@ -1,15 +1,10 @@
 package inaka.com.mangosta.menu;
 
 import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
-import android.support.test.espresso.action.ViewActions;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +13,19 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.MainMenuActivity;
 import inaka.com.mangosta.activities.SplashActivity;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
+
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
+import static android.support.test.espresso.Espresso.pressBack;
+import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.assertion.ViewAssertions.doesNotExist;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
@@ -28,75 +36,74 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void menuItemsAvailability() throws Exception {
-        Espresso.onView(ViewMatchers.withId(R.id.actionUserOptions))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-                .check(ViewAssertions.matches(ViewMatchers.isEnabled()))
-                .check(ViewAssertions.matches(ViewMatchers.isClickable()));
+        onView(withId(R.id.actionUserOptions))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .check(matches(isClickable()));
 
         // click to see hided menu items
-        Espresso.openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        Espresso.onView(ViewMatchers.withText(R.string.action_block_users))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-                .check(ViewAssertions.matches(ViewMatchers.isEnabled()));
+        onView(withText(R.string.action_block_users))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()));
 
-        Espresso.onView(ViewMatchers.withText(R.string.action_signout))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-                .check(ViewAssertions.matches(ViewMatchers.isEnabled()));
+        onView(withText(R.string.action_signout))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()));
     }
 
     @Test
     public void goToUserProfileWithMenuItem() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
-        Espresso.onView(ViewMatchers.withId(R.id.actionUserOptions))
-                .check(ViewAssertions.matches(ViewMatchers.isClickable()))
-                .perform(ViewActions.click())
-                .check(ViewAssertions.doesNotExist());
+        onView(withId(R.id.actionUserOptions))
+                .check(matches(isClickable()))
+                .perform(click())
+                .check(doesNotExist());
 
-        Espresso.onView(ViewMatchers.withId(R.id.layoutNameUserOptions))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        onView(withId(R.id.layoutNameUserOptions))
+                .check(matches(isDisplayed()));
 
-        Espresso.pressBack();
+        pressBack();
 
-        Espresso.onView(ViewMatchers.withId(R.id.actionUserOptions))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        onView(withId(R.id.actionUserOptions))
+                .check(matches(isDisplayed()));
     }
 
     @Test
     public void goToBlockingPageWithMenuItem() throws Exception {
-        Espresso.openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        Espresso.onView(ViewMatchers.withText(R.string.action_block_users))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-                .check(ViewAssertions.matches(ViewMatchers.isEnabled()))
-                .perform(ViewActions.click());
+        onView(withText(R.string.action_block_users))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .perform(click());
 
-        Espresso.onView(ViewMatchers.withId(R.id.blockSearchResultRecyclerView))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        onView(withId(R.id.blockSearchResultRecyclerView))
+                .check(matches(isDisplayed()));
 
-        Espresso.pressBack();
+        pressBack();
 
-        Espresso.openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        Espresso.onView(ViewMatchers.withText(R.string.action_block_users))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        onView(withText(R.string.action_block_users))
+                .check(matches(isDisplayed()));
     }
 
     @Test
     public void logoutWithMenuItem() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
-        Espresso.openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        Espresso.onView(ViewMatchers.withText(R.string.action_signout))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-                .check(ViewAssertions.matches(ViewMatchers.isEnabled()))
-                .perform(ViewActions.click());
+        onView(withText(R.string.action_signout))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .perform(click());
 
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
-        Espresso.onView(ViewMatchers.withId(R.id.loginButton))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        onView(withId(R.id.loginButton)).check(matches(isDisplayed()));
         stopTiming(resource);
     }
 

@@ -6,8 +6,6 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 
-import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +31,8 @@ import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
@@ -84,18 +84,18 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void initializeOneToOneChatsList() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
         // Obtain the one to one chats fragment
         ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.ONE_TO_ONE_CHATS_POSITION);
 
         // Check if it loads the correct amount of chats
-        Assert.assertEquals(getChatsCount(chatsListFragment), mOneToOneChats.size());
+        assertEquals(getChatsCount(chatsListFragment), mOneToOneChats.size());
     }
 
     @Test
     public void initializeMUCLightList() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
         // move to the 2nd tab
         onView(withId(R.id.viewpagerMainMenu))
@@ -105,12 +105,12 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_LIGHT_CHATS_POSITION);
 
         // Check if it loads the correct amount of chats
-        Assert.assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
+        assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
     }
 
     @Test
     public void initializeMUCList() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
         // move to the 3rd tab
         onView(withId(R.id.viewpagerMainMenu))
@@ -121,7 +121,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_CHATS_POSITION);
 
         // Check if it loads the correct amount of chats
-        Assert.assertEquals(getChatsCount(chatsListFragment), mMUCs.size());
+        assertEquals(getChatsCount(chatsListFragment), mMUCs.size());
     }
 
     private int getChatsCount(ChatsListFragment chatsListFragment) {
@@ -136,13 +136,13 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void oneToOneChatsInRecyclerView() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
         checkRecyclerViewContent(mOneToOneChatNames);
     }
 
     @Test
     public void mucLightsInRecyclerView() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
         // move to the 2nd tab
         onView(withId(R.id.viewpagerMainMenu))
@@ -153,7 +153,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void mucsInRecyclerView() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
         // move to the 3rd tab
         onView(withId(R.id.viewpagerMainMenu))

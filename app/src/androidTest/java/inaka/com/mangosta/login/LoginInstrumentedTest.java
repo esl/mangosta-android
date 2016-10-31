@@ -1,14 +1,9 @@
 package inaka.com.mangosta.login;
 
-import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +15,15 @@ import inaka.com.mangosta.context.BaseInstrumentedTest;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
+
 
 @RunWith(AndroidJUnit4.class)
 public class LoginInstrumentedTest extends BaseInstrumentedTest {
@@ -30,33 +34,33 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void checkXMPPServerAndServiceInLogin() throws Exception {
-        Assume.assumeFalse(isUserLoggedIn());
+        assumeFalse(isUserLoggedIn());
 
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 
-        Espresso.onView(ViewMatchers.withId(R.id.loginJidCompletionEditText))
-                .check(ViewAssertions.matches(ViewMatchers.withText("@" + XMPPSession.SERVICE_NAME)));
+        onView(withId(R.id.loginJidCompletionEditText))
+                .check(matches(withText("@" + XMPPSession.SERVICE_NAME)));
 
-        Espresso.onView(ViewMatchers.withId(R.id.loginServerEditText))
-                .check(ViewAssertions.matches(ViewMatchers.withText(XMPPSession.SERVER_NAME)));
+        onView(withId(R.id.loginServerEditText))
+                .check(matches(withText(XMPPSession.SERVER_NAME)));
 
         stopTiming(resource);
     }
 
     @Test
     public void checkXMPPLoggedUserSaved() throws Exception {
-        Assume.assumeTrue(isUserLoggedIn());
+        assumeTrue(isUserLoggedIn());
 
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 
-        Assume.assumeNotNull(XMPPSession.getInstance().getXMPPConnection());
-        Assume.assumeNotNull(XMPPSession.getInstance().getXMPPConnection().getUser());
+        assumeNotNull(XMPPSession.getInstance().getXMPPConnection());
+        assumeNotNull(XMPPSession.getInstance().getXMPPConnection().getUser());
 
         Jid jid = XMPPSession.getInstance().getXMPPConnection().getUser().asBareJid();
-        Assert.assertTrue(XMPPUtils.isAutenticatedJid(jid));
+        assertTrue(XMPPUtils.isAutenticatedJid(jid));
 
         String userName = XMPPUtils.fromJIDToUserName(jid.toString());
-        Assert.assertTrue(XMPPUtils.isAutenticatedUser(userName));
+        assertTrue(XMPPUtils.isAutenticatedUser(userName));
 
         stopTiming(resource);
     }
