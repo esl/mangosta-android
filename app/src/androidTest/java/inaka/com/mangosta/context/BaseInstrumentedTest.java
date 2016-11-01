@@ -1,11 +1,21 @@
 package inaka.com.mangosta.context;
 
+import android.app.Activity;
+import android.content.Context;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
+import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+
+import java.util.Collection;
 
 import inaka.com.mangosta.utils.Preferences;
 
+import static android.support.test.runner.lifecycle.Stage.RESUMED;
+
 public class BaseInstrumentedTest {
+
+    private Activity mCurrentActivity;
 
     protected IdlingResource startTiming(long time) {
         IdlingResource idlingResource = new ElapsedTimeIdlingResource(time);
@@ -50,6 +60,22 @@ public class BaseInstrumentedTest {
 
     protected boolean isUserLoggedIn() {
         return Preferences.getInstance().isLoggedIn();
+    }
+
+    protected Context getContext() {
+        return InstrumentationRegistry.getTargetContext();
+    }
+
+    protected Activity getCurrentActivity() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            public void run() {
+                Collection<Activity> resumedActivities = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(RESUMED);
+                if (resumedActivities.iterator().hasNext()) {
+                    mCurrentActivity = resumedActivities.iterator().next();
+                }
+            }
+        });
+        return mCurrentActivity;
     }
 
 }

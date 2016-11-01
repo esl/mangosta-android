@@ -2,14 +2,10 @@ package inaka.com.mangosta.activities;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
-import android.widget.EditText;
+import android.support.v7.widget.RecyclerView;
 
-import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import static org.junit.Assume.assumeTrue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,7 +15,6 @@ import inaka.com.mangosta.context.BaseInstrumentedTest;
 import inaka.com.mangosta.realm.RealmManager;
 
 import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.Espresso.pressBack;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
@@ -28,22 +23,20 @@ import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 public class CreateBlogActivityTest extends BaseInstrumentedTest {
 
-//    @Rule
-//    public ActivityTestRule<CreateBlogActivity> mCreateBlogActivityActivityTestRule =
-//            new ActivityTestRule<>(CreateBlogActivity.class);
-
     @Rule
-    public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =
-            new ActivityTestRule<>(MainMenuActivity.class);
+    public ActivityTestRule mActivityTestRule = new ActivityTestRule<>(MainMenuActivity.class);
 
     private Activity mActivity;
 
     @Before
     public void setUp() {
-        mActivity = mMainMenuActivityActivityTestRule.getActivity();
+        mActivity = mActivityTestRule.getActivity();
     }
 
     @Test
@@ -90,10 +83,11 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
         onView(withId(R.id.blogsRecyclerView))
                 .check(matches(isDisplayed()));
 
-        pressBack();
-
-        assertEquals(blogPostsCount + 1, getBlogPostsCount());
-
+        IdlingResource resource = startTiming(10000);
+        RecyclerView blogsRecyclerView = (RecyclerView) getCurrentActivity()
+                .findViewById(R.id.blogsRecyclerView);
+        assertEquals(blogPostsCount + 1, blogsRecyclerView.getAdapter().getItemCount());
+        stopTiming(resource);
     }
 
     private int getBlogPostsCount() {

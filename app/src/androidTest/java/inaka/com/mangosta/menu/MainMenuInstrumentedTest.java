@@ -42,7 +42,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isClickable()));
 
         // click to see hided menu items
-        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+        openActionBarOverflowOrOptionsMenu(getContext());
 
         onView(withText(R.string.action_block_users))
                 .check(matches(isDisplayed()))
