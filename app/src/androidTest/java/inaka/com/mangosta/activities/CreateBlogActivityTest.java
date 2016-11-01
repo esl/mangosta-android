@@ -9,10 +9,21 @@ import android.support.v7.widget.RecyclerView;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
+import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.Preferences;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -27,16 +38,49 @@ import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
+//@RunWith(PowerMockRunner.class)
+@PrepareForTest(RealmManager.class)
 public class CreateBlogActivityTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule mActivityTestRule = new ActivityTestRule<>(MainMenuActivity.class);
 
     private Activity mActivity;
+    private List<BlogPost> mBlogPosts;
 
     @Before
     public void setUp() {
+        MockitoAnnotations.initMocks(this);
         mActivity = mActivityTestRule.getActivity();
+        initBlogPosts();
+    }
+
+    private void initBlogPosts() {
+        BlogPost blogPost1 = new BlogPost("001",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                "blog post 1",
+                new Date(),
+                new Date());
+
+        BlogPost blogPost2 = new BlogPost("002",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                "blog post 2",
+                new Date(),
+                new Date());
+
+        BlogPost blogPost3 = new BlogPost("003",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                "blog post 3",
+                new Date(),
+                new Date());
+
+        mBlogPosts = new ArrayList<>();
+        mBlogPosts.add(blogPost1);
+        mBlogPosts.add(blogPost2);
+        mBlogPosts.add(blogPost3);
     }
 
     @Test
@@ -56,6 +100,8 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     public void createBlogPost() throws Exception {
         assumeTrue(isUserLoggedIn());
 
+        PowerMockito.mockStatic(RealmManager.class);
+        PowerMockito.when(RealmManager.getBlogPosts()).thenReturn(mBlogPosts);
         int blogPostsCount = getBlogPostsCount();
 
         mActivity.startActivity(new Intent(mActivity, CreateBlogActivity.class));
