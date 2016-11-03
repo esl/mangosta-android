@@ -41,7 +41,6 @@ public class XMPPUtils {
                     return false;
                 }
 
-                //answerForm.setAnswer("search", jid);
                 ReportedData data;
                 try {
                     data = searchManager.getSearchResults(answerForm, services.get(0));
@@ -71,13 +70,29 @@ public class XMPPUtils {
         return false;
     }
 
-    public static String fromJIDToUserName(String jid) {
-        int position = jid.indexOf("@");
-        return (position >= 0 && !jid.equals("")) ? jid.substring(0, position) : null;
+    public static String fromJIDToUserName(String jidString) {
+        int position = jidString.indexOf("@");
+
+        if (position >= 0 && !jidString.equals("")) {
+
+            if (jidString.substring(position + 1).startsWith(XMPPSession.SERVICE_NAME)) {
+                return jidString.substring(0, position);
+            } else {
+                return jidString;
+            }
+
+        } else {
+            return null;
+        }
+
     }
 
     public static String fromUserNameToJID(String userName) {
-        return userName + "@" + XMPPSession.SERVICE_NAME;
+        if (userName.contains("@")) {
+            return userName;
+        } else {
+            return userName + "@" + XMPPSession.SERVICE_NAME;
+        }
     }
 
     public static String getChatName(Chat chat) {
@@ -97,10 +112,6 @@ public class XMPPUtils {
 
     public static boolean isAutenticatedUser(User user) {
         return user.getLogin().equals(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
-    }
-
-    public static String getAuthenticatedUserName() {
-        return XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getXMPPConnection().getUser().toString());
     }
 
 }

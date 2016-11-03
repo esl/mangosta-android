@@ -36,6 +36,9 @@ public class MainMenuActivity extends BaseActivity {
     @Bind(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
+    @Bind(R.id.manageFriendsFloatingButton)
+    FloatingActionButton manageFriendsFloatingButton;
+
     public boolean mRoomsLoaded = false;
 
     @Override
@@ -57,6 +60,7 @@ public class MainMenuActivity extends BaseActivity {
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
         createNewBlogFloatingButton.setIcon(R.mipmap.ic_add_blog);
+        manageFriendsFloatingButton.setIcon(R.mipmap.ic_friends);
 
         createNewChatFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +78,14 @@ public class MainMenuActivity extends BaseActivity {
             }
         });
 
+        manageFriendsFloatingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
+                MainMenuActivity.this.startActivity(intent);
+            }
+        });
+
     }
 
     @Override
@@ -85,12 +97,11 @@ public class MainMenuActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        Preferences preferences = Preferences.getInstance();
 
         switch (id) {
 
             case R.id.actionSignOut: {
-                preferences.deleteAll();
+                Preferences.getInstance().deleteAll();
 
                 getRealm().beginTransaction();
                 getRealm().deleteAll();
@@ -109,20 +120,7 @@ public class MainMenuActivity extends BaseActivity {
             }
 
             case R.id.actionUserOptions: {
-
-                Intent userOptionsActivityIntent = new Intent(this, UserProfileActivity.class);
-
-                User user = new User();
-                user.setLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()));
-
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("auth_user", true);
-                bundle.putParcelable("user", user);
-
-                userOptionsActivityIntent.putExtras(bundle);
-
-                this.startActivity(userOptionsActivityIntent);
-
+                goToMyProfile();
                 return true;
             }
 
@@ -137,6 +135,21 @@ public class MainMenuActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void goToMyProfile() {
+        Intent userOptionsActivityIntent = new Intent(this, UserProfileActivity.class);
+
+        User user = new User();
+        user.setLogin(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(UserProfileActivity.AUTH_USER_PARAMETER, true);
+        bundle.putParcelable(UserProfileActivity.USER_PARAMETER, user);
+
+        userOptionsActivityIntent.putExtras(bundle);
+
+        this.startActivity(userOptionsActivityIntent);
+    }
+
     // receives events from EventBus
     @Override
     public void onEvent(Event event) {
@@ -146,6 +159,12 @@ public class MainMenuActivity extends BaseActivity {
                 break;
             case GO_BACK_FROM_CHAT:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
+                break;
+            case GO_BACK_FROM_MANAGE_FRIENDS:
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
+                break;
+            case BLOG_POST_CREATED:
+                goToMyProfile();
                 break;
         }
     }
@@ -158,7 +177,7 @@ public class MainMenuActivity extends BaseActivity {
 
     private void reloadChats() {
         ChatsListFragment mChatsListFragment = (ChatsListFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
-                .getRegisteredFragment(0);
+                .getRegisteredFragment(mViewpagerMainMenu.getCurrentItem());
         if (mChatsListFragment != null) {
             mChatsListFragment.loadChats();
         }

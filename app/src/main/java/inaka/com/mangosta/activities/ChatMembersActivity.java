@@ -162,7 +162,7 @@ public class ChatMembersActivity extends BaseActivity {
                 mMembers.add(user);
                 mMembersAdapter.notifyDataSetChanged();
 
-                if (progressLoading.getVisibility() == View.VISIBLE) {
+                if (progressLoading != null && progressLoading.getVisibility() == View.VISIBLE) {
                     progressLoading.setVisibility(View.GONE);
                 }
             }

@@ -230,4 +230,59 @@ public class RealmManager {
         realm.close();
     }
 
+    public static void removeAllMUCChats() {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.where(Chat.class)
+                .equalTo("type", Chat.TYPE_MUC)
+                .findAll().deleteAllFromRealm();
+        realm.commitTransaction();
+        realm.close();
+    }
+
+    public static void removeAllMUCLightChats() {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.where(Chat.class)
+                .equalTo("type", Chat.TYPE_MUC_LIGHT)
+                .findAll().deleteAllFromRealm();
+        realm.commitTransaction();
+        realm.close();
+    }
+
+    public static void removeAllOneToOneChats() {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.where(Chat.class)
+                .equalTo("type", Chat.TYPE_1_T0_1)
+                .findAll().deleteAllFromRealm();
+        realm.commitTransaction();
+        realm.close();
+    }
+
+    public static void hideAllChatsOfType(int type) {
+        Realm realm = getRealm();
+
+        RealmResults<Chat> chats = realm.where(Chat.class)
+                .equalTo("type", type)
+                .findAll();
+
+        for (Chat chat : chats) {
+            realm.beginTransaction();
+            chat.setShow(false);
+            realm.copyToRealmOrUpdate(chat);
+            realm.commitTransaction();
+        }
+
+        realm.close();
+    }
+
+    public static void hideAllMUCChats() {
+        hideAllChatsOfType(Chat.TYPE_MUC);
+    }
+
+    public static void hideAllMUCLightChats() {
+        hideAllChatsOfType(Chat.TYPE_MUC_LIGHT);
+    }
+
 }

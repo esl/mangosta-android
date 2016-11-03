@@ -25,8 +25,11 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -34,6 +37,7 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -57,8 +61,10 @@ import inaka.com.mangosta.chat.RoomManagerListener;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
+import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
@@ -130,6 +136,7 @@ public class ChatActivity extends BaseActivity {
 
     Timer mPauseComposeTimer = new Timer();
     private int mMessagesCount;
+    private Menu mMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,6 +207,11 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
+        // Not enable MAM refresh with MUC
+        if (mChat.getType() == Chat.TYPE_MUC) {
+            loadMessagesSwipeRefreshLayout.setEnabled(false);
+        }
+
         chatSendMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {
@@ -209,11 +221,8 @@ public class ChatActivity extends BaseActivity {
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 if (charSequence.length() > 0) { // compose message
                     mPauseComposeTimer.cancel();
-
                     mRoomManager.updateTypingStatus(ChatState.composing, mChatJID, mChat.getType());
-
                     schedulePauseTimer();
-
                 } else { // delete or send message
                     mPauseComposeTimer.cancel();
                     mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
@@ -423,18 +432,23 @@ public class ChatActivity extends BaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_chat, menu);
+        mMenu = menu;
 
-        MenuItem chatMembersItem = menu.getItem(0);
-        chatMembersItem.setVisible(!(mChat.getType() == Chat.TYPE_1_T0_1));
+        menu.findItem(R.id.actionChatMembers).setVisible(mChat.getType() != Chat.TYPE_1_T0_1);
 
-        MenuItem destroyItem = menu.getItem(4);
-        destroyItem.setVisible(false);
+        // can change room name or subject only if it is a MUC Light
+        menu.findItem(R.id.actionChangeRoomName).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
+        menu.findItem(R.id.actionChangeSubject).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
 
-        // can change room name or subject only if it is a muc light
-        menu.getItem(1).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
-        menu.getItem(2).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
-
+        menu.findItem(R.id.actionDestroyChat).setVisible(false);
         setDestroyButtonVisibility(menu);
+
+        menu.findItem(R.id.actionAddToFriends).setVisible(false);
+        menu.findItem(R.id.actionRemoveFromFriends).setVisible(false);
+        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+            menu.findItem(R.id.actionLeaveChat).setTitle(getString(R.string.action_delete_chat));
+            manageLeaveAndFriendMenuItems();
+        }
 
         return true;
     }
@@ -477,9 +491,45 @@ public class ChatActivity extends BaseActivity {
                 mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
                 destroyChat();
                 break;
+
+            case R.id.actionAddToFriends:
+                addChatGuyToFriends();
+                break;
+
+            case R.id.actionRemoveFromFriends:
+                removeChatGuyFromFriends();
+                break;
         }
 
         return true;
+    }
+
+    private void removeChatGuyFromFriends() {
+        User userNotFriend = new User();
+        userNotFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
+        try {
+            RosterManager.removeFromBuddies(userNotFriend);
+            setMenuChatNotFriend();
+            Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_friends),
+                    userNotFriend.getLogin()), Toast.LENGTH_SHORT).show();
+        } catch (SmackException.NotLoggedInException | InterruptedException |
+                SmackException.NotConnectedException | XMPPException.XMPPErrorException |
+                XmppStringprepException | SmackException.NoResponseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addChatGuyToFriends() {
+        User userFriend = new User();
+        userFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
+        try {
+            RosterManager.addToBuddies(userFriend);
+            setMenuChatWithFriend();
+            Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_friends),
+                    userFriend.getLogin()), Toast.LENGTH_SHORT).show();
+        } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | XmppStringprepException | SmackException.NoResponseException e) {
+            e.printStackTrace();
+        }
     }
 
     private void changeMUCLightRoomName() {
@@ -672,9 +722,17 @@ public class ChatActivity extends BaseActivity {
 
     private void leaveChat() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(getString(R.string.want_to_leave_chat));
 
-        builder.setPositiveButton(R.string.action_leave_chat, new DialogInterface.OnClickListener() {
+        int positiveButtonTitle;
+        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+            builder.setMessage(getString(R.string.want_to_delete_chat));
+            positiveButtonTitle = R.string.action_delete_chat;
+        } else {
+            builder.setMessage(getString(R.string.want_to_leave_chat));
+            positiveButtonTitle = R.string.action_leave_chat;
+        }
+
+        builder.setPositiveButton(positiveButtonTitle, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mLeaving = true;
@@ -901,6 +959,39 @@ public class ChatActivity extends BaseActivity {
         refreshMessagesAndScrollToEnd();
     }
 
+    private void manageLeaveAndFriendMenuItems() {
+        if (isChatWithFriend()) {
+            setMenuChatWithFriend();
+        } else {
+            setMenuChatNotFriend();
+        }
+    }
+
+    private void setMenuChatNotFriend() {
+        mMenu.findItem(R.id.actionLeaveChat).setVisible(true);
+        mMenu.findItem(R.id.actionAddToFriends).setVisible(true);
+        mMenu.findItem(R.id.actionRemoveFromFriends).setVisible(false);
+    }
+
+    private void setMenuChatWithFriend() {
+        mMenu.findItem(R.id.actionLeaveChat).setVisible(false);
+        mMenu.findItem(R.id.actionAddToFriends).setVisible(false);
+        mMenu.findItem(R.id.actionRemoveFromFriends).setVisible(true);
+    }
+
+    private boolean isChatWithFriend() {
+        try {
+            for (RosterEntry entry : RosterManager.getBuddies()) {
+                if (mChat.getJid().equals(entry.getJid().toString())) {
+                    return true;
+                }
+            }
+        } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private void setDestroyButtonVisibility(final Menu menu) {
         switch (mChat.getType()) {
             case Chat.TYPE_MUC_LIGHT:
@@ -927,7 +1018,7 @@ public class ChatActivity extends BaseActivity {
 
                     Jid key = pair.getKey();
                     if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
-                        MenuItem destroyItem = menu.getItem(4);
+                        MenuItem destroyItem = menu.findItem(R.id.actionDestroyChat);
                         mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
                         destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
                     }

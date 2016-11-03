@@ -65,7 +65,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
         public void bind(final Chat chat) {
 
-            if (chat == null) {
+            if (chat == null || !chat.isValid()) {
                 return;
             }
 

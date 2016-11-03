@@ -149,7 +149,6 @@ public class XMPPSession {
     public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
-
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
     private PublishSubject<Presence> mPresencePublisher = PublishSubject.create();
@@ -207,6 +206,7 @@ public class XMPPSession {
 
         Roster roster = Roster.getInstanceFor(mXMPPConnection);
         roster.setRosterLoadedAtLogin(false);
+        roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
 
         mXMPPConnection.addConnectionListener(new AbstractConnectionClosedListener() {
             @Override
@@ -215,7 +215,7 @@ public class XMPPSession {
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
-                RoomManager.notShowMUCs();
+                RealmManager.hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
