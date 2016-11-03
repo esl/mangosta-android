@@ -1,19 +1,19 @@
 package inaka.com.mangosta.activities;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
+import android.test.IsolatedContext;
+import android.test.mock.MockContentResolver;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,6 +24,7 @@ import inaka.com.mangosta.context.BaseInstrumentedTest;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
+import io.realm.Realm;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -38,8 +39,6 @@ import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
-//@RunWith(PowerMockRunner.class)
-@PrepareForTest(RealmManager.class)
 public class CreateBlogActivityTest extends BaseInstrumentedTest {
 
     @Rule
@@ -47,12 +46,24 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
 
     private Activity mActivity;
     private List<BlogPost> mBlogPosts;
+    private Context mContext;
+    private Realm mRealm;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         mActivity = mActivityTestRule.getActivity();
         initBlogPosts();
+
+        Context context = getContext();
+        ContentResolver provider = new MockContentResolver();
+        mContext = new IsolatedContext(provider, context);
+        Realm.init(mContext);
+        mRealm = Realm.getDefaultInstance();
+
+        RealmManager realmManager = Mockito.mock(RealmManager.class);
+        Mockito.when(realmManager.getRealm()).thenReturn(mRealm);
+        Mockito.when(realmManager.getBlogPosts()).thenReturn(mBlogPosts);
+        RealmManager.setSpecialInstanceForTesting(realmManager);
     }
 
     private void initBlogPosts() {
@@ -87,6 +98,7 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     public void enterBlogPostContent() throws Exception {
         assumeTrue(isUserLoggedIn());
 
+
         mActivity.startActivity(new Intent(mActivity, CreateBlogActivity.class));
 
         onView(withId(R.id.createBlogText))
@@ -100,8 +112,7 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     public void createBlogPost() throws Exception {
         assumeTrue(isUserLoggedIn());
 
-        PowerMockito.mockStatic(RealmManager.class);
-        PowerMockito.when(RealmManager.getBlogPosts()).thenReturn(mBlogPosts);
+
         int blogPostsCount = getBlogPostsCount();
 
         mActivity.startActivity(new Intent(mActivity, CreateBlogActivity.class));
@@ -137,7 +148,7 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     }
 
     private int getBlogPostsCount() {
-        return RealmManager.getBlogPosts().size();
+        return RealmManager.getInstance().getBlogPosts().size();
     }
 
 }

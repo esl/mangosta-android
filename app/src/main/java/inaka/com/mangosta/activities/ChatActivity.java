@@ -179,7 +179,7 @@ public class ChatActivity extends BaseActivity {
         chatMessagesRecyclerView.setHasFixedSize(true);
         chatMessagesRecyclerView.setLayoutManager(mLayoutManagerMessages);
 
-        mMessages = RealmManager.getMessagesForChat(getRealm(), mChatJID);
+        mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
 
         mMessages.addChangeListener(mRealmChangeListener);
 

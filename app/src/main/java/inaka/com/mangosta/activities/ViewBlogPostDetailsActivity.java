@@ -101,7 +101,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
 
                     try {
                         BlogPostComment blogPostComment = sendComment(newComment);
-                        RealmManager.saveBlogPostComment(blogPostComment);
+                        RealmManager.getInstance().saveBlogPostComment(blogPostComment);
 
                         Toast.makeText(getApplicationContext(), ViewBlogPostDetailsActivity.this.getResources()
                                 .getString(R.string.comment_created), Toast.LENGTH_LONG).show();
@@ -145,7 +145,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
 
     private void loadBlogPostComments() {
         mBlogPostComments.clear();
-        mBlogPostComments.addAll(RealmManager.getBlogPostComments(mBlogPost.getId()));
+        mBlogPostComments.addAll(RealmManager.getInstance().getBlogPostComments(mBlogPost.getId()));
         commentsListAdapter.notifyDataSetChanged();
     }
 

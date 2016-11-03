@@ -14,14 +14,14 @@ public class BaseFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mRealm = RealmManager.getRealm();
+        mRealm = RealmManager.getInstance().getRealm();
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
 
-        if (mRealm != null) {
+        if (mRealm != null && !RealmManager.isTesting()) {
             mRealm.close();
         }
     }
@@ -34,10 +34,10 @@ public class BaseFragment extends Fragment {
     protected Realm getRealm() {
         try {
             if (mRealm.isClosed()) {
-                mRealm = RealmManager.getRealm();
+                mRealm = RealmManager.getInstance().getRealm();
             }
         } catch (Throwable e) {
-            mRealm = RealmManager.getRealm();
+            mRealm = RealmManager.getInstance().getRealm();
         }
         return mRealm;
     }

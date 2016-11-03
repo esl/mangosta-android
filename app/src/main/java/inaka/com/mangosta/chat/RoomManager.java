@@ -78,10 +78,10 @@ public class RoomManager {
 
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
             if (discoverItems != null) {
-                RealmManager.hideAllMUCChats();
+                RealmManager.getInstance().hideAllMUCChats();
 
                 List<DiscoverItems.Item> items = discoverItems.getItems();
-                Realm realm = RealmManager.getRealm();
+                Realm realm = RealmManager.getInstance().getRealm();
 
                 try {
                     for (DiscoverItems.Item item : items) {
@@ -155,9 +155,9 @@ public class RoomManager {
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCLightItems();
 
             if (discoverItems != null) {
-                RealmManager.hideAllMUCLightChats();
+                RealmManager.getInstance().hideAllMUCLightChats();
                 List<DiscoverItems.Item> items = discoverItems.getItems();
-                Realm realm = RealmManager.getRealm();
+                Realm realm = RealmManager.getInstance().getRealm();
 
                 try {
                     for (DiscoverItems.Item item : items) {
@@ -181,7 +181,7 @@ public class RoomManager {
                             realm.commitTransaction();
 
                             // set last retrieved from MAM
-                            ChatMessage chatMessage = RealmManager.getLastMessageForChat(chatRoom.getJid());
+                            ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(chatRoom.getJid());
                             if (chatMessage != null) {
                                 realm.beginTransaction();
                                 chatRoom.setLastRetrievedFromMAM(chatMessage.getMessageId());
@@ -293,7 +293,7 @@ public class RoomManager {
     }
 
     public static void createChatIfNotExists(String chatJid, final boolean save) {
-        if (!RealmManager.chatExists(chatJid)) {
+        if (!RealmManager.getInstance().chatExists(chatJid)) {
             // save chat
             final inaka.com.mangosta.models.Chat chat = new inaka.com.mangosta.models.Chat(chatJid);
 
@@ -314,7 +314,7 @@ public class RoomManager {
 
                 chat.setShow(true);
                 chat.setDateCreated(new Date());
-                RealmManager.saveChat(chat);
+                RealmManager.getInstance().saveChat(chat);
             }
         }
     }
@@ -363,7 +363,7 @@ public class RoomManager {
         Tasks.executeInBackground(MangostaApplication.getInstance(), new BackgroundWork<Stanza>() {
             @Override
             public Stanza doInBackground() throws Exception {
-                Realm realm = RealmManager.getRealm();
+                Realm realm = RealmManager.getInstance().getRealm();
                 Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
                 MamManager mamManager = XMPPSession.getInstance().getMamManager();
                 int pageSize = 15;
@@ -426,7 +426,7 @@ public class RoomManager {
             presence.setTo(JidCreate.from(jid));
             XMPPSession.getInstance().getXMPPConnection().sendStanza(presence);
 
-            Realm realm = RealmManager.getRealm();
+            Realm realm = RealmManager.getInstance().getRealm();
             realm.beginTransaction();
 
             Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
@@ -453,7 +453,7 @@ public class RoomManager {
             MultiUserChatLight multiUserChatLight = manager.getMultiUserChatLight(JidCreate.from(jid).asEntityBareJidIfPossible());
             multiUserChatLight.leave();
 
-            Realm realm = RealmManager.getRealm();
+            Realm realm = RealmManager.getInstance().getRealm();
             realm.beginTransaction();
 
             Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
@@ -474,7 +474,7 @@ public class RoomManager {
     }
 
     public void leave1to1Chat(String chatJid) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
 
         Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 

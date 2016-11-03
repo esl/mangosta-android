@@ -215,7 +215,7 @@ public class XMPPSession {
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
-                RealmManager.hideAllMUCChats();
+                RealmManager.getInstance().hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -430,7 +430,7 @@ public class XMPPSession {
                     Date updated = postEntryExtension.getUpdated();
 
                     BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
-                    RealmManager.saveBlogPost(blogPost);
+                    RealmManager.getInstance().saveBlogPost(blogPost);
                 }
             }
         });
@@ -785,7 +785,7 @@ public class XMPPSession {
             if (isMessageCorrection(message)) { // message correction
                 saveMessageCorrection(message, delayDate);
             } else { // normal message received
-                if (!RealmManager.chatMessageExists(messageId)) {
+                if (!RealmManager.getInstance().chatMessageExists(messageId)) {
                     manageMessageReceived(message, delayDate, messageId);
                 }
             }
@@ -795,7 +795,7 @@ public class XMPPSession {
     private void saveMessage(Message message) {
         String messageId = assignMessageId(message);
 
-        if (RealmManager.chatMessageExists(messageId)) { // message sent confirmation
+        if (RealmManager.getInstance().chatMessageExists(messageId)) { // message sent confirmation
             manageMessageAlreadyExists(message, null, messageId);
 
         } else if (isMessageCorrection(message)) { // message correction
@@ -826,7 +826,7 @@ public class XMPPSession {
         String newMessageBody = message.getBody();
         String idInitialMessage = messageCorrectExtension.getIdInitialMessage();
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class)
@@ -883,7 +883,7 @@ public class XMPPSession {
             chatMessage.setType(ChatMessage.TYPE_CHAT);
         }
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
 
@@ -925,7 +925,7 @@ public class XMPPSession {
     }
 
     private void manageMessageAlreadyExists(Message message, Date delayDate, String messageId) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class).equalTo("messageId", messageId).findFirst();
@@ -948,13 +948,13 @@ public class XMPPSession {
     }
 
     private Realm realmBeginTransaction() {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
         return realm;
     }
 
     private void manageSender(String[] jidList, ChatMessage chatMessage, String chatRoomJid) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJid).findFirst();
 
         if (chat.getType() == Chat.TYPE_MUC) {
@@ -1027,7 +1027,7 @@ public class XMPPSession {
     public int deleteMessagesToDelete() {
         int count = 0;
         for (String messageId : messagesToDeleteIds) {
-            RealmManager.deleteMessage(messageId);
+            RealmManager.getInstance().deleteMessage(messageId);
             count++;
         }
         messagesToDeleteIds.clear();

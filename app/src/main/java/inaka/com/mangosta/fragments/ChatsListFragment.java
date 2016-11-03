@@ -146,15 +146,15 @@ public class ChatsListFragment extends BaseFragment {
 
         switch (mPosition) {
             case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats
-                mChats.addAll(RealmManager.get1to1Chats());
+                mChats.addAll(RealmManager.getInstance().get1to1Chats());
                 break;
 
             case MUC_LIGHT_CHATS_POSITION: // load muc chats
-                mChats.addAll(RealmManager.getMUCLights());
+                mChats.addAll(RealmManager.getInstance().getMUCLights());
                 break;
 
             case MUC_CHATS_POSITION: // load muc light chats
-                mChats.addAll(RealmManager.getMUCs());
+                mChats.addAll(RealmManager.getInstance().getMUCs());
                 break;
         }
 

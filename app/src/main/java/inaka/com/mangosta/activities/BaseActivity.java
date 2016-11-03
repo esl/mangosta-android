@@ -22,7 +22,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mRealm = RealmManager.getRealm();
+        mRealm = RealmManager.getInstance().getRealm();
     }
 
     @Override
@@ -30,7 +30,7 @@ public class BaseActivity extends AppCompatActivity {
         ButterKnife.unbind(this);
         EventBus.getDefault().unregister(this);
 
-        if (mRealm != null) {
+        if (mRealm != null && !RealmManager.isTesting()) {
             mRealm.close();
         }
         clearReferences();
@@ -102,10 +102,10 @@ public class BaseActivity extends AppCompatActivity {
     public Realm getRealm() {
         try {
             if (mRealm.isClosed()) {
-                mRealm = RealmManager.getRealm();
+                mRealm = RealmManager.getInstance().getRealm();
             }
         } catch (Throwable e) {
-            mRealm = RealmManager.getRealm();
+            mRealm = RealmManager.getInstance().getRealm();
         }
         return mRealm;
     }

@@ -11,8 +11,8 @@ public class ChatOrderComparator implements Comparator<Chat> {
 
     @Override
     public int compare(Chat chat1, Chat chat2) {
-        ChatMessage chatMessage1 = RealmManager.getLastMessageForChat(chat1.getJid());
-        ChatMessage chatMessage2 = RealmManager.getLastMessageForChat(chat2.getJid());
+        ChatMessage chatMessage1 = RealmManager.getInstance().getLastMessageForChat(chat1.getJid());
+        ChatMessage chatMessage2 = RealmManager.getInstance().getLastMessageForChat(chat2.getJid());
 
         Date date1 = null;
         Date date2 = null;

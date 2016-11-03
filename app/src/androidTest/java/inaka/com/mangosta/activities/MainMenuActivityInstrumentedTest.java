@@ -56,7 +56,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     private void obtainMUCs() {
-        mMUCs = RealmManager.getMUCs();
+        mMUCs = RealmManager.getInstance().getMUCs();
         Collections.sort(mMUCs, new ChatOrderComparator());
         mMUCNames = new ArrayList<>();
         for (Chat chat : mMUCs) {
@@ -65,7 +65,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     private void obtainMUCLights() {
-        mMUCLights = RealmManager.getMUCLights();
+        mMUCLights = RealmManager.getInstance().getMUCLights();
         Collections.sort(mMUCLights, new ChatOrderComparator());
         mMUCLightNames = new ArrayList<>();
         for (Chat chat : mMUCLights) {
@@ -74,7 +74,7 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     private void obtain1to1Chats() {
-        mOneToOneChats = RealmManager.get1to1Chats();
+        mOneToOneChats = RealmManager.getInstance().get1to1Chats();
         Collections.sort(mOneToOneChats, new ChatOrderComparator());
         mOneToOneChatNames = new ArrayList<>();
         for (Chat chat : mOneToOneChats) {
