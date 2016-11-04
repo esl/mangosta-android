@@ -122,7 +122,7 @@ public class XMPPUtils {
     }
 
     public static boolean isAutenticatedJid(Jid jid) {
-        return jid.equals(XMPPSession.getInstance().getXMPPConnection().getUser().asBareJid());
+        return jid.equals(XMPPSession.getInstance().getUser().asBareJid());
     }
 
 }

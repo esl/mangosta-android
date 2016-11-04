@@ -258,7 +258,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                                 }
 
                                 // send correction message
-                                XMPPSession.getInstance().getXMPPConnection().sendStanza(message);
+                                XMPPSession.getInstance().sendStanza(message);
 
                                 // update message if 1 to 1 chat
                                 if (chat.getType() == Chat.TYPE_1_T0_1) {

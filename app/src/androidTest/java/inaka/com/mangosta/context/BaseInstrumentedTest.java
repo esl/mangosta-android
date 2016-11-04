@@ -7,20 +7,29 @@ import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 
-import org.mockito.Mockito;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.packet.Stanza;
+import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.Collection;
 
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
+import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
 
 import static android.support.test.runner.lifecycle.Stage.RESUMED;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BaseInstrumentedTest {
 
     private Activity mCurrentActivity;
-    private Realm mRealmMock;
+    protected Realm mRealmMock;
     protected RealmManager mRealmManagerMock;
 
     protected IdlingResource startTiming(long time) {
@@ -84,13 +93,39 @@ public class BaseInstrumentedTest {
         return mCurrentActivity;
     }
 
-    protected void setUpRealmTestContext() {
+    private void setUpRealmTestContext() {
         Realm.init(getContext());
         mRealmMock = Realm.getDefaultInstance();
 
-        mRealmManagerMock = Mockito.mock(RealmManager.class);
-        Mockito.when(mRealmManagerMock.getRealm()).thenReturn(mRealmMock);
+        mRealmManagerMock = mock(RealmManager.class);
+        when(mRealmManagerMock.getRealm()).thenReturn(mRealmMock);
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
+    }
+
+    private void mockXMPPSession() {
+        XMPPSession xmppSession = mock(XMPPSession.class);
+
+        try {
+            EntityBareJid jid = JidCreate.entityBareFrom(Preferences.getInstance().getUserXMPPJid());
+            when(xmppSession.getUser()).thenReturn(jid);
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            doNothing().when(xmppSession).sendStanza(any(Stanza.class));
+        } catch (SmackException.NotConnectedException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        doNothing().when(xmppSession).createNodeToAllowComments(any(String.class));
+
+        XMPPSession.setSpecialInstanceForTesting(xmppSession);
+    }
+
+    protected void setUp() {
+        setUpRealmTestContext();
+        mockXMPPSession();
     }
 
 }

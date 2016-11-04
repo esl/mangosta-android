@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 
 import java.util.List;
@@ -133,7 +134,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
     }
 
     private static boolean isAuthorizedXMPPUser(User user) {
-        EntityFullJid userJid = XMPPSession.getInstance().getXMPPConnection().getUser();
+        EntityBareJid userJid = XMPPSession.getInstance().getUser();
         return userJid != null && user.getLogin().equals(XMPPUtils.fromJIDToUserName(userJid.toString()));
     }
 

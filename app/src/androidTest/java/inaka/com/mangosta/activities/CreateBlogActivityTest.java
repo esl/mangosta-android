@@ -43,12 +43,11 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     private List<BlogPost> mBlogPosts;
 
     @Before
+    @Override
     public void setUp() {
-        setUpRealmTestContext();
+        super.setUp();
         mActivity = mActivityTestRule.getActivity();
         initBlogPosts();
-//        Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
-//        Mockito.doNothing().when(mRealmManagerMock).saveBlogPost(Mockito.any(BlogPost.class));
     }
 
     private void initBlogPosts() {
@@ -140,14 +139,17 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
         mBlogPosts.add(blogPost4);
         Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
 
+        IdlingResource resource = startTiming(10000);
+
         onView(withId(R.id.blogsRecyclerView))
                 .check(matches(isDisplayed()));
 
-        IdlingResource resource = startTiming(10000);
         RecyclerView blogsRecyclerView = (RecyclerView) getCurrentActivity()
                 .findViewById(R.id.blogsRecyclerView);
+
         assertEquals(blogPostsCount + 1, getBlogPostsCount());
         assertEquals(getBlogPostsCount(), blogsRecyclerView.getAdapter().getItemCount());
+
         stopTiming(resource);
     }
 

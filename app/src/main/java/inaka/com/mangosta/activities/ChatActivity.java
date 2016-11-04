@@ -351,7 +351,7 @@ public class ChatActivity extends BaseActivity {
                             ChatStateExtension chatStateExtension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
                             ChatState chatState = chatStateExtension.getChatState();
 
-                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getXMPPConnection().getUser().toString());
+                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
                             String userSender = "";
 
                             String[] jidList = message.getFrom().toString().split("/");

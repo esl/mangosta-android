@@ -48,6 +48,7 @@ import org.jivesoftware.smackx.pep.PEPManager;
 import org.jivesoftware.smackx.pubsub.EventElement;
 import org.jivesoftware.smackx.pubsub.EventElementType;
 import org.jivesoftware.smackx.pubsub.ItemsExtension;
+import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jxmpp.jid.EntityBareJid;
@@ -138,6 +139,7 @@ import rx.subjects.PublishSubject;
 
 public class XMPPSession {
 
+    private static boolean mIsTesting = false;
     private static XMPPSession mInstance;
     private XMPPTCPConnection mXMPPConnection;
 
@@ -176,6 +178,15 @@ public class XMPPSession {
         }
 
         return mInstance;
+    }
+
+    public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
+        mInstance = xmppSession;
+        mIsTesting = true;
+    }
+
+    public static boolean isTesting() {
+        return mIsTesting;
     }
 
     private XMPPSession() {
@@ -452,7 +463,7 @@ public class XMPPSession {
         }
 
         // subscribe to myself
-        String myJIDString = getXMPPConnection().getUser().asEntityBareJid().toString();
+        String myJIDString = getUser().asEntityBareJid().toString();
         try {
             org.jivesoftware.smackx.pubsub.Subscription subscription = pubSubManager.getNode(nodeName).subscribe(myJIDString);
             Log.wtf("Subscription state", subscription.getState().toString());
@@ -562,7 +573,7 @@ public class XMPPSession {
                             Presence presence = new Presence(presenceType);
                             presence.setTo(itemJid);
                             try {
-                                mXMPPConnection.sendStanza(presence);
+                                sendStanza(presence);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -590,7 +601,7 @@ public class XMPPSession {
     }
 
     public PubSubManager getPubSubManager() {
-        EntityBareJid myJIDString = getXMPPConnection().getUser().asEntityBareJid();
+        EntityBareJid myJIDString = getUser();
         return PubSubManager.getInstance(mXMPPConnection, myJIDString);
     }
 
@@ -696,7 +707,7 @@ public class XMPPSession {
                         for (DiscoverItems.Item item : items) {
                             Presence presence = new Presence(Presence.Type.unavailable);
                             presence.setTo(item.getEntityID());
-                            mXMPPConnection.sendStanza(presence);
+                            sendStanza(presence);
                         }
                     }
                     mReconnectionManager.disableAutomaticReconnection();
@@ -1055,6 +1066,39 @@ public class XMPPSession {
 
     private boolean hasAffiliationsChangeExtension(Message message) {
         return message.hasExtension(MUCLightElements.AffiliationsChangeExtension.ELEMENT, MUCLightElements.AffiliationsChangeExtension.NAMESPACE);
+    }
+
+    public void sendStanza(Stanza stanza) throws SmackException.NotConnectedException, InterruptedException {
+        if (isTesting()) {
+            try {
+                getXMPPConnection().sendStanza(stanza);
+            } catch (SmackException.NotConnectedException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            getXMPPConnection().sendStanza(stanza);
+        }
+    }
+
+    public void createNodeToAllowComments(String blogPostId) {
+        String nodeName = "urn:xmpp:microblog:0:comments/" + blogPostId;
+        PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
+        try {
+            // create node
+            LeafNode node = pubSubManager.createNode(nodeName);
+
+            // subscribe to comments
+            String myJIDString = XMPPSession.getInstance().getUser().toString();
+            org.jivesoftware.smackx.pubsub.Subscription subscription = node.subscribe(myJIDString);
+
+            Log.wtf("Comments subscription state", subscription.getState().toString());
+        } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public EntityBareJid getUser() {
+        return getXMPPConnection().getUser().asEntityBareJid();
     }
 
 }

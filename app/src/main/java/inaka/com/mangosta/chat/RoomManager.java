@@ -132,7 +132,7 @@ public class RoomManager {
                         try {
                             Presence presence = new Presence(Presence.Type.available);
                             presence.setTo(JidCreate.from(itemJid));
-                            connection.sendStanza(presence);
+                            XMPPSession.getInstance().sendStanza(presence);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -424,7 +424,7 @@ public class RoomManager {
         try {
             Presence presence = new Presence(Presence.Type.unavailable);
             presence.setTo(JidCreate.from(jid));
-            XMPPSession.getInstance().getXMPPConnection().sendStanza(presence);
+            XMPPSession.getInstance().sendStanza(presence);
 
             Realm realm = RealmManager.getInstance().getRealm();
             realm.beginTransaction();

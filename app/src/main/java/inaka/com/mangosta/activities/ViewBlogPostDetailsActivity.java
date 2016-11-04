@@ -129,7 +129,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
     }
 
     private BlogPostComment sendComment(String content) throws SmackException.NotConnectedException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NoResponseException {
-        Jid jid = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid();
+        Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
         String userName = XMPPUtils.fromJIDToUserName(jid.toString());
         Jid pubSubServiceJid = PubSubManager.getPubSubService(XMPPSession.getInstance().getXMPPConnection());
 
@@ -138,7 +138,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
         PubSub publishCommentPubSub = PubSub.createPubsubPacket(pubSubServiceJid, IQ.Type.set, publishCommentExtension, null);
 
         // send stanza
-        XMPPSession.getInstance().getXMPPConnection().sendStanza(publishCommentPubSub);
+        XMPPSession.getInstance().sendStanza(publishCommentPubSub);
 
         return new BlogPostComment(publishCommentExtension.getId(), mBlogPost.getId(), content, userName, jid.toString(), mBlogPost.getOwnerAvatarUrl(), publishCommentExtension.getPublished());
     }
