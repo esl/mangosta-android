@@ -70,7 +70,7 @@ public class BaseActivity extends AppCompatActivity {
 
         Log.wtf("activities", String.valueOf(mSessionDepth));
 
-        if (mSessionDepth == 1 && XMPPSession.getInstance().getXMPPConnection().isConnected()) {
+        if (!XMPPSession.isTesting() && mSessionDepth == 1 && XMPPSession.getInstance().getXMPPConnection().isConnected()) {
             XMPPSession.getInstance().activeCSI();
         }
 
