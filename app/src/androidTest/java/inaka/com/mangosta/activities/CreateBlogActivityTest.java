@@ -47,7 +47,8 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
         setUpRealmTestContext();
         mActivity = mActivityTestRule.getActivity();
         initBlogPosts();
-        Mockito.when(mRealmManager.getBlogPosts()).thenReturn(mBlogPosts);
+//        Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
+//        Mockito.doNothing().when(mRealmManagerMock).saveBlogPost(Mockito.any(BlogPost.class));
     }
 
     private void initBlogPosts() {
@@ -72,10 +73,16 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
                 new Date(),
                 new Date());
 
+        mRealmManagerMock.saveBlogPost(blogPost1);
+        mRealmManagerMock.saveBlogPost(blogPost2);
+        mRealmManagerMock.saveBlogPost(blogPost3);
+
         mBlogPosts = new ArrayList<>();
         mBlogPosts.add(blogPost1);
         mBlogPosts.add(blogPost2);
         mBlogPosts.add(blogPost3);
+
+        Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
     }
 
     @Test
@@ -105,20 +112,33 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
                 .check(matches(isClickable()))
                 .perform(click());
 
-        // nothing happens
-        // ...
+        // nothing happens because the content is empty
 
+        String newBlogPostContent = "Blog post test";
+
+        // now I complete the content
         onView(withId(R.id.createBlogText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
-                .perform(typeText("Running a test"))
+                .perform(typeText(newBlogPostContent))
                 .check(matches(hasFocus()))
-                .check(matches(withText("Running a test")));
+                .check(matches(withText(newBlogPostContent)));
 
+        // create blog post
         onView(withId(R.id.createBlogFloatingButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
+
+        // save it in mock
+        BlogPost blogPost4 = new BlogPost("004",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                newBlogPostContent,
+                new Date(),
+                new Date());
+        mBlogPosts.add(blogPost4);
+        Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
 
         onView(withId(R.id.blogsRecyclerView))
                 .check(matches(isDisplayed()));
@@ -126,7 +146,8 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
         IdlingResource resource = startTiming(10000);
         RecyclerView blogsRecyclerView = (RecyclerView) getCurrentActivity()
                 .findViewById(R.id.blogsRecyclerView);
-        assertEquals(blogPostsCount + 1, blogsRecyclerView.getAdapter().getItemCount());
+        assertEquals(blogPostsCount + 1, getBlogPostsCount());
+        assertEquals(getBlogPostsCount(), blogsRecyclerView.getAdapter().getItemCount());
         stopTiming(resource);
     }
 
