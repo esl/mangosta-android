@@ -1,21 +1,31 @@
 package inaka.com.mangosta.context;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import android.test.IsolatedContext;
+import android.test.mock.MockContentResolver;
+
+import org.mockito.Mockito;
 
 import java.util.Collection;
 
+import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
+import io.realm.Realm;
 
 import static android.support.test.runner.lifecycle.Stage.RESUMED;
 
 public class BaseInstrumentedTest {
 
     private Activity mCurrentActivity;
+    protected Context mContext;
+    private Realm mRealm;
+    protected RealmManager mRealmManager;
 
     protected IdlingResource startTiming(long time) {
         IdlingResource idlingResource = new ElapsedTimeIdlingResource(time);
@@ -76,6 +86,18 @@ public class BaseInstrumentedTest {
             }
         });
         return mCurrentActivity;
+    }
+
+    protected void setUpRealmTestContext() {
+        Context context = getContext();
+        ContentResolver provider = new MockContentResolver();
+        mContext = new IsolatedContext(provider, context);
+        Realm.init(mContext);
+        mRealm = Realm.getDefaultInstance();
+
+        mRealmManager = Mockito.mock(RealmManager.class);
+        Mockito.when(mRealmManager.getRealm()).thenReturn(mRealm);
+        RealmManager.setSpecialInstanceForTesting(mRealmManager);
     }
 
 }

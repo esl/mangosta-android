@@ -1,14 +1,10 @@
 package inaka.com.mangosta.activities;
 
 import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
-import android.test.IsolatedContext;
-import android.test.mock.MockContentResolver;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,7 +20,6 @@ import inaka.com.mangosta.context.BaseInstrumentedTest;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
-import io.realm.Realm;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -46,24 +41,13 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
 
     private Activity mActivity;
     private List<BlogPost> mBlogPosts;
-    private Context mContext;
-    private Realm mRealm;
 
     @Before
     public void setUp() {
+        setUpRealmTestContext();
         mActivity = mActivityTestRule.getActivity();
         initBlogPosts();
-
-        Context context = getContext();
-        ContentResolver provider = new MockContentResolver();
-        mContext = new IsolatedContext(provider, context);
-        Realm.init(mContext);
-        mRealm = Realm.getDefaultInstance();
-
-        RealmManager realmManager = Mockito.mock(RealmManager.class);
-        Mockito.when(realmManager.getRealm()).thenReturn(mRealm);
-        Mockito.when(realmManager.getBlogPosts()).thenReturn(mBlogPosts);
-        RealmManager.setSpecialInstanceForTesting(realmManager);
+        Mockito.when(mRealmManager.getBlogPosts()).thenReturn(mBlogPosts);
     }
 
     private void initBlogPosts() {
@@ -111,7 +95,6 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     @Test
     public void createBlogPost() throws Exception {
         assumeTrue(isUserLoggedIn());
-
 
         int blogPostsCount = getBlogPostsCount();
 
