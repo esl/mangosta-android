@@ -29,7 +29,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
 
-public class UserProfileActivityTest extends BaseInstrumentedTest {
+public class UserProfileActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule mActivityTestRule = new ActivityTestRule<>(UserProfileActivity.class, true, false);

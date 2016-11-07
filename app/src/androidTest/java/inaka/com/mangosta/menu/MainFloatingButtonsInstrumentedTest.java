@@ -16,7 +16,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 
-public class MainFloatingButtonsTest extends BaseInstrumentedTest {
+public class MainFloatingButtonsInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =

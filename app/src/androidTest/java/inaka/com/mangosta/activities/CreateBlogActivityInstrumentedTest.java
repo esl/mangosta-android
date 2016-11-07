@@ -34,7 +34,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
-public class CreateBlogActivityTest extends BaseInstrumentedTest {
+public class CreateBlogActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule mActivityTestRule = new ActivityTestRule<>(MainMenuActivity.class);
