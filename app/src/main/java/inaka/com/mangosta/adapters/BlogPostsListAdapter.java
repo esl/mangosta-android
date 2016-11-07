@@ -84,7 +84,7 @@ public class BlogPostsListAdapter extends RecyclerView.Adapter<BlogPostsListAdap
         public void goToBlogPostDetails(BlogPost blogPost) {
             Intent blogPostActivityIntent = new Intent(mContext, BlogPostDetailsActivity.class);
             Bundle bundle = new Bundle();
-            bundle.putParcelable("blogPost", blogPost);
+            bundle.putParcelable(BlogPostDetailsActivity.BLOG_POST_PARAMETER, blogPost);
             blogPostActivityIntent.putExtras(bundle);
             mContext.startActivity(blogPostActivityIntent);
         }

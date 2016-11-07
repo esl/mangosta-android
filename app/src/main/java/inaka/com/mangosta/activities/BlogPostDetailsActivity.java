@@ -62,6 +62,7 @@ public class BlogPostDetailsActivity extends BaseActivity {
     List<BlogPostComment> mBlogPostComments;
 
     private BlogPostCommentsListAdapter commentsListAdapter;
+    public static String BLOG_POST_PARAMETER = "blogPost";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +72,7 @@ public class BlogPostDetailsActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         Bundle bundle = getIntent().getExtras();
-        mBlogPost = bundle.getParcelable("blogPost");
+        mBlogPost = bundle.getParcelable(BLOG_POST_PARAMETER);
 
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setTitle(mBlogPost.getContent());
