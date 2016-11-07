@@ -7,7 +7,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -16,7 +15,7 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.activities.ViewBlogPostDetailsActivity;
+import inaka.com.mangosta.activities.BlogPostDetailsActivity;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.ui.ViewHolderType;
 import inaka.com.mangosta.utils.TimeCalculation;
@@ -83,7 +82,7 @@ public class BlogPostsListAdapter extends RecyclerView.Adapter<BlogPostsListAdap
         }
 
         public void goToBlogPostDetails(BlogPost blogPost) {
-            Intent blogPostActivityIntent = new Intent(mContext, ViewBlogPostDetailsActivity.class);
+            Intent blogPostActivityIntent = new Intent(mContext, BlogPostDetailsActivity.class);
             Bundle bundle = new Bundle();
             bundle.putParcelable("blogPost", blogPost);
             blogPostActivityIntent.putExtras(bundle);

@@ -35,7 +35,7 @@ import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 
-public class ViewBlogPostDetailsActivity extends BaseActivity {
+public class BlogPostDetailsActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
@@ -96,14 +96,14 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
                 String newComment = textNewComment.getText().toString();
 
                 if (newComment.length() > 0) {
-                    final ProgressDialog progressSendComment = ProgressDialog.show(ViewBlogPostDetailsActivity.this,
+                    final ProgressDialog progressSendComment = ProgressDialog.show(BlogPostDetailsActivity.this,
                             getResources().getString(R.string.loading), getResources().getString(R.string.sending_request), true);
 
                     try {
                         BlogPostComment blogPostComment = sendComment(newComment);
                         RealmManager.getInstance().saveBlogPostComment(blogPostComment);
 
-                        Toast.makeText(getApplicationContext(), ViewBlogPostDetailsActivity.this.getResources()
+                        Toast.makeText(getApplicationContext(), BlogPostDetailsActivity.this.getResources()
                                 .getString(R.string.comment_created), Toast.LENGTH_LONG).show();
                         textNewComment.setText("");
 
@@ -117,7 +117,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
                     }
 
                 } else {
-                    Toast.makeText(getApplicationContext(), ViewBlogPostDetailsActivity.this.getResources()
+                    Toast.makeText(getApplicationContext(), BlogPostDetailsActivity.this.getResources()
                             .getString(R.string.empty_message), Toast.LENGTH_SHORT).show();
                 }
 
