@@ -2,16 +2,13 @@ package inaka.com.mangosta.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.test.espresso.IdlingResource;
 import android.support.test.espresso.NoMatchingViewException;
-import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,12 +23,19 @@ import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
+import static org.mockito.Mockito.when;
+
 
 public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTest {
 
@@ -48,10 +52,17 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
         super.setUp();
         initBlogPostsComments();
         launchActivity();
+//        doNothing().when(mRealmManagerMock).saveBlogPostComment(any(BlogPostComment.class));
     }
 
     private void initBlogPostsComments() {
-        mBlogPost = new BlogPost("sarasa001", "sarasa@erlang-solutions.com", null, "blog post content", new Date(), new Date());
+        Date date = getDate(2016, 10, 25, 22, 14, 53);
+        mBlogPost = new BlogPost("sarasa001",
+                "sarasa@erlang-solutions.com",
+                null,
+                "blog post content",
+                date,
+                date);
 
         mBlogPostComments = new ArrayList<>();
         mBlogPostCommentsContent = new ArrayList<>();
@@ -66,27 +77,27 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         new Date());
 
         BlogPostComment comment2 =
-                new BlogPostComment("101",
+                new BlogPostComment("102",
                         mBlogPost.getId(),
-                        "comment1",
+                        "comment2",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
                         null,
                         new Date());
 
         BlogPostComment comment3 =
-                new BlogPostComment("101",
+                new BlogPostComment("103",
                         mBlogPost.getId(),
-                        "comment1",
+                        "comment3",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
                         null,
                         new Date());
 
         BlogPostComment comment4 =
-                new BlogPostComment("101",
+                new BlogPostComment("104",
                         mBlogPost.getId(),
-                        "comment1",
+                        "comment4",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
                         null,
@@ -102,7 +113,7 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
         mBlogPostCommentsContent.add(comment3.getContent());
         mBlogPostCommentsContent.add(comment4.getContent());
 
-        Mockito.when(mRealmManagerMock.getBlogPostComments(mBlogPost.getId())).thenReturn(mBlogPostComments);
+        when(mRealmManagerMock.getBlogPostComments(mBlogPost.getId())).thenReturn(mBlogPostComments);
     }
 
     private void launchActivity() {
@@ -113,33 +124,8 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
         mActivityTestRule.launchActivity(intent);
     }
 
-    @Test
-    public void blogPostDetails() throws Exception {
-        onView(withId(R.id.textBlogPostOwnerName))
-                .check(matches(isDisplayed()))
-                .check(matches(withText(XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()))));
-
-        onView(withId(R.id.textBlogPostDate))
-                .check(matches(isDisplayed()))
-                .check(matches(withText(TimeCalculation.getTimeStringAgoSinceDate(getContext(), mBlogPost.getUpdated()))));
-
-        onView(withId(R.id.textBlogPostTitle))
-                .check(matches(isDisplayed()))
-                .check(matches(withText(mBlogPost.getContent())));
-    }
-
-    @Test
-    public void blogPostComments() throws Exception {
-        onView(withId(R.id.recyclerviewComments))
-                .check(matches(isDisplayed()));
-
-        IdlingResource resource = startTiming(5000);
-        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
-        stopTiming(resource);
-    }
-
     private void checkBlogPostsRecyclerViewContent(final List<String> comments) {
-        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.recyclerviewComments), ViewMatchers.isDisplayed()))
+        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.recyclerviewComments), isDisplayed()))
                 .withItems(comments)
                 .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
                     @Override
@@ -147,6 +133,75 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         matches(hasDescendant(withText(comment))).check(view, e);
                     }
                 });
+    }
+
+    @Test
+    public void blogPostDetails() throws Exception {
+        String dateString = TimeCalculation.getTimeStringAgoSinceDate(getContext(), mBlogPost.getUpdated());
+        onView(withId(R.id.textBlogPostDate))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(dateString)));
+
+        onView(withId(R.id.textBlogPostOwnerName))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()))));
+
+        onView(withId(R.id.textBlogPostTitle))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(mBlogPost.getContent())));
+    }
+
+    @Test
+    public void blogPostCommentsList() throws Exception {
+        onView(withId(R.id.recyclerviewComments))
+                .check(matches(isDisplayed()));
+        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
+    }
+
+    @Test
+    public void tryToAddCommentWithoutText() throws Exception {
+        onView(withId(R.id.textNewComment))
+                .check(matches(isDisplayed()))
+                .check(matches(isFocusable()));
+
+        // Try to send comment
+        onView(withId(R.id.buttonSendComment))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        // Empty message error
+        isToastMessageDisplayed(R.string.empty_message);
+    }
+
+    @Test
+    public void addNewComment() throws Exception {
+        // Enter comment text
+        String commentText = "Testing with a new comment";
+        onView(withId(R.id.textNewComment))
+                .perform(typeText(commentText), closeSoftKeyboard())
+                .check(matches(withText(commentText)));
+
+        // mocking new response
+        mBlogPostComments.add(
+                new BlogPostComment("105",
+                        mBlogPost.getId(),
+                        commentText,
+                        XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
+                        mBlogPost.getOwnerJid(),
+                        null,
+                        new Date()));
+        mBlogPostCommentsContent.add(commentText);
+        when(mRealmManagerMock.getBlogPostComments(mBlogPost.getId())).thenReturn(mBlogPostComments);
+
+        // Send comment
+        onView(withId(R.id.buttonSendComment))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        // Check comments list
+        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
     }
 
 }

@@ -22,6 +22,7 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
@@ -51,6 +52,7 @@ import org.jivesoftware.smackx.pubsub.ItemsExtension;
 import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -85,6 +87,7 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.BlogPost;
+import inaka.com.mangosta.models.BlogPostComment;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.realm.RealmManager;
@@ -117,6 +120,7 @@ import inaka.com.mangosta.xmpp.mam.providers.MamPrefsIQProvider;
 import inaka.com.mangosta.xmpp.mam.providers.MamQueryIQProvider;
 import inaka.com.mangosta.xmpp.mam.providers.MamResultProvider;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
+import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
 import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
@@ -1099,6 +1103,10 @@ public class XMPPSession {
 
     public EntityBareJid getUser() {
         return getXMPPConnection().getUser().asEntityBareJid();
+    }
+
+    public Jid getPubSubService() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException {
+        return  PubSubManager.getPubSubService(getXMPPConnection());
     }
 
 }

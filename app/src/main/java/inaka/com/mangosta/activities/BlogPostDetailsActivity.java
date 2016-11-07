@@ -15,7 +15,6 @@ import android.widget.Toast;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jxmpp.jid.Jid;
 
@@ -101,7 +100,7 @@ public class BlogPostDetailsActivity extends BaseActivity {
                             getResources().getString(R.string.loading), getResources().getString(R.string.sending_request), true);
 
                     try {
-                        BlogPostComment blogPostComment = sendComment(newComment);
+                        BlogPostComment blogPostComment = sendBlogPostComment(newComment, mBlogPost);
                         RealmManager.getInstance().saveBlogPostComment(blogPostComment);
 
                         Toast.makeText(getApplicationContext(), BlogPostDetailsActivity.this.getResources()
@@ -129,19 +128,27 @@ public class BlogPostDetailsActivity extends BaseActivity {
         loadBlogPostComments();
     }
 
-    private BlogPostComment sendComment(String content) throws SmackException.NotConnectedException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NoResponseException {
+    public BlogPostComment sendBlogPostComment(String content, BlogPost blogPost)
+            throws SmackException.NotConnectedException, InterruptedException,
+            XMPPException.XMPPErrorException, SmackException.NoResponseException {
         Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
         String userName = XMPPUtils.fromJIDToUserName(jid.toString());
-        Jid pubSubServiceJid = PubSubManager.getPubSubService(XMPPSession.getInstance().getXMPPConnection());
+        Jid pubSubServiceJid = XMPPSession.getInstance().getPubSubService();
 
         // create stanza
-        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(mBlogPost.getId(), userName, jid, content, new Date());
+        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(blogPost.getId(), userName, jid, content, new Date());
         PubSub publishCommentPubSub = PubSub.createPubsubPacket(pubSubServiceJid, IQ.Type.set, publishCommentExtension, null);
 
         // send stanza
         XMPPSession.getInstance().sendStanza(publishCommentPubSub);
 
-        return new BlogPostComment(publishCommentExtension.getId(), mBlogPost.getId(), content, userName, jid.toString(), mBlogPost.getOwnerAvatarUrl(), publishCommentExtension.getPublished());
+        return new BlogPostComment(publishCommentExtension.getId(),
+                blogPost.getId(),
+                content,
+                userName,
+                jid.toString(),
+                blogPost.getOwnerAvatarUrl(),
+                publishCommentExtension.getPublished());
     }
 
     private void loadBlogPostComments() {

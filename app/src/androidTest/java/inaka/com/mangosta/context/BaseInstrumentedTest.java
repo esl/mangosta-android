@@ -15,6 +15,7 @@ import org.jxmpp.stringprep.XmppStringprepException;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -25,16 +26,21 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
 
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.runner.lifecycle.Stage.RESUMED;
+import static inaka.com.mangosta.models.MyViewMatchers.isToast;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class BaseInstrumentedTest {
 
     private Activity mCurrentActivity;
-    protected Realm mRealmMock;
     protected RealmManager mRealmManagerMock;
     protected List<BlogPost> mBlogPosts;
 
@@ -101,10 +107,10 @@ public class BaseInstrumentedTest {
 
     private void setUpRealmTestContext() {
         Realm.init(getContext());
-        mRealmMock = Realm.getDefaultInstance();
+        Realm realmMock = Realm.getDefaultInstance();
 
         mRealmManagerMock = mock(RealmManager.class);
-        when(mRealmManagerMock.getRealm()).thenReturn(mRealmMock);
+        when(mRealmManagerMock.getRealm()).thenReturn(realmMock);
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
     }
 
@@ -125,6 +131,12 @@ public class BaseInstrumentedTest {
         }
 
         doNothing().when(xmppSession).createNodeToAllowComments(any(String.class));
+
+        try {
+            doReturn(null).when(xmppSession).getPubSubService();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         XMPPSession.setSpecialInstanceForTesting(xmppSession);
     }
@@ -166,6 +178,22 @@ public class BaseInstrumentedTest {
         mBlogPosts.add(blogPost3);
 
         Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
+    }
+
+    public void isToastMessageDisplayed(int textId) {
+        onView(withText(textId)).inRoot(isToast()).check(matches(isDisplayed()));
+    }
+
+    protected static Date getDate(int year, int month, int day, int hour, int minute, int second) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month);
+        cal.set(Calendar.DAY_OF_MONTH, day);
+        cal.set(Calendar.HOUR_OF_DAY, hour);
+        cal.set(Calendar.MINUTE, minute);
+        cal.set(Calendar.SECOND, second);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 
 }
