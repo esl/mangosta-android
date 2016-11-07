@@ -40,7 +40,6 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
     public ActivityTestRule mActivityTestRule = new ActivityTestRule<>(MainMenuActivity.class);
 
     private Activity mActivity;
-    private List<BlogPost> mBlogPosts;
 
     @Before
     @Override
@@ -48,40 +47,6 @@ public class CreateBlogActivityTest extends BaseInstrumentedTest {
         super.setUp();
         mActivity = mActivityTestRule.getActivity();
         initBlogPosts();
-    }
-
-    private void initBlogPosts() {
-        BlogPost blogPost1 = new BlogPost("001",
-                Preferences.getInstance().getUserXMPPJid(),
-                null,
-                "blog post 1",
-                new Date(),
-                new Date());
-
-        BlogPost blogPost2 = new BlogPost("002",
-                Preferences.getInstance().getUserXMPPJid(),
-                null,
-                "blog post 2",
-                new Date(),
-                new Date());
-
-        BlogPost blogPost3 = new BlogPost("003",
-                Preferences.getInstance().getUserXMPPJid(),
-                null,
-                "blog post 3",
-                new Date(),
-                new Date());
-
-        mRealmManagerMock.saveBlogPost(blogPost1);
-        mRealmManagerMock.saveBlogPost(blogPost2);
-        mRealmManagerMock.saveBlogPost(blogPost3);
-
-        mBlogPosts = new ArrayList<>();
-        mBlogPosts.add(blogPost1);
-        mBlogPosts.add(blogPost2);
-        mBlogPosts.add(blogPost3);
-
-        Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
     }
 
     @Test

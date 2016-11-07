@@ -12,9 +12,14 @@ import org.jivesoftware.smack.packet.Stanza;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
+import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
+import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -31,6 +36,7 @@ public class BaseInstrumentedTest {
     private Activity mCurrentActivity;
     protected Realm mRealmMock;
     protected RealmManager mRealmManagerMock;
+    protected List<BlogPost> mBlogPosts;
 
     protected IdlingResource startTiming(long time) {
         IdlingResource idlingResource = new ElapsedTimeIdlingResource(time);
@@ -126,6 +132,40 @@ public class BaseInstrumentedTest {
     protected void setUp() {
         setUpRealmTestContext();
         mockXMPPSession();
+    }
+
+    protected void initBlogPosts() {
+        BlogPost blogPost1 = new BlogPost("001",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                "blog post 1",
+                new Date(),
+                new Date());
+
+        BlogPost blogPost2 = new BlogPost("002",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                "blog post 2",
+                new Date(),
+                new Date());
+
+        BlogPost blogPost3 = new BlogPost("003",
+                Preferences.getInstance().getUserXMPPJid(),
+                null,
+                "blog post 3",
+                new Date(),
+                new Date());
+
+        mRealmManagerMock.saveBlogPost(blogPost1);
+        mRealmManagerMock.saveBlogPost(blogPost2);
+        mRealmManagerMock.saveBlogPost(blogPost3);
+
+        mBlogPosts = new ArrayList<>();
+        mBlogPosts.add(blogPost1);
+        mBlogPosts.add(blogPost2);
+        mBlogPosts.add(blogPost3);
+
+        Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
     }
 
 }
