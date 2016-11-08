@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
-import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -23,7 +22,6 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.ExtensionElement;
-import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
@@ -53,7 +51,6 @@ import org.jivesoftware.smackx.pubsub.ItemsExtension;
 import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
-import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jivesoftware.smackx.search.ReportedData;
 import org.jivesoftware.smackx.search.UserSearch;
 import org.jivesoftware.smackx.search.UserSearchManager;
@@ -93,7 +90,6 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.BlogPost;
-import inaka.com.mangosta.models.BlogPostComment;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.realm.RealmManager;
@@ -126,7 +122,6 @@ import inaka.com.mangosta.xmpp.mam.providers.MamPrefsIQProvider;
 import inaka.com.mangosta.xmpp.mam.providers.MamQueryIQProvider;
 import inaka.com.mangosta.xmpp.mam.providers.MamResultProvider;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
-import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
 import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
@@ -1112,7 +1107,7 @@ public class XMPPSession {
     }
 
     public Jid getPubSubService() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException {
-        return  PubSubManager.getPubSubService(getXMPPConnection());
+        return PubSubManager.getPubSubService(getXMPPConnection());
     }
 
     public boolean userExists(String jid) {
@@ -1166,6 +1161,28 @@ public class XMPPSession {
         }
 
         return false;
+    }
+
+    public void blockContacts(List<Jid> jids)
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().blockContacts(jids);
+    }
+
+    public void unblockContacts(List<Jid> jids)
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().unblockContacts(jids);
+    }
+
+    public List<Jid> getBlockList() throws Exception {
+        return getBlockingCommandManager().getBlockList();
+    }
+
+    public void unblockAll()
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().unblockAll();
     }
 
 }

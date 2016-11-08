@@ -21,6 +21,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.allOf;
 import static org.mockito.Mockito.doReturn;
 
 public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
@@ -34,8 +35,8 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
     public void setUp() {
         super.setUp();
         launchActivity();
-        doReturn(true).when(mXMPPSessionMock).userExists("ramabit");
-        doReturn(false).when(mXMPPSessionMock).userExists("sarasa");
+        doReturn(true).when(mXMPPSessionMock).userExists("sarasaTrue");
+        doReturn(false).when(mXMPPSessionMock).userExists("sarasaFalse");
 
     }
 
@@ -45,11 +46,11 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void searchUserNotFound() {
+    public void searchUserNotFound() throws Exception {
         onView(withId(R.id.blockSearchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
-                .perform(typeText("sarasa"));
+                .perform(typeText("sarasaFalse"));
 
         onView(withId(R.id.blockSearchUserButton))
                 .check(matches(isDisplayed()))
@@ -65,11 +66,11 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void searchUserFound() {
+    public void searchUserFound() throws Exception {
         onView(withId(R.id.blockSearchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
-                .perform(typeText("ramabit"));
+                .perform(typeText("sarasaTrue"));
 
         onView(withId(R.id.blockSearchUserButton))
                 .check(matches(isDisplayed()))
@@ -79,7 +80,31 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
         RecyclerView searchResultsRecyclerView =
                 (RecyclerView) getCurrentActivity().findViewById(R.id.blockSearchResultRecyclerView);
         Assert.assertEquals(1, searchResultsRecyclerView.getAdapter().getItemCount());
+    }
 
+
+    @Test
+    public void searchUserAndBlockIt() throws Exception {
+        onView(withId(R.id.blockSearchUserEditText))
+                .check(matches(isDisplayed()))
+                .check(matches(isFocusable()))
+                .perform(typeText("sarasaTrue"));
+
+        onView(withId(R.id.blockSearchUserButton))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        onView(allOf(withId(R.id.addUserButton), isDisplayed()))
+                .perform(click());
+
+        RecyclerView searchResultsRecyclerView =
+                (RecyclerView) getCurrentActivity().findViewById(R.id.blockSearchResultRecyclerView);
+        Assert.assertEquals(0, searchResultsRecyclerView.getAdapter().getItemCount());
+
+        RecyclerView blockedUsersRecyclerView =
+                (RecyclerView) getCurrentActivity().findViewById(R.id.blockedUsersRecyclerView);
+        Assert.assertEquals(1, blockedUsersRecyclerView.getAdapter().getItemCount());
     }
 
 }

@@ -32,6 +32,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.runner.lifecycle.Stage.RESUMED;
 import static inaka.com.mangosta.models.MyViewMatchers.isToast;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -133,11 +134,18 @@ public class BaseInstrumentedTest {
         }
 
         doNothing().when(mXMPPSessionMock).createNodeToAllowComments(any(String.class));
-//        doNothing().when(mXMPPSessionMock).subscribeToMyBlogPosts();
-//        doNothing().when(mXMPPSessionMock).getXOAUTHTokens();
 
         try {
             doReturn(null).when(mXMPPSessionMock).getPubSubService();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            doNothing().when(mXMPPSessionMock).blockContacts(anyList());
+            doNothing().when(mXMPPSessionMock).unblockContacts(anyList());
+            doReturn(new ArrayList<>()).when(mXMPPSessionMock).getBlockList();
+            doNothing().when(mXMPPSessionMock).unblockAll();
         } catch (Exception e) {
             e.printStackTrace();
         }
