@@ -2,7 +2,9 @@ package inaka.com.mangosta.activities;
 
 import android.content.Intent;
 import android.support.test.rule.ActivityTestRule;
+import android.support.v7.widget.RecyclerView;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +66,19 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void searchUserFound() {
+        onView(withId(R.id.blockSearchUserEditText))
+                .check(matches(isDisplayed()))
+                .check(matches(isFocusable()))
+                .perform(typeText("ramabit"));
+
+        onView(withId(R.id.blockSearchUserButton))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        RecyclerView searchResultsRecyclerView =
+                (RecyclerView) getCurrentActivity().findViewById(R.id.blockSearchResultRecyclerView);
+        Assert.assertEquals(1, searchResultsRecyclerView.getAdapter().getItemCount());
 
     }
 
