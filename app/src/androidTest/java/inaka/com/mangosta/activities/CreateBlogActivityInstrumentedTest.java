@@ -4,16 +4,13 @@ import android.app.Activity;
 import android.content.Intent;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
-import android.support.v7.widget.RecyclerView;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
@@ -88,13 +85,26 @@ public class CreateBlogActivityInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(hasFocus()))
                 .check(matches(withText(newBlogPostContent)));
 
+        // save it in mock
+        addBlogPostToMockResponse(newBlogPostContent);
+
         // create blog post
         onView(withId(R.id.createBlogFloatingButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
 
-        // save it in mock
+        IdlingResource resource = startTiming(2000);
+
+        onView(withId(R.id.blogsRecyclerView))
+                .check(matches(isDisplayed()));
+
+        assertEquals(blogPostsCount + 1, getBlogPostsCount());
+
+        stopTiming(resource);
+    }
+
+    private void addBlogPostToMockResponse(String newBlogPostContent) {
         BlogPost blogPost4 = new BlogPost("004",
                 Preferences.getInstance().getUserXMPPJid(),
                 null,
@@ -103,19 +113,6 @@ public class CreateBlogActivityInstrumentedTest extends BaseInstrumentedTest {
                 new Date());
         mBlogPosts.add(blogPost4);
         Mockito.when(mRealmManagerMock.getBlogPosts()).thenReturn(mBlogPosts);
-
-        IdlingResource resource = startTiming(10000);
-
-        onView(withId(R.id.blogsRecyclerView))
-                .check(matches(isDisplayed()));
-
-        RecyclerView blogsRecyclerView = (RecyclerView) getCurrentActivity()
-                .findViewById(R.id.blogsRecyclerView);
-
-        assertEquals(blogPostsCount + 1, getBlogPostsCount());
-        assertEquals(getBlogPostsCount(), blogsRecyclerView.getAdapter().getItemCount());
-
-        stopTiming(resource);
     }
 
     private int getBlogPostsCount() {

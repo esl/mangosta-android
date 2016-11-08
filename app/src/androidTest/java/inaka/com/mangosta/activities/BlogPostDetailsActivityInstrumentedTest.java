@@ -52,7 +52,66 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
         super.setUp();
         initBlogPostsComments();
         launchActivity();
-//        doNothing().when(mRealmManagerMock).saveBlogPostComment(any(BlogPostComment.class));
+    }
+
+    @Test
+    public void blogPostDetails() throws Exception {
+        String dateString = TimeCalculation.getTimeStringAgoSinceDate(getContext(), mBlogPost.getUpdated());
+        onView(withId(R.id.textBlogPostDate))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(dateString)));
+
+        onView(withId(R.id.textBlogPostOwnerName))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()))));
+
+        onView(withId(R.id.textBlogPostTitle))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(mBlogPost.getContent())));
+    }
+
+    @Test
+    public void blogPostCommentsList() throws Exception {
+        onView(withId(R.id.recyclerviewComments))
+                .check(matches(isDisplayed()));
+        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
+    }
+
+    @Test
+    public void tryToAddCommentWithoutText() throws Exception {
+        onView(withId(R.id.textNewComment))
+                .check(matches(isDisplayed()))
+                .check(matches(isFocusable()));
+
+        // Try to send comment
+        onView(withId(R.id.buttonSendComment))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        // Empty message error
+        isToastMessageDisplayed(R.string.empty_message);
+    }
+
+    @Test
+    public void addNewComment() throws Exception {
+        // Enter comment text
+        String commentText = "Testing with a new comment";
+        onView(withId(R.id.textNewComment))
+                .perform(typeText(commentText), closeSoftKeyboard())
+                .check(matches(withText(commentText)));
+
+        // mocking new response
+        addNewCommentToMockResponse(commentText);
+
+        // Send comment
+        onView(withId(R.id.buttonSendComment))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        // Check comments list
+        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
     }
 
     private void initBlogPostsComments() {
@@ -135,54 +194,7 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                 });
     }
 
-    @Test
-    public void blogPostDetails() throws Exception {
-        String dateString = TimeCalculation.getTimeStringAgoSinceDate(getContext(), mBlogPost.getUpdated());
-        onView(withId(R.id.textBlogPostDate))
-                .check(matches(isDisplayed()))
-                .check(matches(withText(dateString)));
-
-        onView(withId(R.id.textBlogPostOwnerName))
-                .check(matches(isDisplayed()))
-                .check(matches(withText(XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()))));
-
-        onView(withId(R.id.textBlogPostTitle))
-                .check(matches(isDisplayed()))
-                .check(matches(withText(mBlogPost.getContent())));
-    }
-
-    @Test
-    public void blogPostCommentsList() throws Exception {
-        onView(withId(R.id.recyclerviewComments))
-                .check(matches(isDisplayed()));
-        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
-    }
-
-    @Test
-    public void tryToAddCommentWithoutText() throws Exception {
-        onView(withId(R.id.textNewComment))
-                .check(matches(isDisplayed()))
-                .check(matches(isFocusable()));
-
-        // Try to send comment
-        onView(withId(R.id.buttonSendComment))
-                .check(matches(isDisplayed()))
-                .check(matches(isClickable()))
-                .perform(click());
-
-        // Empty message error
-        isToastMessageDisplayed(R.string.empty_message);
-    }
-
-    @Test
-    public void addNewComment() throws Exception {
-        // Enter comment text
-        String commentText = "Testing with a new comment";
-        onView(withId(R.id.textNewComment))
-                .perform(typeText(commentText), closeSoftKeyboard())
-                .check(matches(withText(commentText)));
-
-        // mocking new response
+    private void addNewCommentToMockResponse(String commentText) {
         mBlogPostComments.add(
                 new BlogPostComment("105",
                         mBlogPost.getId(),
@@ -193,15 +205,6 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         new Date()));
         mBlogPostCommentsContent.add(commentText);
         when(mRealmManagerMock.getBlogPostComments(mBlogPost.getId())).thenReturn(mBlogPostComments);
-
-        // Send comment
-        onView(withId(R.id.buttonSendComment))
-                .check(matches(isDisplayed()))
-                .check(matches(isClickable()))
-                .perform(click());
-
-        // Check comments list
-        checkBlogPostsRecyclerViewContent(mBlogPostCommentsContent);
     }
 
 }

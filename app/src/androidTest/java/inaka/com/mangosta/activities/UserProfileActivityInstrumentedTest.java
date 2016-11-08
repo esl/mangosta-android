@@ -90,8 +90,8 @@ public class UserProfileActivityInstrumentedTest extends BaseInstrumentedTest {
                 .withItems(blogPosts)
                 .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
                     @Override
-                    public void check(String chatName, View view, NoMatchingViewException e) {
-                        matches(hasDescendant(withText(chatName))).check(view, e);
+                    public void check(String blogPost, View view, NoMatchingViewException e) {
+                        matches(hasDescendant(withText(blogPost))).check(view, e);
                     }
                 });
     }
