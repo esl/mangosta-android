@@ -4,14 +4,9 @@ import android.content.Intent;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
 
-import org.jivesoftware.smack.roster.Roster;
-import org.jivesoftware.smack.roster.RosterEntry;
-import org.jivesoftware.smack.roster.packet.RosterPacket;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
@@ -33,6 +28,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static inaka.com.mangosta.models.MyViewMatchers.atPositionOnRecyclerView;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
 
 public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest {
@@ -120,7 +116,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
                 .check(matches(isClickable()))
                 .perform(click());
 
-        Assert.assertEquals(1, getSearchedUsersCount());
+        assertEquals(1, getSearchedUsersCount());
     }
 
     @Test
@@ -135,13 +131,13 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
                 .check(matches(isClickable()))
                 .perform(click());
 
-        Assert.assertEquals(1, getSearchedUsersCount());
+        assertEquals(1, getSearchedUsersCount());
 
         onView(allOf(withId(R.id.addUserButton), isDisplayed()))
                 .perform(click());
 
-        Assert.assertEquals(0, getSearchedUsersCount());
-        Assert.assertEquals(mFriends.size() + 1, getFriendsCount());
+        assertEquals(0, getSearchedUsersCount());
+        assertEquals(mFriends.size() + 1, getFriendsCount());
     }
 
     @Test
@@ -149,7 +145,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
         onView(atPositionOnRecyclerView(R.id.manageFriendsUsersRecyclerView, 0, R.id.removeUserButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
-        Assert.assertEquals(mFriends.size() - 1, getFriendsCount());
+        assertEquals(mFriends.size() - 1, getFriendsCount());
     }
 
     @Test
@@ -159,7 +155,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
                 .check(matches(isClickable()))
                 .perform(click());
 
-        Assert.assertEquals(0, getFriendsCount());
+        assertEquals(0, getFriendsCount());
 
         onView(withId(R.id.manageFriendsUsersUnfriendAllButton))
                 .check(matches(not(isDisplayed())));
