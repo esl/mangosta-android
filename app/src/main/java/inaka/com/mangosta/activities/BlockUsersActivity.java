@@ -335,7 +335,11 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });

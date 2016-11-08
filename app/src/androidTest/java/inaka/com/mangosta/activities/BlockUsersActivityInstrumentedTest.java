@@ -32,8 +32,8 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
     public void setUp() {
         super.setUp();
         launchActivity();
-        doReturn(true).when(mXMPPSessionMock).userExists("ramabit@erlang-solutions.com");
-        doReturn(false).when(mXMPPSessionMock).userExists("sarasa@erlang-solutions.com");
+        doReturn(true).when(mXMPPSessionMock).userExists("ramabit");
+        doReturn(false).when(mXMPPSessionMock).userExists("sarasa");
 
     }
 
