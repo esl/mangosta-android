@@ -72,6 +72,18 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
         mActivityTestRule.launchActivity(intent);
     }
 
+    private int getSearchedUsersCount() {
+        RecyclerView searchResultsRecyclerView =
+                (RecyclerView) getCurrentActivity().findViewById(R.id.blockSearchResultRecyclerView);
+        return searchResultsRecyclerView.getAdapter().getItemCount();
+    }
+
+    private int getBlockedUsersCount() {
+        RecyclerView blockedUsersRecyclerView =
+                (RecyclerView) getCurrentActivity().findViewById(R.id.blockedUsersRecyclerView);
+        return blockedUsersRecyclerView.getAdapter().getItemCount();
+    }
+
     @Test
     public void searchUserNotFound() throws Exception {
         onView(withId(R.id.blockSearchUserEditText))
@@ -104,9 +116,7 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isClickable()))
                 .perform(click());
 
-        RecyclerView searchResultsRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.blockSearchResultRecyclerView);
-        Assert.assertEquals(1, searchResultsRecyclerView.getAdapter().getItemCount());
+        Assert.assertEquals(1, getSearchedUsersCount());
     }
 
     @Test
@@ -121,16 +131,13 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isClickable()))
                 .perform(click());
 
+        Assert.assertEquals(1, getSearchedUsersCount());
+
         onView(allOf(withId(R.id.addUserButton), isDisplayed()))
                 .perform(click());
 
-        RecyclerView searchResultsRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.blockSearchResultRecyclerView);
-        Assert.assertEquals(0, searchResultsRecyclerView.getAdapter().getItemCount());
-
-        RecyclerView blockedUsersRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.blockedUsersRecyclerView);
-        Assert.assertEquals(mBlockedUsers.size() + 1, blockedUsersRecyclerView.getAdapter().getItemCount());
+        Assert.assertEquals(0, getSearchedUsersCount());
+        Assert.assertEquals(mBlockedUsers.size() + 1, getBlockedUsersCount());
     }
 
     @Test
@@ -138,10 +145,7 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
         onView(atPositionOnRecyclerView(R.id.blockedUsersRecyclerView, 0, R.id.removeUserButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
-
-        RecyclerView blockedUsersRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.blockedUsersRecyclerView);
-        Assert.assertEquals(mBlockedUsers.size() - 1, blockedUsersRecyclerView.getAdapter().getItemCount());
+        Assert.assertEquals(mBlockedUsers.size() - 1, getBlockedUsersCount());
     }
 
 }
