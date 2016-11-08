@@ -18,59 +18,6 @@ import inaka.com.mangosta.utils.Preferences;
 
 public class XMPPUtils {
 
-    public static boolean userExists(String jid) {
-        ProviderManager.addIQProvider("query", "jabber:iq:search", new UserSearch.Provider());
-        ProviderManager.addIQProvider("query", "jabber:iq:vjud", new UserSearch.Provider());
-        UserSearchManager searchManager = new UserSearchManager(XMPPSession.getInstance().getXMPPConnection());
-
-        try {
-            List<DomainBareJid> services = searchManager.getSearchServices();
-
-            if (services == null || services.size() < 1) {
-                return false;
-            }
-
-            Form searchForm;
-            try {
-                searchForm = searchManager.getSearchForm(services.get(0));
-                Form answerForm = searchForm.createAnswerForm();
-
-                try {
-                    answerForm.setAnswer("user", jid);
-                } catch (IllegalStateException ex) {
-                    ex.printStackTrace();
-                    return false;
-                }
-
-                ReportedData data;
-                try {
-                    data = searchManager.getSearchResults(answerForm, services.get(0));
-
-                    if (data.getRows() != null) {
-                        List<ReportedData.Row> rowList = data.getRows();
-
-                        return rowList.size() > 0;
-                    }
-
-                } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-
-
-            } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
-                e.printStackTrace();
-                return false;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        return false;
-    }
-
     public static String fromJIDToUserName(String jidString) {
         int position = jidString.indexOf("@");
 

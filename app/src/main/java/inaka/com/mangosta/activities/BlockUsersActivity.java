@@ -116,7 +116,7 @@ public class BlockUsersActivity extends BaseActivity {
         Tasks.executeInBackground(BlockUsersActivity.this, new BackgroundWork<Boolean>() {
             @Override
             public Boolean doInBackground() throws Exception {
-                return XMPPUtils.userExists(user);
+                return XMPPSession.getInstance().userExists(user);
             }
         }, new Completion<Boolean>() {
             @Override
@@ -313,7 +313,6 @@ public class BlockUsersActivity extends BaseActivity {
             public List<Jid> doInBackground() throws Exception {
                 BlockingCommandManager blockingCommandManager = XMPPSession.getInstance().getBlockingCommandManager();
                 return blockingCommandManager.getBlockList();
-
             }
         }, new Completion<List<Jid>>() {
             @Override
@@ -371,7 +370,11 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });

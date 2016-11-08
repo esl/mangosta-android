@@ -35,6 +35,7 @@ import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.RosterManager;
+import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class ManageFriendsActivity extends BaseActivity {
@@ -115,7 +116,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(ManageFriendsActivity.this, new BackgroundWork<Boolean>() {
             @Override
             public Boolean doInBackground() throws Exception {
-                return XMPPUtils.userExists(user);
+                return XMPPSession.getInstance().userExists(user);
             }
         }, new Completion<Boolean>() {
             @Override

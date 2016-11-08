@@ -42,6 +42,7 @@ public class BaseInstrumentedTest {
 
     private Activity mCurrentActivity;
     protected RealmManager mRealmManagerMock;
+    protected XMPPSession mXMPPSessionMock;
     protected List<BlogPost> mBlogPosts;
 
     protected IdlingResource startTiming(long time) {
@@ -115,30 +116,32 @@ public class BaseInstrumentedTest {
     }
 
     private void mockXMPPSession() {
-        XMPPSession xmppSession = mock(XMPPSession.class);
+        mXMPPSessionMock = mock(XMPPSession.class);
+        XMPPSession.setSpecialInstanceForTesting(mXMPPSessionMock);
 
         try {
             EntityBareJid jid = JidCreate.entityBareFrom(Preferences.getInstance().getUserXMPPJid());
-            when(xmppSession.getUser()).thenReturn(jid);
+            when(mXMPPSessionMock.getUser()).thenReturn(jid);
         } catch (XmppStringprepException e) {
             e.printStackTrace();
         }
 
         try {
-            doNothing().when(xmppSession).sendStanza(any(Stanza.class));
+            doNothing().when(mXMPPSessionMock).sendStanza(any(Stanza.class));
         } catch (SmackException.NotConnectedException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        doNothing().when(xmppSession).createNodeToAllowComments(any(String.class));
+        doNothing().when(mXMPPSessionMock).createNodeToAllowComments(any(String.class));
+//        doNothing().when(mXMPPSessionMock).subscribeToMyBlogPosts();
+//        doNothing().when(mXMPPSessionMock).getXOAUTHTokens();
 
         try {
-            doReturn(null).when(xmppSession).getPubSubService();
+            doReturn(null).when(mXMPPSessionMock).getPubSubService();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        XMPPSession.setSpecialInstanceForTesting(xmppSession);
     }
 
     protected void setUp() {

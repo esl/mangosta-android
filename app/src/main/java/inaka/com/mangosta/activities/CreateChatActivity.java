@@ -38,6 +38,7 @@ import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
+import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 
@@ -120,7 +121,7 @@ public class CreateChatActivity extends BaseActivity {
         Tasks.executeInBackground(CreateChatActivity.this, new BackgroundWork<String>() {
             @Override
             public String doInBackground() throws Exception {
-                if (XMPPUtils.userExists(user)) {
+                if (XMPPSession.getInstance().userExists(user)) {
                     obtainUser(user);
                 } else {
                     showInviteDialog(user);

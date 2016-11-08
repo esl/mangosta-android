@@ -132,7 +132,7 @@ public class EditChatMemberActivity extends BaseActivity {
         Tasks.executeInBackground(EditChatMemberActivity.this, new BackgroundWork<Boolean>() {
             @Override
             public Boolean doInBackground() throws Exception {
-                return XMPPUtils.userExists(user);
+                return XMPPSession.getInstance().userExists(user);
             }
         }, new Completion<Boolean>() {
             @Override

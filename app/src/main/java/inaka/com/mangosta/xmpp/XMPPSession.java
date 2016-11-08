@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
+import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -53,6 +54,11 @@ import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
+import org.jivesoftware.smackx.search.ReportedData;
+import org.jivesoftware.smackx.search.UserSearch;
+import org.jivesoftware.smackx.search.UserSearchManager;
+import org.jivesoftware.smackx.xdata.Form;
+import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -456,7 +462,7 @@ public class XMPPSession {
         mArchiveQueryPublisher.onNext(id);
     }
 
-    private void subscribeToMyBlogPosts() {
+    public void subscribeToMyBlogPosts() {
         PubSubManager pubSubManager = getPubSubManager();
         String nodeName = "urn:xmpp:microblog:0";
 
@@ -476,7 +482,7 @@ public class XMPPSession {
         }
     }
 
-    private void getXOAUTHTokens() {
+    public void getXOAUTHTokens() {
         TBRManager tbrManager = TBRManager.getInstanceFor(getXMPPConnection());
         try {
             Preferences preferences = Preferences.getInstance();
@@ -1107,6 +1113,59 @@ public class XMPPSession {
 
     public Jid getPubSubService() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException {
         return  PubSubManager.getPubSubService(getXMPPConnection());
+    }
+
+    public boolean userExists(String jid) {
+        ProviderManager.addIQProvider("query", "jabber:iq:search", new UserSearch.Provider());
+        ProviderManager.addIQProvider("query", "jabber:iq:vjud", new UserSearch.Provider());
+        UserSearchManager searchManager = new UserSearchManager(getXMPPConnection());
+
+        try {
+            List<DomainBareJid> services = searchManager.getSearchServices();
+
+            if (services == null || services.size() < 1) {
+                return false;
+            }
+
+            Form searchForm;
+            try {
+                searchForm = searchManager.getSearchForm(services.get(0));
+                Form answerForm = searchForm.createAnswerForm();
+
+                try {
+                    answerForm.setAnswer("user", jid);
+                } catch (IllegalStateException ex) {
+                    ex.printStackTrace();
+                    return false;
+                }
+
+                ReportedData data;
+                try {
+                    data = searchManager.getSearchResults(answerForm, services.get(0));
+
+                    if (data.getRows() != null) {
+                        List<ReportedData.Row> rowList = data.getRows();
+
+                        return rowList.size() > 0;
+                    }
+
+                } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+
+            } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return false;
     }
 
 }
