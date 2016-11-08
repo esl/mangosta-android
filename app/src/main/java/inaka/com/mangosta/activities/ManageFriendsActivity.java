@@ -20,7 +20,7 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
-import org.jivesoftware.smack.roster.RosterEntry;
+import org.jxmpp.jid.Jid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,7 +134,10 @@ public class ManageFriendsActivity extends BaseActivity {
 
             @Override
             public void onError(Context context, Exception e) {
-                Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
+                }
+
                 if (manageFriendsSearchUserButton != null && manageFriendsSearchUserProgressBar != null) {
                     manageFriendsSearchUserProgressBar.setVisibility(View.GONE);
                     manageFriendsSearchUserButton.setVisibility(View.VISIBLE);
@@ -232,7 +235,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                RosterManager.addToBuddies(user);
+                RosterManager.getInstance().addToBuddies(user);
                 return null;
             }
         }, new Completion<Object>() {
@@ -255,7 +258,11 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
@@ -268,7 +275,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                RosterManager.removeFromBuddies(user);
+                RosterManager.getInstance().removeFromBuddies(user);
                 return null;
             }
         }, new Completion<Object>() {
@@ -291,7 +298,11 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(ManageFriendsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(ManageFriendsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
@@ -301,22 +312,22 @@ public class ManageFriendsActivity extends BaseActivity {
     private void getFriends() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<List<RosterEntry>>() {
+        Tasks.executeInBackground(this, new BackgroundWork<List<Jid>>() {
             @Override
-            public List<RosterEntry> doInBackground() throws Exception {
-                return RosterManager.getBuddies();
+            public List<Jid> doInBackground() throws Exception {
+                return RosterManager.getInstance().getBuddies();
             }
-        }, new Completion<List<RosterEntry>>() {
+        }, new Completion<List<Jid>>() {
             @Override
-            public void onSuccess(Context context, List<RosterEntry> entries) {
-                if (entries != null) {
-                    for (RosterEntry entry : entries) {
-                        obtainUser(XMPPUtils.fromJIDToUserName(entry.getJid().toString()), false);
+            public void onSuccess(Context context, List<Jid> jids) {
+                if (jids != null) {
+                    for (Jid jid : jids) {
+                        obtainUser(XMPPUtils.fromJIDToUserName(jid.toString()), false);
                     }
                     if (progress != null) {
                         progress.dismiss();
                     }
-                    if (entries.size() > 0 && manageFriendsUsersUnfriendAllButton != null) {
+                    if (jids.size() > 0 && manageFriendsUsersUnfriendAllButton != null) {
                         manageFriendsUsersUnfriendAllButton.setVisibility(View.VISIBLE);
                     }
                 }
@@ -327,7 +338,11 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
@@ -340,7 +355,7 @@ public class ManageFriendsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                RosterManager.removeAllFriends();
+                RosterManager.getInstance().removeAllFriends();
                 return null;
             }
         }, new Completion<Object>() {
@@ -361,7 +376,11 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!XMPPSession.isTesting()) {
+                    Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });

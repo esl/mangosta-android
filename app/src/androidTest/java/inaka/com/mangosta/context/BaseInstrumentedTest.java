@@ -21,8 +21,10 @@ import java.util.Date;
 import java.util.List;
 
 import inaka.com.mangosta.models.BlogPost;
+import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
+import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
 
@@ -44,6 +46,7 @@ public class BaseInstrumentedTest {
     private Activity mCurrentActivity;
     protected RealmManager mRealmManagerMock;
     protected XMPPSession mXMPPSessionMock;
+    protected RosterManager mRosterManagerMock;
     protected List<BlogPost> mBlogPosts;
 
     protected IdlingResource startTiming(long time) {
@@ -152,9 +155,24 @@ public class BaseInstrumentedTest {
 
     }
 
+    private void mockRosterManager() {
+        mRosterManagerMock = mock(RosterManager.class);
+        RosterManager.setSpecialInstanceForTesting(mRosterManagerMock);
+
+        try {
+            doNothing().when(mRosterManagerMock).addToBuddies(any(User.class));
+            doNothing().when(mRosterManagerMock).removeFromBuddies(any(User.class));
+            doReturn(new ArrayList<>()).when(mRosterManagerMock).getBuddies();
+            doNothing().when(mRosterManagerMock).removeAllFriends();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     protected void setUp() {
         setUpRealmTestContext();
         mockXMPPSession();
+        mockRosterManager();
     }
 
     protected void initBlogPosts() {

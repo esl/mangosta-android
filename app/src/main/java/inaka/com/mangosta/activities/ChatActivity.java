@@ -29,7 +29,6 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -508,7 +507,7 @@ public class ChatActivity extends BaseActivity {
         User userNotFriend = new User();
         userNotFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.removeFromBuddies(userNotFriend);
+            RosterManager.getInstance().removeFromBuddies(userNotFriend);
             setMenuChatNotFriend();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_friends),
                     userNotFriend.getLogin()), Toast.LENGTH_SHORT).show();
@@ -523,7 +522,7 @@ public class ChatActivity extends BaseActivity {
         User userFriend = new User();
         userFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.addToBuddies(userFriend);
+            RosterManager.getInstance().addToBuddies(userFriend);
             setMenuChatWithFriend();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_friends),
                     userFriend.getLogin()), Toast.LENGTH_SHORT).show();
@@ -915,7 +914,6 @@ public class ChatActivity extends BaseActivity {
         @Override
         public void onMessageSent(Message message) {
             super.onMessageSent(message);
-
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -981,8 +979,8 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithFriend() {
         try {
-            for (RosterEntry entry : RosterManager.getBuddies()) {
-                if (mChat.getJid().equals(entry.getJid().toString())) {
+            for (Jid jid : RosterManager.getInstance().getBuddies()) {
+                if (mChat.getJid().equals(jid.toString())) {
                     return true;
                 }
             }
