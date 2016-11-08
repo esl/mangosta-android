@@ -28,6 +28,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static inaka.com.mangosta.models.MyViewMatchers.atPositionOnRecyclerView;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.doReturn;
 
 public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
@@ -146,6 +147,19 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isDisplayed()))
                 .perform(click());
         Assert.assertEquals(mBlockedUsers.size() - 1, getBlockedUsersCount());
+    }
+
+    @Test
+    public void unblockAll() throws Exception {
+        onView(withId(R.id.blockedUsersUnblockAllButton))
+                .check(matches(isDisplayed()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        Assert.assertEquals(0, getBlockedUsersCount());
+
+        onView(withId(R.id.blockedUsersUnblockAllButton))
+                .check(matches(not(isDisplayed())));
     }
 
 }
