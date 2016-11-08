@@ -8,6 +8,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
@@ -21,6 +26,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static inaka.com.mangosta.models.MyViewMatchers.atPositionOnRecyclerView;
 import static org.hamcrest.Matchers.allOf;
 import static org.mockito.Mockito.doReturn;
 
@@ -30,14 +36,35 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
     public ActivityTestRule mActivityTestRule =
             new ActivityTestRule<>(BlockUsersActivity.class, true, false);
 
+    private List<Jid> mBlockedUsers;
+
     @Before
     @Override
     public void setUp() {
         super.setUp();
-        launchActivity();
+
+        // user that exists
         doReturn(true).when(mXMPPSessionMock).userExists("sarasaTrue");
+
+        // user that does not exist
         doReturn(false).when(mXMPPSessionMock).userExists("sarasaFalse");
 
+        // set list of blocked users
+        setBlockedUsers();
+
+        launchActivity();
+    }
+
+    private void setBlockedUsers() {
+        mBlockedUsers = new ArrayList<>();
+        try {
+            mBlockedUsers.add(JidCreate.from("blocked1@sarasa.com"));
+            mBlockedUsers.add(JidCreate.from("blocked2@sarasa.com"));
+            mBlockedUsers.add(JidCreate.from("blocked3@sarasa.com"));
+            doReturn(mBlockedUsers).when(mXMPPSessionMock).getBlockList();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void launchActivity() {
@@ -82,7 +109,6 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
         Assert.assertEquals(1, searchResultsRecyclerView.getAdapter().getItemCount());
     }
 
-
     @Test
     public void searchUserAndBlockIt() throws Exception {
         onView(withId(R.id.blockSearchUserEditText))
@@ -104,7 +130,18 @@ public class BlockUsersActivityInstrumentedTest extends BaseInstrumentedTest {
 
         RecyclerView blockedUsersRecyclerView =
                 (RecyclerView) getCurrentActivity().findViewById(R.id.blockedUsersRecyclerView);
-        Assert.assertEquals(1, blockedUsersRecyclerView.getAdapter().getItemCount());
+        Assert.assertEquals(mBlockedUsers.size() + 1, blockedUsersRecyclerView.getAdapter().getItemCount());
+    }
+
+    @Test
+    public void unblockUser() throws Exception {
+        onView(atPositionOnRecyclerView(R.id.blockedUsersRecyclerView, 0, R.id.removeUserButton))
+                .check(matches(isDisplayed()))
+                .perform(click());
+
+        RecyclerView blockedUsersRecyclerView =
+                (RecyclerView) getCurrentActivity().findViewById(R.id.blockedUsersRecyclerView);
+        Assert.assertEquals(mBlockedUsers.size() - 1, blockedUsersRecyclerView.getAdapter().getItemCount());
     }
 
 }
