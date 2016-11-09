@@ -45,10 +45,8 @@ public class RoomsListManager {
         mInstance = roomsListManager;
     }
 
-    public String createCommonChat(User user) {
-        String jid = XMPPUtils.fromUserNameToJID(user.getLogin());
+    public void createCommonChat(String jid) {
         createChatIfNotExists(jid, true);
-        return jid;
     }
 
     public ChatManager getChatManager() {

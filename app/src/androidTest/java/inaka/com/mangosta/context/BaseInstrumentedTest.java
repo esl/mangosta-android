@@ -19,7 +19,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
@@ -133,7 +132,7 @@ public class BaseInstrumentedTest {
 
         try {
             EntityBareJid jid = JidCreate.entityBareFrom(Preferences.getInstance().getUserXMPPJid());
-            when(mXMPPSessionMock.getUser()).thenReturn(jid);
+            doReturn(jid).when(mXMPPSessionMock).getUser();
         } catch (XmppStringprepException e) {
             e.printStackTrace();
         }
@@ -181,7 +180,11 @@ public class BaseInstrumentedTest {
         mRoomListManagerMock = mock(RoomsListManager.class);
         RoomsListManager.setSpecialInstanceForTesting(mRoomListManagerMock);
 
-        doReturn(UUID.randomUUID().toString()).when(mRoomListManagerMock).createCommonChat(any(User.class));
+        doNothing().when(mRoomListManagerMock).createCommonChat(any(String.class));
+
+        doReturn(null).when(mRoomListManagerMock).createMUCLight(anyList(), any(String.class));
+
+        doReturn(null).when(mRoomListManagerMock).createMUC(anyList(), any(String.class), any(String.class));
 
         doNothing().when(mRoomListManagerMock)
                 .manageNewChat(any(Chat.class),

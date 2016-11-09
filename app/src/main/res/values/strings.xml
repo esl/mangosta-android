@@ -59,6 +59,7 @@
     <string name="chat_with">Chat with %1$s</string>
     <string name="room_name">Room name</string>
     <string name="enter_room_name">Enter a name for the room</string>
+    <string name="enter_room_name_hint">Enter room name here</string>
     <string name="enter_new_room_name">Enter a name for the room</string>
     <string name="room_name_changed">Room name changed</string>
     <string name="room_subject">Room subject</string>

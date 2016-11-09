@@ -20,6 +20,7 @@ import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
+import static android.support.test.espresso.matcher.ViewMatchers.withHint;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static inaka.com.mangosta.models.MyViewMatchers.atPositionOnRecyclerView;
@@ -126,6 +127,36 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isDisplayed()));
     }
 
+    private void enterGroupChatName(String name) {
+        onView(withHint(R.string.enter_room_name_hint))
+                .check(matches(isDisplayed()))
+                .check(matches(isFocusable()))
+                .perform(typeText(name));
+    }
+
+    private void createGroupChat() {
+        onView(withText(android.R.string.yes))
+                .check(matches(isDisplayed()))
+                .perform(click());
+    }
+
+    private void selectMUCType() {
+        onView(withText(R.string.muc_chat_type))
+                .check(matches(isDisplayed()))
+                .perform(click());
+    }
+
+    private void selectMUCLightType() {
+        onView(withText(R.string.muc_light_chat_type))
+                .check(matches(isDisplayed()))
+                .perform(click());
+    }
+
+    private void checkDialogToSelectRoomNameIsOpened() {
+        onView(withText(R.string.room_name))
+                .check(matches(isDisplayed()));
+    }
+
     @Test
     public void searchUserNotFound() throws Exception {
         onView(withId(R.id.createChatSearchUserEditText))
@@ -203,12 +234,25 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
     public void createMUC() throws Exception {
         addUser1();
         addUser2();
+        pressButtonToCreateChat();
+        checkDialogToSelectRoomNameIsOpened();
+        selectMUCType();
+        enterGroupChatName("test muc");
+        createGroupChat();
+        verifyEnteredToAChat();
     }
+
 
     @Test
     public void createdMUCLight() throws Exception {
         addUser1();
         addUser2();
+        pressButtonToCreateChat();
+        checkDialogToSelectRoomNameIsOpened();
+        selectMUCLightType();
+        enterGroupChatName("test muc light");
+        createGroupChat();
+        verifyEnteredToAChat();
     }
 
 }
