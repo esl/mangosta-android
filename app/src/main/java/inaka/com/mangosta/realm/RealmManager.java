@@ -307,4 +307,8 @@ public class RealmManager {
         hideAllChatsOfType(Chat.TYPE_MUC_LIGHT);
     }
 
+    public Chat getChatFromRealm(Realm realm, String mChatJID) {
+        return realm.where(Chat.class).equalTo("jid", mChatJID).findFirst();
+    }
+
 }

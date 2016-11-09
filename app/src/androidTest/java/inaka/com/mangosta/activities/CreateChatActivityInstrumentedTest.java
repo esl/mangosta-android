@@ -121,6 +121,11 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
                 .perform(click());
     }
 
+    private void verifyEnteredToAChat() {
+        onView(withId(R.id.chatSendMessageEditText))
+                .check(matches(isDisplayed()));
+    }
+
     @Test
     public void searchUserNotFound() throws Exception {
         onView(withId(R.id.createChatSearchUserEditText))
@@ -159,7 +164,6 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
     @Test
     public void searchUserAndAddItToAChat() throws Exception {
         addUser1();
-        pressButtonToCreateChat();
     }
 
     @Test
@@ -191,7 +195,8 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
     @Test
     public void create1to1Chat() throws Exception {
         addUser1();
-
+        pressButtonToCreateChat();
+        verifyEnteredToAChat();
     }
 
     @Test

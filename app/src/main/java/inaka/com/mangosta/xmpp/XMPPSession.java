@@ -88,7 +88,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
-import inaka.com.mangosta.chat.RoomManager;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
@@ -883,7 +883,7 @@ public class XMPPSession {
             return;
         }
 
-        RoomManager.createChatIfNotExists(chatRoomJID, true);
+        RoomsListManager.getInstance().createChatIfNotExists(chatRoomJID, true);
 
         manageSender(jidList, chatMessage, chatRoomJID);
 

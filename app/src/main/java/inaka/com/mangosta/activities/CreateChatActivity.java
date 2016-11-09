@@ -33,7 +33,7 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
-import inaka.com.mangosta.chat.RoomManager;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
@@ -244,7 +244,7 @@ public class CreateChatActivity extends BaseActivity {
             Toast.makeText(this, getString(R.string.add_people_to_create_chat), Toast.LENGTH_LONG).show();
 
         } else if (memberUsers.size() == 1) {   // 1 to 1 chat
-            String chatJid = RoomManager.createCommonChat(memberUsers.get(0));
+            String chatJid = RoomsListManager.getInstance().createCommonChat(memberUsers.get(0));
             NavigateToChat.go(chatJid, String.format(Locale.getDefault(), getString(R.string.chat_with), XMPPUtils.fromJIDToUserName(chatJid)), this);
 
         } else {    // muc or muc light
@@ -293,7 +293,7 @@ public class CreateChatActivity extends BaseActivity {
                         int radioButtonId = radioGroup.getCheckedRadioButtonId();
 
                         if (radioButtonId == radioButtonMUCLight.getId()) {
-                            MultiUserChatLight multiUserChatLight = RoomManager.createMUCLight(memberUsers, chatName);
+                            MultiUserChatLight multiUserChatLight = RoomsListManager.getInstance().createMUCLight(memberUsers, chatName);
 
                             if (multiUserChatLight != null) {
                                 NavigateToChat.go(multiUserChatLight.getRoom().toString(), chatName, CreateChatActivity.this);
@@ -304,7 +304,7 @@ public class CreateChatActivity extends BaseActivity {
                         }
 
                         if (radioButtonId == radioButtonMUC.getId()) {
-                            MultiUserChat multiUserChat = RoomManager.createMUC(memberUsers, chatName, nickName);
+                            MultiUserChat multiUserChat = RoomsListManager.getInstance().createMUC(memberUsers, chatName, nickName);
 
                             if (multiUserChat != null) {
                                 NavigateToChat.go(multiUserChat.getRoom().toString(), chatName, CreateChatActivity.this);
