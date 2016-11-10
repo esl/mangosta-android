@@ -128,14 +128,6 @@ public class BaseInstrumentedTest {
 
     private void mockXMPPSession() {
         mXMPPSessionMock = mock(XMPPSession.class);
-        XMPPSession.setSpecialInstanceForTesting(mXMPPSessionMock);
-
-        try {
-            EntityBareJid jid = JidCreate.entityBareFrom(Preferences.getInstance().getUserXMPPJid());
-            doReturn(jid).when(mXMPPSessionMock).getUser();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
-        }
 
         try {
             doNothing().when(mXMPPSessionMock).sendStanza(any(Stanza.class));
@@ -160,6 +152,14 @@ public class BaseInstrumentedTest {
             e.printStackTrace();
         }
 
+        try {
+            EntityBareJid jid = JidCreate.entityBareFrom(Preferences.getInstance().getUserXMPPJid());
+            doReturn(jid).when(mXMPPSessionMock).getUser();
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
+        }
+
+        XMPPSession.setSpecialInstanceForTesting(mXMPPSessionMock);
     }
 
     private void mockRosterManager() {
