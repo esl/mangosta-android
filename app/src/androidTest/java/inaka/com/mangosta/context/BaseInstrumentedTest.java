@@ -9,6 +9,7 @@ import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
@@ -19,10 +20,13 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
+import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
@@ -47,10 +51,12 @@ public class BaseInstrumentedTest {
 
     private Activity mCurrentActivity;
 
+    protected Realm mRealmMock;
     protected RealmManager mRealmManagerMock;
     protected XMPPSession mXMPPSessionMock;
     protected RosterManager mRosterManagerMock;
     protected RoomsListManager mRoomListManagerMock;
+    protected RoomManager mRoomManagerMock;
 
     protected List<BlogPost> mBlogPosts;
 
@@ -117,11 +123,17 @@ public class BaseInstrumentedTest {
 
     private void setUpRealmTestContext() {
         Realm.init(getContext());
-        Realm realmMock = Realm.getDefaultInstance();
+        mRealmMock = Realm.getDefaultInstance();
 
         mRealmManagerMock = mock(RealmManager.class);
-        when(mRealmManagerMock.getRealm()).thenReturn(realmMock);
+
+        when(mRealmManagerMock.getRealm()).thenReturn(mRealmMock);
         doReturn(new Chat()).when(mRealmManagerMock).getChatFromRealm(any(Realm.class), any(String.class));
+        doReturn(UUID.randomUUID().toString()).when(mRealmManagerMock)
+                .saveMessageLocally(any(Chat.class), any(String.class), any(String.class), any(int.class));
+        doReturn(mRealmMock.where(ChatMessage.class).findAll())
+                .when(mRealmManagerMock)
+                .getMessagesForChat(any(Realm.class), any(String.class));
 
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
     }
@@ -186,13 +198,19 @@ public class BaseInstrumentedTest {
 
         doReturn(null).when(mRoomListManagerMock).createMUC(anyList(), any(String.class), any(String.class));
 
-        doNothing().when(mRoomListManagerMock)
-                .manageNewChat(any(Chat.class),
-                        any(Realm.class),
-                        any(String.class),
-                        any(String.class));
+//        doNothing().when(mRoomListManagerMock)
+//                .manageNewChat(any(Chat.class),
+//                        any(Realm.class),
+//                        any(String.class),
+//                        any(String.class));
 
         doNothing().when(mRoomListManagerMock).setShowChat(any(Realm.class), any(Chat.class));
+    }
+
+    private void mockRoomManager() {
+        mRoomManagerMock = mock(RoomManager.class);
+        RoomManager.setSpecialInstanceForTesting(mRoomManagerMock);
+        doNothing().when(mRoomManagerMock).updateTypingStatus(any(ChatState.class), any(String.class), any(int.class));
     }
 
     protected void setUp() {
@@ -200,6 +218,7 @@ public class BaseInstrumentedTest {
         mockXMPPSession();
         mockRosterManager();
         mockRoomListManager();
+        mockRoomManager();
     }
 
     protected void initBlogPosts() {

@@ -191,27 +191,6 @@ public class RoomsListManager {
         }
     }
 
-    public void manageNewChat(Chat mChat, Realm realm, String chatName, String mChatJID) {
-        realm.beginTransaction();
-        if (mChat == null) {
-            mChat = new Chat(mChatJID);
-
-            if (mChatJID.contains(XMPPSession.MUC_SERVICE_NAME)) {
-                mChat.setType(Chat.TYPE_MUC);
-            } else if (mChatJID.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
-                mChat.setType(Chat.TYPE_MUC_LIGHT);
-            } else {
-                mChat.setType(Chat.TYPE_1_T0_1);
-            }
-
-            mChat.setDateCreated(new Date());
-        }
-        mChat.setName(chatName);
-        realm.copyToRealmOrUpdate(mChat);
-        realm.commitTransaction();
-        realm.close();
-    }
-
     public void setShowChat(Realm realm, Chat mChat) {
         realm.beginTransaction();
         mChat.setShow(true);

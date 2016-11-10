@@ -47,7 +47,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -156,7 +155,7 @@ public class ChatActivity extends BaseActivity {
         mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
 
         if (isNewChat) {
-            RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
+            manageNewChat(chatName);
         }
 
         if (!mChat.isShow()) {
@@ -180,10 +179,8 @@ public class ChatActivity extends BaseActivity {
         chatMessagesRecyclerView.setHasFixedSize(true);
         chatMessagesRecyclerView.setLayoutManager(mLayoutManagerMessages);
 
-        if (!RealmManager.isTesting()) {
-            mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
-            mMessages.addChangeListener(mRealmChangeListener);
-        }
+        mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
+        mMessages.addChangeListener(mRealmChangeListener);
         List<ChatMessage> messages = ((mMessages == null) ? new ArrayList<ChatMessage>() : mMessages);
         mMessagesAdapter = new ChatMessagesAdapter(this, messages);
 
@@ -271,6 +268,28 @@ public class ChatActivity extends BaseActivity {
                 });
             }
         }, 15000);
+    }
+
+    private void manageNewChat(String chatName) {
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        if (mChat == null) {
+            mChat = new Chat(mChatJID);
+
+            if (mChatJID.contains(XMPPSession.MUC_SERVICE_NAME)) {
+                mChat.setType(Chat.TYPE_MUC);
+            } else if (mChatJID.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
+                mChat.setType(Chat.TYPE_MUC_LIGHT);
+            } else {
+                mChat.setType(Chat.TYPE_1_T0_1);
+            }
+
+            mChat.setDateCreated(new Date());
+        }
+        mChat.setName(chatName);
+        realm.copyToRealmOrUpdate(mChat);
+        realm.commitTransaction();
+        realm.close();
     }
 
     private void manageRoomNameAndSubject() {
@@ -649,42 +668,18 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendTextMessage() {
-        if (!XMPPSession.isInstanceNull() && XMPPSession.getInstance().isConnectedAndAuthenticated()) {
+        if (!XMPPSession.isInstanceNull() && (XMPPSession.getInstance().isConnectedAndAuthenticated())) {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
 
             if (!TextUtils.isEmpty(content)) {
-                String messageId = saveMessageLocally(content, ChatMessage.TYPE_CHAT);
+                String messageId = RealmManager.getInstance()
+                        .saveMessageLocally(mChat, mChatJID, content, ChatMessage.TYPE_CHAT);
                 mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 mRoomManager.sendTextMessage(messageId, mChatJID, content, mChat.getType());
                 chatSendMessageEditText.setText("");
                 refreshMessagesAndScrollToEnd();
             }
         }
-    }
-
-    private String saveMessageLocally(String content, int type) {
-        RoomsListManager.getInstance().createChatIfNotExists(mChatJID, true);
-        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-
-        String messageId = UUID.randomUUID().toString();
-
-        ChatMessage chatMessage = new ChatMessage();
-
-        chatMessage.setMessageId(messageId);
-        chatMessage.setRoomJid(mChat.getJid());
-        chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
-        chatMessage.setStatus(ChatMessage.STATUS_SENDING);
-        chatMessage.setDate(new Date());
-        chatMessage.setType(type);
-        chatMessage.setContent(content);
-
-        Realm realm = getRealm();
-        realm.beginTransaction();
-        realm.copyToRealmOrUpdate(chatMessage);
-        realm.commitTransaction();
-        realm.close();
-
-        return messageId;
     }
 
     private void leaveChat() {
@@ -920,7 +915,8 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void stickerSent(String imageName) {
-        String messageId = saveMessageLocally(imageName, ChatMessage.TYPE_STICKER);
+        String messageId = RealmManager.getInstance()
+                .saveMessageLocally(mChat, mChatJID, imageName, ChatMessage.TYPE_STICKER);
         mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         mRoomManager.sendStickerMessage(messageId, mChatJID, imageName, mChat.getType());
         stickersRecyclerView.setVisibility(View.GONE);

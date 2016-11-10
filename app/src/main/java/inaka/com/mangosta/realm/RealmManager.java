@@ -1,8 +1,11 @@
 package inaka.com.mangosta.realm;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.BlogPostComment;
 import inaka.com.mangosta.models.Chat;
@@ -252,6 +255,33 @@ public class RealmManager {
         realm.close();
     }
 
+    public void deleteChatAndItsMessages(String jid) {
+        Realm realm = getRealm();
+
+        Chat chat = realm.where(Chat.class)
+                .equalTo("jid", jid)
+                .findFirst();
+
+        if (chat != null) {
+            realm.beginTransaction();
+            chat.deleteFromRealm();
+            realm.commitTransaction();
+        }
+
+//        RealmResults<ChatMessage> chatMessages =
+//                realm.where(ChatMessage.class)
+//                        .equalTo("roomJid", jid)
+//                        .findAll();
+//
+//        for (ChatMessage chatMessage : chatMessages) {
+//            realm.beginTransaction();
+//            chatMessage.deleteFromRealm();
+//            realm.commitTransaction();
+//        }
+
+        realm.close();
+    }
+
     public void removeAllMUCChats() {
         Realm realm = getRealm();
         realm.beginTransaction();
@@ -309,6 +339,31 @@ public class RealmManager {
 
     public Chat getChatFromRealm(Realm realm, String mChatJID) {
         return realm.where(Chat.class).equalTo("jid", mChatJID).findFirst();
+    }
+
+    public String saveMessageLocally(Chat chat, String chatJID, String content, int type) {
+        RoomsListManager.getInstance().createChatIfNotExists(chatJID, true);
+        chat = RealmManager.getInstance().getChatFromRealm(getRealm(), chatJID);
+
+        String messageId = UUID.randomUUID().toString();
+
+        ChatMessage chatMessage = new ChatMessage();
+
+        chatMessage.setMessageId(messageId);
+        chatMessage.setRoomJid(chat.getJid());
+        chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+        chatMessage.setStatus(ChatMessage.STATUS_SENDING);
+        chatMessage.setDate(new Date());
+        chatMessage.setType(type);
+        chatMessage.setContent(content);
+
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.copyToRealmOrUpdate(chatMessage);
+        realm.commitTransaction();
+        realm.close();
+
+        return messageId;
     }
 
 }

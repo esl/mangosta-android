@@ -50,8 +50,9 @@ import io.realm.Realm;
 
 public class RoomManager {
 
-    RoomManagerListener mListener;
+    private RoomManagerListener mListener;
     private static RoomManager mInstance;
+    private static boolean mIsTesting;
 
     private RoomManager(RoomManagerListener listener) {
         mListener = listener;
@@ -62,6 +63,15 @@ public class RoomManager {
             mInstance = new RoomManager(listener);
         }
         return mInstance;
+    }
+
+    public static boolean isTesting() {
+        return mIsTesting;
+    }
+
+    public static void setSpecialInstanceForTesting(RoomManager roomManager) {
+        mInstance = roomManager;
+        mIsTesting = true;
     }
 
     public void loadMUCRooms() {
