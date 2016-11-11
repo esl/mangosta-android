@@ -18,13 +18,16 @@ import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.realm.RealmManager;
 
 import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
+import static android.support.test.espresso.matcher.ViewMatchers.withHint;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static inaka.com.mangosta.models.MyViewMatchers.atPositionOnRecyclerView;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
@@ -160,11 +163,30 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void fixTextMessageSent() throws Throwable {
-//        composeMessage("test message");
-//        clickSendTextMessage();
-//        checkMessagesCount(mMessagesCount + 1);
+        composeMessage("test message to be fixed");
+        clickSendTextMessage();
+        checkMessagesCount(mMessagesCount);
 
-//        onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, 0, ))
+        onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.imageEditMessage))
+                .perform(click());
+
+        onView(withText(R.string.correct_message))
+                .check(matches(isDisplayed()));
+
+        onView(withText("test message to be fixed"))
+                .check(matches(isDisplayed()))
+                .check(matches(isFocusable()))
+                .perform(clearText());
+
+        onView(withHint(R.string.hint_edit_text))
+                .perform(typeText("fixed message"));
+
+        onView(withText(android.R.string.ok))
+                .perform(click());
+
+        onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.messageContentTextView))
+                .check(matches(isDisplayed()))
+                .check(matches(withText("fixed message")));
     }
 
     @Test

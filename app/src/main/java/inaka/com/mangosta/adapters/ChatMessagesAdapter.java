@@ -231,6 +231,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
             lp.setMargins(10, 0, 10, 0);
             messageEditText.setLayoutParams(lp);
             messageEditText.setText(chatMessage.getContent());
+            messageEditText.setHint(mContext.getString(R.string.hint_edit_text));
 
             linearLayout.addView(messageEditText);
 
