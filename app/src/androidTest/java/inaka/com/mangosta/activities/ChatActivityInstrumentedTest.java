@@ -2,7 +2,6 @@ package inaka.com.mangosta.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
 
@@ -43,6 +42,7 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
     @Override
     @Before
     public void setUp() {
+        setUpTest();
         assumeTrue(isUserLoggedIn());
 
         try {
@@ -101,7 +101,7 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         mActivityTestRule.launchActivity(intent);
     }
 
-    private void clickSendMessage() {
+    private void clickSendTextMessage() {
         onView(withId(R.id.chatSendMessageButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
@@ -141,12 +141,14 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
         onView(atPositionOnRecyclerView(R.id.stickersRecyclerView, 0, -1))
                 .perform(click());
+
+        mMessagesCount++;
     }
 
     @Test
     public void sendTextMessage() throws Throwable {
         composeMessage("test message");
-        clickSendMessage();
+        clickSendTextMessage();
         checkMessagesCount(mMessagesCount);
     }
 
@@ -159,7 +161,7 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
     @Test
     public void fixTextMessageSent() throws Throwable {
 //        composeMessage("test message");
-//        clickSendMessage();
+//        clickSendTextMessage();
 //        checkMessagesCount(mMessagesCount + 1);
 
 //        onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, 0, ))

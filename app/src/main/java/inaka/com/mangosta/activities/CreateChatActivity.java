@@ -298,7 +298,7 @@ public class CreateChatActivity extends BaseActivity {
                         if (radioButtonId == radioButtonMUCLight.getId()) {
                             MultiUserChatLight multiUserChatLight = RoomsListManager.getInstance().createMUCLight(memberUsers, chatName);
 
-                            if (multiUserChatLight != null || XMPPSession.isTesting()) {
+                            if (multiUserChatLight != null || Preferences.isTesting()) {
 
                                 String roomJid = (multiUserChatLight == null) ?
                                         UUID.randomUUID().toString() : multiUserChatLight.getRoom().toString();
@@ -316,7 +316,7 @@ public class CreateChatActivity extends BaseActivity {
                             String roomJid = (multiUserChat == null) ?
                                     UUID.randomUUID().toString() : multiUserChat.getRoom().toString();
 
-                            if (multiUserChat != null || XMPPSession.isTesting()) {
+                            if (multiUserChat != null || Preferences.isTesting()) {
                                 NavigateToChat.go(roomJid, chatName, CreateChatActivity.this);
                             } else {
                                 Toast.makeText(CreateChatActivity.this, getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();

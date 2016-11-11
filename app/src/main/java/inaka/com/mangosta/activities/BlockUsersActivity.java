@@ -33,6 +33,7 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -258,7 +259,7 @@ public class BlockUsersActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
@@ -301,7 +302,7 @@ public class BlockUsersActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(BlockUsersActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
 
@@ -341,7 +342,7 @@ public class BlockUsersActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
@@ -379,7 +380,7 @@ public class BlockUsersActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 

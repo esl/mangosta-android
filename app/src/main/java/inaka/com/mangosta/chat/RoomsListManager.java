@@ -199,4 +199,25 @@ public class RoomsListManager {
         realm.close();
     }
 
+    public void manageNewChat(Chat chat, Realm realm, String chatName, String chatJid) {
+        realm.beginTransaction();
+        if (chat == null) {
+            chat = new Chat(chatJid);
+
+            if (chatJid.contains(XMPPSession.MUC_SERVICE_NAME)) {
+                chat.setType(Chat.TYPE_MUC);
+            } else if (chatJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
+                chat.setType(Chat.TYPE_MUC_LIGHT);
+            } else {
+                chat.setType(Chat.TYPE_1_T0_1);
+            }
+
+            chat.setDateCreated(new Date());
+        }
+        chat.setName(chatName);
+        realm.copyToRealmOrUpdate(chat);
+        realm.commitTransaction();
+        realm.close();
+    }
+
 }

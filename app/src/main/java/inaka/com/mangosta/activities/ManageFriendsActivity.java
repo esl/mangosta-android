@@ -33,6 +33,7 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -134,7 +135,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
             @Override
             public void onError(Context context, Exception e) {
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
                 }
 
@@ -259,7 +260,7 @@ public class ManageFriendsActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
@@ -299,7 +300,7 @@ public class ManageFriendsActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(ManageFriendsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
 
@@ -339,7 +340,7 @@ public class ManageFriendsActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
@@ -377,7 +378,7 @@ public class ManageFriendsActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (!XMPPSession.isTesting()) {
+                if (!Preferences.isTesting()) {
                     Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.Preferences;
 import io.realm.Realm;
 
 public class BaseFragment extends Fragment {
@@ -21,7 +22,7 @@ public class BaseFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
 
-        if (mRealm != null && !RealmManager.isTesting()) {
+        if (mRealm != null && !Preferences.isTesting()) {
             mRealm.close();
         }
     }

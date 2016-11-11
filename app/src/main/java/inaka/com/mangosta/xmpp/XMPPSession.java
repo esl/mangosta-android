@@ -144,7 +144,6 @@ import rx.subjects.PublishSubject;
 
 public class XMPPSession {
 
-    private static boolean mIsTesting = false;
     private static XMPPSession mInstance;
     private XMPPTCPConnection mXMPPConnection;
 
@@ -187,11 +186,6 @@ public class XMPPSession {
 
     public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
         mInstance = xmppSession;
-        mIsTesting = true;
-    }
-
-    public static boolean isTesting() {
-        return mIsTesting;
     }
 
     private XMPPSession() {
@@ -1074,7 +1068,7 @@ public class XMPPSession {
     }
 
     public void sendStanza(Stanza stanza) throws SmackException.NotConnectedException, InterruptedException {
-        if (isTesting()) {
+        if (Preferences.isTesting()) {
             try {
                 getXMPPConnection().sendStanza(stanza);
             } catch (SmackException.NotConnectedException | InterruptedException e) {

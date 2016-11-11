@@ -138,7 +138,7 @@ public class BaseInstrumentedTest {
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
     }
 
-    private void mockXMPPSession() {
+    protected void mockXMPPSession() {
         mXMPPSessionMock = mock(XMPPSession.class);
 
         try {
@@ -198,13 +198,10 @@ public class BaseInstrumentedTest {
 
         doReturn(null).when(mRoomListManagerMock).createMUC(anyList(), any(String.class), any(String.class));
 
-//        doNothing().when(mRoomListManagerMock)
-//                .manageNewChat(any(Chat.class),
-//                        any(Realm.class),
-//                        any(String.class),
-//                        any(String.class));
-
         doNothing().when(mRoomListManagerMock).setShowChat(any(Realm.class), any(Chat.class));
+
+        doNothing().when(mRoomListManagerMock)
+                .manageNewChat(any(Chat.class), any(Realm.class), any(String.class), any(String.class));
     }
 
     private void mockRoomManager() {
@@ -213,7 +210,12 @@ public class BaseInstrumentedTest {
         doNothing().when(mRoomManagerMock).updateTypingStatus(any(ChatState.class), any(String.class), any(int.class));
     }
 
+    protected void setUpTest() {
+        Preferences.setTest();
+    }
+
     protected void setUp() {
+        setUpTest();
         setUpRealmTestContext();
         mockXMPPSession();
         mockRosterManager();

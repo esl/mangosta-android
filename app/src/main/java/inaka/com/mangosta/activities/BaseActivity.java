@@ -10,6 +10,7 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
 
@@ -30,7 +31,7 @@ public class BaseActivity extends AppCompatActivity {
         ButterKnife.unbind(this);
         EventBus.getDefault().unregister(this);
 
-        if (mRealm != null && !RealmManager.isTesting()) {
+        if (mRealm != null && !Preferences.isTesting()) {
             mRealm.close();
         }
         clearReferences();
@@ -70,7 +71,7 @@ public class BaseActivity extends AppCompatActivity {
 
         Log.wtf("activities", String.valueOf(mSessionDepth));
 
-        if (!XMPPSession.isTesting() && mSessionDepth == 1 && XMPPSession.getInstance().getXMPPConnection().isConnected()) {
+        if (!Preferences.isTesting() && mSessionDepth == 1 && XMPPSession.getInstance().getXMPPConnection().isConnected()) {
             XMPPSession.getInstance().activeCSI();
         }
 

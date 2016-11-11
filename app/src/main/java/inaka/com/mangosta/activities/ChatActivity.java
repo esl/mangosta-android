@@ -155,7 +155,7 @@ public class ChatActivity extends BaseActivity {
         mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
 
         if (isNewChat) {
-            manageNewChat(chatName);
+            RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
         }
 
         if (!mChat.isShow()) {
@@ -179,8 +179,11 @@ public class ChatActivity extends BaseActivity {
         chatMessagesRecyclerView.setHasFixedSize(true);
         chatMessagesRecyclerView.setLayoutManager(mLayoutManagerMessages);
 
-        mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
-        mMessages.addChangeListener(mRealmChangeListener);
+        if(!RealmManager.isTesting()) {
+            mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
+            mMessages.addChangeListener(mRealmChangeListener);
+        }
+
         List<ChatMessage> messages = ((mMessages == null) ? new ArrayList<ChatMessage>() : mMessages);
         mMessagesAdapter = new ChatMessagesAdapter(this, messages);
 
@@ -268,28 +271,6 @@ public class ChatActivity extends BaseActivity {
                 });
             }
         }, 15000);
-    }
-
-    private void manageNewChat(String chatName) {
-        Realm realm = getRealm();
-        realm.beginTransaction();
-        if (mChat == null) {
-            mChat = new Chat(mChatJID);
-
-            if (mChatJID.contains(XMPPSession.MUC_SERVICE_NAME)) {
-                mChat.setType(Chat.TYPE_MUC);
-            } else if (mChatJID.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
-                mChat.setType(Chat.TYPE_MUC_LIGHT);
-            } else {
-                mChat.setType(Chat.TYPE_1_T0_1);
-            }
-
-            mChat.setDateCreated(new Date());
-        }
-        mChat.setName(chatName);
-        realm.copyToRealmOrUpdate(mChat);
-        realm.commitTransaction();
-        realm.close();
     }
 
     private void manageRoomNameAndSubject() {
@@ -668,7 +649,8 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendTextMessage() {
-        if (!XMPPSession.isInstanceNull() && (XMPPSession.getInstance().isConnectedAndAuthenticated())) {
+        if (!XMPPSession.isInstanceNull()
+                && (XMPPSession.getInstance().isConnectedAndAuthenticated() || Preferences.isTesting())) {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
 
             if (!TextUtils.isEmpty(content)) {
