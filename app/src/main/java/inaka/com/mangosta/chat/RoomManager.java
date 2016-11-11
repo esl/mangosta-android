@@ -462,25 +462,27 @@ public class RoomManager {
     }
 
     public void updateTypingStatus(final ChatState chatState, final String jid, final int chatType) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Message message = new Message(JidCreate.from(jid));
-                    message.addExtension(new ChatStateExtension(chatState));
+        if (!Preferences.isTesting()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Message message = new Message(JidCreate.from(jid));
+                        message.addExtension(new ChatStateExtension(chatState));
 
-                    if (chatType == Chat.TYPE_1_T0_1) {
-                        message.setType(Message.Type.chat);
-                    } else {
-                        message.setType(Message.Type.groupchat);
+                        if (chatType == Chat.TYPE_1_T0_1) {
+                            message.setType(Message.Type.chat);
+                        } else {
+                            message.setType(Message.Type.groupchat);
+                        }
+
+                        sendMessageDependingOnType(message, jid, chatType);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-
-                    sendMessageDependingOnType(message, jid, chatType);
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {

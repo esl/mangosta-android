@@ -509,6 +509,7 @@ public class ChatActivity extends BaseActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(10, 0, 10, 0);
         roomNameEditText.setLayoutParams(lp);
+        roomNameEditText.setHint(getString(R.string.enter_room_name_hint));
         roomNameEditText.setText(getSupportActionBar().getTitle());
 
         linearLayout.addView(roomNameEditText);
@@ -524,8 +525,10 @@ public class ChatActivity extends BaseActivity {
                         Tasks.executeInBackground(ChatActivity.this, new BackgroundWork<Object>() {
                             @Override
                             public Object doInBackground() throws Exception {
-                                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                                multiUserChatLight.changeRoomName(chatName);
+                                if (!Preferences.isTesting()) {
+                                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                                    multiUserChatLight.changeRoomName(chatName);
+                                }
                                 return null;
                             }
                         }, new Completion<Object>() {
@@ -574,6 +577,7 @@ public class ChatActivity extends BaseActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(10, 0, 10, 0);
         roomSubjectEditText.setLayoutParams(lp);
+        roomSubjectEditText.setHint(getString(R.string.enter_room_subject_hint));
         roomSubjectEditText.setText(getSupportActionBar().getSubtitle());
 
         linearLayout.addView(roomSubjectEditText);
@@ -589,8 +593,10 @@ public class ChatActivity extends BaseActivity {
                         Tasks.executeInBackground(ChatActivity.this, new BackgroundWork<Object>() {
                             @Override
                             public Object doInBackground() throws Exception {
-                                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                                multiUserChatLight.changeSubject(subject);
+                                if (!Preferences.isTesting()) {
+                                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                                    multiUserChatLight.changeSubject(subject);
+                                }
                                 return null;
                             }
                         }, new Completion<Object>() {

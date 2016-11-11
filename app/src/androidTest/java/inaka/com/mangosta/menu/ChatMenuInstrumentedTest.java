@@ -21,9 +21,12 @@ import inaka.com.mangosta.realm.RealmManager;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
+import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.withHint;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assume.assumeTrue;
 
@@ -110,16 +113,56 @@ public class ChatMenuInstrumentedTest extends BaseInstrumentedTest {
     public void changeRoomName() throws Exception {
         launchActivityWithMUCLight();
 
+        onView(withText(mTestMUCLightName))
+                .check(matches(isDisplayed()));
+
         openActionBarOverflowOrOptionsMenu(getContext());
 
         onView(withText(R.string.action_change_room_name))
                 .check(matches(isDisplayed()))
                 .perform(click());
+
+        onView(withText(R.string.room_name))
+                .check(matches(isDisplayed()));
+
+        onView(withText(mTestMUCLightName))
+                .perform(clearText());
+
+        onView(withHint(R.string.enter_room_name_hint))
+                .perform(typeText("new room name"));
+
+        onView(withText(android.R.string.yes))
+                .perform(click());
+
+        isToastMessageDisplayed(R.string.room_name_changed);
+
+        onView(withText("new room name"))
+                .check(matches(isDisplayed()));
     }
 
     @Test
     public void changeRoomSubject() throws Exception {
+        launchActivityWithMUCLight();
 
+        openActionBarOverflowOrOptionsMenu(getContext());
+
+        onView(withText(R.string.action_change_room_subject))
+                .check(matches(isDisplayed()))
+                .perform(click());
+
+        onView(withText(R.string.room_subject))
+                .check(matches(isDisplayed()));
+
+        onView(withHint(R.string.enter_room_subject_hint))
+                .perform(clearText(), typeText("new room subject"));
+
+        onView(withText(android.R.string.yes))
+                .perform(click());
+
+        isToastMessageDisplayed(R.string.room_subject_changed);
+
+        onView(withText("new room subject"))
+                .check(matches(isDisplayed()));
     }
 
 }
