@@ -268,16 +268,16 @@ public class RealmManager {
             realm.commitTransaction();
         }
 
-//        RealmResults<ChatMessage> chatMessages =
-//                realm.where(ChatMessage.class)
-//                        .equalTo("roomJid", jid)
-//                        .findAll();
-//
-//        for (ChatMessage chatMessage : chatMessages) {
-//            realm.beginTransaction();
-//            chatMessage.deleteFromRealm();
-//            realm.commitTransaction();
-//        }
+        RealmResults<ChatMessage> chatMessages =
+                realm.where(ChatMessage.class)
+                        .equalTo("roomJid", jid)
+                        .findAll();
+
+        for (ChatMessage chatMessage : chatMessages) {
+            realm.beginTransaction();
+            chatMessage.deleteFromRealm();
+            realm.commitTransaction();
+        }
 
         realm.close();
     }

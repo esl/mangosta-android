@@ -1,4 +1,4 @@
-package inaka.com.mangosta.activities;
+package inaka.com.mangosta.menu;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,27 +14,20 @@ import org.junit.Test;
 import java.util.Date;
 
 import inaka.com.mangosta.R;
+import inaka.com.mangosta.activities.ChatActivity;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.realm.RealmManager;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
-import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static android.support.test.espresso.matcher.ViewMatchers.isFocusable;
-import static android.support.test.espresso.matcher.ViewMatchers.withHint;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static inaka.com.mangosta.models.MyViewMatchers.atPositionOnRecyclerView;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
-public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
+public class ChatMenuInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule mActivityTestRule =
@@ -73,7 +66,7 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @AfterClass
-    public static void afterAllTests() {
+    public static void afterTest() {
         RealmManager.getInstance().deleteChatAndItsMessages(mTestChatJID);
         RealmManager.getInstance().deleteChatAndItsMessages(mTestMUCLightJID);
     }
@@ -113,97 +106,6 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         initMessagesCount();
     }
 
-    private void clickSendTextMessage() {
-        onView(withId(R.id.chatSendMessageButton))
-                .check(matches(isDisplayed()))
-                .perform(click());
-        mMessagesCount++;
-    }
-
-    private void composeMessage(String message) {
-        onView(withId(R.id.chatSendMessageEditText))
-                .check(matches(isDisplayed()))
-                .check(matches(isFocusable()))
-                .perform(typeText(message));
-    }
-
-    private void checkMessagesCount(final int count) throws Throwable {
-        onView(withId(R.id.chatMessagesRecyclerView))
-                .check(matches(isDisplayed()));
-
-        final RecyclerView chatMessagesRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.chatMessagesRecyclerView);
-
-        mActivityTestRule.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                assertEquals(count, chatMessagesRecyclerView.getAdapter().getItemCount());
-            }
-        });
-    }
-
-    private void sendSticker() {
-        onView(withId(R.id.stickersMenuImageButton))
-                .check(matches(isDisplayed()))
-                .check(matches(isClickable()))
-                .perform(click());
-
-        onView(withId(R.id.stickersRecyclerView))
-                .check(matches(isDisplayed()));
-
-        onView(atPositionOnRecyclerView(R.id.stickersRecyclerView, 0, -1))
-                .perform(click());
-
-        mMessagesCount++;
-    }
-
-    @Test
-    public void sendTextMessage() throws Throwable {
-        launchActivityWithChat();
-
-        composeMessage("test message");
-        clickSendTextMessage();
-        checkMessagesCount(mMessagesCount);
-    }
-
-    @Test
-    public void sendStickerMessage() throws Throwable {
-        launchActivityWithChat();
-
-        sendSticker();
-        checkMessagesCount(mMessagesCount);
-    }
-
-    @Test
-    public void fixTextMessageSent() throws Throwable {
-        launchActivityWithChat();
-
-        composeMessage("test message to be fixed");
-        clickSendTextMessage();
-        checkMessagesCount(mMessagesCount);
-
-        onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.imageEditMessage))
-                .perform(click());
-
-        onView(withText(R.string.correct_message))
-                .check(matches(isDisplayed()));
-
-        onView(withText("test message to be fixed"))
-                .check(matches(isDisplayed()))
-                .check(matches(isFocusable()))
-                .perform(clearText());
-
-        onView(withHint(R.string.hint_edit_text))
-                .perform(typeText("fixed message"));
-
-        onView(withText(android.R.string.ok))
-                .perform(click());
-
-        onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.messageContentTextView))
-                .check(matches(isDisplayed()))
-                .check(matches(withText("fixed message")));
-    }
-
     @Test
     public void changeRoomName() throws Exception {
         launchActivityWithMUCLight();
@@ -213,6 +115,11 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         onView(withText(R.string.action_change_room_name))
                 .check(matches(isDisplayed()))
                 .perform(click());
+    }
+
+    @Test
+    public void changeRoomSubject() throws Exception {
+
     }
 
 }
