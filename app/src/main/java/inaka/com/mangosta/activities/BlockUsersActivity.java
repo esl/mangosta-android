@@ -37,7 +37,6 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.blocking.BlockingCommandManager;
 
 public class BlockUsersActivity extends BaseActivity {
 

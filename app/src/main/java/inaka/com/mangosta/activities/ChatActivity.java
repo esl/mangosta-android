@@ -40,7 +40,6 @@ import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -179,7 +178,7 @@ public class ChatActivity extends BaseActivity {
         chatMessagesRecyclerView.setHasFixedSize(true);
         chatMessagesRecyclerView.setLayoutManager(mLayoutManagerMessages);
 
-        if(!RealmManager.isTesting()) {
+        if (!RealmManager.isTesting()) {
             mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
             mMessages.addChangeListener(mRealmChangeListener);
         }
