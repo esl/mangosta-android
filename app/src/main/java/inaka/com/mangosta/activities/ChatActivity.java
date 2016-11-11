@@ -276,19 +276,25 @@ public class ChatActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<MUCLightRoomConfiguration>() {
             @Override
             public MUCLightRoomConfiguration doInBackground() throws Exception {
-                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                return multiUserChatLight.getConfiguration();
+                if (Preferences.isTesting()) {
+                    return null;
+                } else {
+                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                    return multiUserChatLight.getConfiguration();
+                }
             }
         }, new Completion<MUCLightRoomConfiguration>() {
             @Override
             public void onSuccess(Context context, MUCLightRoomConfiguration mucLightRoomConfiguration) {
-                Realm realm = getRealm();
-                realm.beginTransaction();
-                mChat.setName(mucLightRoomConfiguration.getRoomName());
-                mChat.setSubject(mucLightRoomConfiguration.getSubject());
-                realm.copyToRealmOrUpdate(mChat);
-                realm.commitTransaction();
-                realm.close();
+                if (mucLightRoomConfiguration != null) {
+                    Realm realm = getRealm();
+                    realm.beginTransaction();
+                    mChat.setName(mucLightRoomConfiguration.getRoomName());
+                    mChat.setSubject(mucLightRoomConfiguration.getSubject());
+                    realm.copyToRealmOrUpdate(mChat);
+                    realm.commitTransaction();
+                    realm.close();
+                }
 
                 if (mChat.getSubject() != null) {
                     getSupportActionBar().setSubtitle(mChat.getSubject());
@@ -958,6 +964,9 @@ public class ChatActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, MUCLightAffiliation>>() {
             @Override
             public HashMap<Jid, MUCLightAffiliation> doInBackground() throws Exception {
+                if (Preferences.isTesting()) {
+                    return null;
+                }
                 MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
                 MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
                 return multiUserChatLight.getAffiliations();
@@ -965,13 +974,14 @@ public class ChatActivity extends BaseActivity {
         }, new Completion<HashMap<Jid, MUCLightAffiliation>>() {
             @Override
             public void onSuccess(Context context, HashMap<Jid, MUCLightAffiliation> occupants) {
-                for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
-
-                    Jid key = pair.getKey();
-                    if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
-                        MenuItem destroyItem = menu.findItem(R.id.actionDestroyChat);
-                        mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
-                        destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
+                if (occupants != null) {
+                    for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
+                        Jid key = pair.getKey();
+                        if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
+                            MenuItem destroyItem = menu.findItem(R.id.actionDestroyChat);
+                            mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
+                            destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
+                        }
                     }
                 }
             }

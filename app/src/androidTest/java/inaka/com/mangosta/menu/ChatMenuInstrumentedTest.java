@@ -21,6 +21,7 @@ import inaka.com.mangosta.realm.RealmManager;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
+import static android.support.test.espresso.Espresso.pressBack;
 import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.typeText;
@@ -107,6 +108,22 @@ public class ChatMenuInstrumentedTest extends BaseInstrumentedTest {
         intent.putExtras(bundle);
         mActivityTestRule.launchActivity(intent);
         initMessagesCount();
+    }
+
+    @Test
+    public void goToRoomMembers() throws Exception {
+        launchActivityWithMUCLight();
+
+        openActionBarOverflowOrOptionsMenu(getContext());
+
+        onView(withText(R.string.action_chat_members))
+                .check(matches(isDisplayed()))
+                .perform(click());
+
+        onView(withText(R.string.title_activity_chat_members))
+                .check(matches(isDisplayed()));
+
+        pressBack();
     }
 
     @Test

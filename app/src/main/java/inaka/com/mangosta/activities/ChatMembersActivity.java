@@ -34,6 +34,7 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
@@ -173,7 +174,12 @@ public class ChatMembersActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadMembers(mRoomJid);
+
+        if (Preferences.isTesting()) {
+            progressLoading.setVisibility(View.GONE);
+        } else {
+            loadMembers(mRoomJid);
+        }
     }
 
     @Override
