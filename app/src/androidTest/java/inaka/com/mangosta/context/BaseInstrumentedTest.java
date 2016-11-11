@@ -208,6 +208,8 @@ public class BaseInstrumentedTest {
         mRoomManagerMock = mock(RoomManager.class);
         RoomManager.setSpecialInstanceForTesting(mRoomManagerMock);
         doNothing().when(mRoomManagerMock).updateTypingStatus(any(ChatState.class), any(String.class), any(int.class));
+        doNothing().when(mRoomManagerMock).addToMUCLight(any(User.class), any(String.class));
+        doNothing().when(mRoomManagerMock).removeFromMUCLight(any(User.class), any(String.class));
     }
 
     protected void setUpTest() {

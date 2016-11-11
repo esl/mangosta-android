@@ -35,6 +35,7 @@ import java.util.Map;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
@@ -509,6 +510,38 @@ public class RoomManager {
             }
         }
         return jids;
+    }
+
+    public void addToMUCLight(User user, String chatJID) {
+        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
+        try {
+            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(chatJID).asEntityBareJidIfPossible());
+
+            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+
+            HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
+            affiliations.put(jid, MUCLightAffiliation.member);
+
+            mucLight.changeAffiliations(affiliations);
+        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeFromMUCLight(User user, String chatJID) {
+        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
+        try {
+            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(chatJID).asEntityBareJidIfPossible());
+
+            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+
+            HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
+            affiliations.put(jid, MUCLightAffiliation.none);
+
+            mucLight.changeAffiliations(affiliations);
+        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
+            e.printStackTrace();
+        }
     }
 
 }

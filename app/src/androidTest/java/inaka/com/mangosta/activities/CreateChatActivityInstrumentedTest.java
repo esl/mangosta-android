@@ -56,24 +56,24 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
     private int getSearchedUsersCount() {
         RecyclerView searchResultsRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.createChatSearchResultRecyclerView);
+                (RecyclerView) getCurrentActivity().findViewById(R.id.searchResultRecyclerView);
         return searchResultsRecyclerView.getAdapter().getItemCount();
     }
 
     private int getUsersForChatCount() {
         RecyclerView searchResultsRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.createChatMembersRecyclerView);
+                (RecyclerView) getCurrentActivity().findViewById(R.id.membersRecyclerView);
         return searchResultsRecyclerView.getAdapter().getItemCount();
     }
 
     private void addUser1() {
-        onView(withId(R.id.createChatSearchUserEditText))
+        onView(withId(R.id.searchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(clearText())
                 .perform(typeText("user1"));
 
-        onView(withId(R.id.createChatSearchUserButton))
+        onView(withId(R.id.searchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -88,13 +88,13 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     private void addUser2() {
-        onView(withId(R.id.createChatSearchUserEditText))
+        onView(withId(R.id.searchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(clearText())
                 .perform(typeText("user2"));
 
-        onView(withId(R.id.createChatSearchUserButton))
+        onView(withId(R.id.searchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -109,7 +109,7 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     private void removeFirstUser() {
-        onView(atPositionOnRecyclerView(R.id.createChatMembersRecyclerView, 0, R.id.removeUserButton))
+        onView(atPositionOnRecyclerView(R.id.membersRecyclerView, 0, R.id.removeUserButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
         assertEquals(0, getUsersForChatCount());
@@ -159,12 +159,12 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void searchUserNotFound() throws Exception {
-        onView(withId(R.id.createChatSearchUserEditText))
+        onView(withId(R.id.searchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(typeText("falseUser"));
 
-        onView(withId(R.id.createChatSearchUserButton))
+        onView(withId(R.id.searchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -179,12 +179,12 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void searchUserFound() throws Exception {
-        onView(withId(R.id.createChatSearchUserEditText))
+        onView(withId(R.id.searchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(typeText("user1"));
 
-        onView(withId(R.id.createChatSearchUserButton))
+        onView(withId(R.id.searchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -206,7 +206,7 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
         addUser1();
         addUser2();
 
-        onView(atPositionOnRecyclerView(R.id.createChatMembersRecyclerView, 1, R.id.removeUserButton))
+        onView(atPositionOnRecyclerView(R.id.membersRecyclerView, 1, R.id.removeUserButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
         assertEquals(1, getUsersForChatCount());

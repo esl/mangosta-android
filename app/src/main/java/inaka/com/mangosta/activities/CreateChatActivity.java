@@ -48,19 +48,19 @@ public class CreateChatActivity extends BaseActivity {
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.createChatSearchUserButton)
+    @Bind(R.id.searchUserButton)
     ImageButton createChatSearchUserButton;
 
-    @Bind(R.id.createChatSearchUserEditText)
+    @Bind(R.id.searchUserEditText)
     EditText createChatSearchUserEditText;
 
-    @Bind(R.id.createChatSearchUserProgressBar)
+    @Bind(R.id.searchUserProgressBar)
     ProgressBar createChatSearchUserProgressBar;
 
-    @Bind(R.id.createChatSearchResultRecyclerView)
+    @Bind(R.id.searchResultRecyclerView)
     RecyclerView createChatSearchResultRecyclerView;
 
-    @Bind(R.id.createChatMembersRecyclerView)
+    @Bind(R.id.membersRecyclerView)
     RecyclerView createChatMembersRecyclerView;
 
     @Bind(R.id.continueFloatingButton)
