@@ -19,7 +19,6 @@ import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.realm.RealmManager;
 
 import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
 import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.typeText;
@@ -42,8 +41,6 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
     private static String mTestChatJID = "user@erlang-solutions.com";
     private static String mTestChatName = "Chat with user";
-    private static String mTestMUCLightJID = "muclightsample@erlang-solutions.com";
-    private static String mTestMUCLightName = "MUC Light sample";
     private int mMessagesCount;
 
     @Override
@@ -62,20 +59,11 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         chat.setJid(mTestChatJID);
         chat.setDateCreated(new Date());
         RealmManager.getInstance().saveChat(chat);
-
-        Chat muclightChat = new Chat();
-        muclightChat.setType(Chat.TYPE_MUC_LIGHT);
-        muclightChat.setShow(true);
-        muclightChat.setName(mTestMUCLightName);
-        muclightChat.setJid(mTestMUCLightJID);
-        muclightChat.setDateCreated(new Date());
-        RealmManager.getInstance().saveChat(muclightChat);
     }
 
     @AfterClass
     public static void afterAllTests() {
         RealmManager.getInstance().deleteChatAndItsMessages(mTestChatJID);
-        RealmManager.getInstance().deleteChatAndItsMessages(mTestMUCLightJID);
     }
 
     private void initMessagesCount() {
@@ -98,16 +86,6 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         Bundle bundle = new Bundle();
         bundle.putString(ChatActivity.CHAT_JID_PARAMETER, mTestChatJID);
         bundle.putString(ChatActivity.CHAT_NAME_PARAMETER, mTestChatName);
-        intent.putExtras(bundle);
-        mActivityTestRule.launchActivity(intent);
-        initMessagesCount();
-    }
-
-    private void launchActivityWithMUCLight() {
-        Intent intent = new Intent(getContext(), ChatActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putString(ChatActivity.CHAT_JID_PARAMETER, mTestMUCLightJID);
-        bundle.putString(ChatActivity.CHAT_NAME_PARAMETER, mTestMUCLightName);
         intent.putExtras(bundle);
         mActivityTestRule.launchActivity(intent);
         initMessagesCount();
@@ -202,17 +180,6 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.messageContentTextView))
                 .check(matches(isDisplayed()))
                 .check(matches(withText("fixed message")));
-    }
-
-    @Test
-    public void changeRoomName() throws Exception {
-        launchActivityWithMUCLight();
-
-        openActionBarOverflowOrOptionsMenu(getContext());
-
-        onView(withText(R.string.action_change_room_name))
-                .check(matches(isDisplayed()))
-                .perform(click());
     }
 
 }
