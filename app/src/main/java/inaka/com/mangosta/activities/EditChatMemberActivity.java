@@ -39,8 +39,10 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -94,7 +96,7 @@ public class EditChatMemberActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         mChatJID = getIntent().getStringExtra(CHAT_JID_PARAMETER);
-        mChat = getRealm().where(Chat.class).equalTo("jid", mChatJID).findFirst();
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
 
         LinearLayoutManager layoutManagerSearch = new LinearLayoutManager(this);
         createChatSearchResultRecyclerView.setHasFixedSize(true);
@@ -125,7 +127,11 @@ public class EditChatMemberActivity extends BaseActivity {
 
         continueFloatingButton.setVisibility(View.INVISIBLE);
 
-        getChatMembers();
+        try {
+            getChatMembers();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void searchUserBackgroundTask(final String user) {
@@ -168,14 +174,14 @@ public class EditChatMemberActivity extends BaseActivity {
         return true;
     }
 
-    private void getChatMembers() {
+    private void getChatMembers() throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, XmppStringprepException {
 
-        List<Jid> jids = new ArrayList<>();
+        List<String> jids = new ArrayList<>();
 
         switch (mChat.getType()) {
 
             case Chat.TYPE_MUC_LIGHT:
-                jids = getMUCLightMembers();
+                jids = RoomManager.getInstance(null).loadMUCLightMembers(mChatJID);
                 break;
 
             case Chat.TYPE_MUC:
@@ -183,8 +189,8 @@ public class EditChatMemberActivity extends BaseActivity {
                 break;
         }
 
-        for (Jid jid : jids) {
-            membersObtainUser(XMPPUtils.fromJIDToUserName(jid.toString()));
+        for (String jid : jids) {
+            membersObtainUser(XMPPUtils.fromJIDToUserName(jid));
         }
 
     }
@@ -201,8 +207,8 @@ public class EditChatMemberActivity extends BaseActivity {
         return jids;
     }
 
-    private List<Jid> getMUCMembers() {
-        List<Jid> jids = new ArrayList<>();
+    private List<String> getMUCMembers() {
+        List<String> jids = new ArrayList<>();
 
         MultiUserChatManager multiUserChatManager = XMPPSession.getInstance().getMUCManager();
         try {
@@ -211,7 +217,7 @@ public class EditChatMemberActivity extends BaseActivity {
 
             for (Jid jid : occupants) {
                 String userName = jid.toString().split("/")[1];
-                jids.add(JidCreate.from(XMPPUtils.fromUserNameToJID(userName)));
+                jids.add(XMPPUtils.fromUserNameToJID(userName));
             }
 
         } catch (XmppStringprepException e) {

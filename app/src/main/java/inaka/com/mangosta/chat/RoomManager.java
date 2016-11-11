@@ -28,7 +28,9 @@ import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Chat;
@@ -42,6 +44,7 @@ import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.bob.BoBHash;
 import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
 import inaka.com.mangosta.xmpp.mam.MamManager;
+import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
 import inaka.com.mangosta.xmpp.muclight.MUCLightRoomConfiguration;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
@@ -490,6 +493,22 @@ public class RoomManager {
             String userJid = jid.toString();
             RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
         }
+    }
+
+    public List<String> loadMUCLightMembers(String roomJid) throws XmppStringprepException, SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException {
+        MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+        MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(roomJid).asEntityBareJidIfPossible());
+
+        HashMap<Jid, MUCLightAffiliation> occupants = multiUserChatLight.getAffiliations();
+        List<String> jids = new ArrayList<>();
+
+        for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
+            Jid jid = pair.getKey();
+            if (jid != null) {
+                jids.add(jid.toString());
+            }
+        }
+        return jids;
     }
 
 }
