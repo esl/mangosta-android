@@ -353,6 +353,7 @@ public class ChatActivity extends BaseActivity {
 
                             String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getXMPPConnection().getUser().toString());
                             String userSender = "";
+                            String messageType = message.getType().name();
 
                             String[] jidList = message.getFrom().toString().split("/");
 
@@ -375,7 +376,7 @@ public class ChatActivity extends BaseActivity {
                                     break;
                             }
 
-                            if (!userSender.equals(myUser)) {
+                            if (!userSender.equals(myUser) && !messageType.equals("error")) {
                                 if (chatState.equals(ChatState.composing)) { // typing
                                     chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
                                     chatTypingTextView.setVisibility(View.VISIBLE);
