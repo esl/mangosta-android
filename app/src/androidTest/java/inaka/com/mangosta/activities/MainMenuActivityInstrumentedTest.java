@@ -1,5 +1,6 @@
 package inaka.com.mangosta.activities;
 
+import android.support.test.espresso.IdlingResource;
 import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
@@ -82,48 +83,6 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         }
     }
 
-    @Test
-    public void initializeOneToOneChatsList() throws Exception {
-        assumeTrue(isUserLoggedIn());
-
-        // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.ONE_TO_ONE_CHATS_POSITION);
-
-        // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mOneToOneChats.size());
-    }
-
-    @Test
-    public void initializeMUCLightList() throws Exception {
-        assumeTrue(isUserLoggedIn());
-
-        // move to the 2nd tab
-        onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft());
-
-        // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_LIGHT_CHATS_POSITION);
-
-        // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
-    }
-
-    @Test
-    public void initializeMUCList() throws Exception {
-        assumeTrue(isUserLoggedIn());
-
-        // move to the 3rd tab
-        onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft())
-                .perform(swipeLeft());
-
-        // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_CHATS_POSITION);
-
-        // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mMUCs.size());
-    }
-
     private int getChatsCount(ChatsListFragment chatsListFragment) {
         return chatsListFragment.getChatListAdapter().getItemCount();
     }
@@ -132,35 +91,6 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         MainMenuActivity mainMenuActivity = mMainMenuActivityActivityTestRule.getActivity();
         ViewPagerMainMenuAdapter adapter = ((ViewPagerMainMenuAdapter) mainMenuActivity.mViewpagerMainMenu.getAdapter());
         return (ChatsListFragment) adapter.mFragmentList[index];
-    }
-
-    @Test
-    public void oneToOneChatsInRecyclerView() throws Exception {
-        assumeTrue(isUserLoggedIn());
-        checkRecyclerViewContent(mOneToOneChatNames);
-    }
-
-    @Test
-    public void mucLightsInRecyclerView() throws Exception {
-        assumeTrue(isUserLoggedIn());
-
-        // move to the 2nd tab
-        onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft());
-
-        checkRecyclerViewContent(mMUCLightNames);
-    }
-
-    @Test
-    public void mucsInRecyclerView() throws Exception {
-        assumeTrue(isUserLoggedIn());
-
-        // move to the 3rd tab
-        onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft())
-                .perform(swipeLeft());
-
-        checkRecyclerViewContent(mMUCNames);
     }
 
     private void checkRecyclerViewContent(final List<String> chatNames) {
@@ -172,6 +102,66 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
                         matches(hasDescendant(withText(chatName))).check(view, e);
                     }
                 });
+    }
+
+    @Test
+    public void initializeOneToOneChatsList() throws Exception {
+        assumeTrue(isUserLoggedIn());
+
+        IdlingResource resource = startTiming(5000);
+
+        // Obtain the one to one chats fragment
+        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.ONE_TO_ONE_CHATS_POSITION);
+
+        // Check if it loads the correct amount of chats
+        assertEquals(getChatsCount(chatsListFragment), mOneToOneChats.size());
+
+        checkRecyclerViewContent(mOneToOneChatNames);
+
+        stopTiming(resource);
+    }
+
+    @Test
+    public void initializeMUCLightList() throws Exception {
+        assumeTrue(isUserLoggedIn());
+
+        // move to the 2nd tab
+        onView(withId(R.id.viewpagerMainMenu))
+                .perform(swipeLeft());
+
+        IdlingResource resource = startTiming(5000);
+
+        // Obtain the one to one chats fragment
+        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_LIGHT_CHATS_POSITION);
+
+        // Check if it loads the correct amount of chats
+        assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
+
+        checkRecyclerViewContent(mMUCLightNames);
+
+        stopTiming(resource);
+    }
+
+    @Test
+    public void initializeMUCList() throws Exception {
+        assumeTrue(isUserLoggedIn());
+
+        // move to the 3rd tab
+        onView(withId(R.id.viewpagerMainMenu))
+                .perform(swipeLeft())
+                .perform(swipeLeft());
+
+        IdlingResource resource = startTiming(5000);
+
+        // Obtain the one to one chats fragment
+        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_CHATS_POSITION);
+
+        // Check if it loads the correct amount of chats
+        assertEquals(getChatsCount(chatsListFragment), mMUCs.size());
+
+        checkRecyclerViewContent(mMUCNames);
+
+        stopTiming(resource);
     }
 
 }
