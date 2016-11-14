@@ -180,12 +180,15 @@ public class XMPPSession {
         if (mInstance == null) {
             mInstance = new XMPPSession();
         }
-
         return mInstance;
     }
 
     public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
         mInstance = xmppSession;
+    }
+
+    public static void clearInstance() {
+        mInstance = null;
     }
 
     private XMPPSession() {
@@ -714,13 +717,13 @@ public class XMPPSession {
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    mInstance = null;
+                    clearInstance();
                 }
             }
         }).start();
     }
 
-    //Room Message Subscription
+    // Room Message Subscription
     public Subscription subscribeRoomToMessages(final String roomJid, final MessageSubscriber subscriber) {
         return mMessagePublisher
                 .filter(
