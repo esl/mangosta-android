@@ -24,15 +24,23 @@ import java.util.UUID;
 
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomsListManager;
+import inaka.com.mangosta.interfaces.MongooseService;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.MongooseServiceMock;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.mock.BehaviorDelegate;
+import retrofit2.mock.MockRetrofit;
+import retrofit2.mock.NetworkBehavior;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
@@ -57,6 +65,9 @@ public class BaseInstrumentedTest {
     protected RosterManager mRosterManagerMock;
     protected RoomsListManager mRoomListManagerMock;
     protected RoomManager mRoomManagerMock;
+
+    private final NetworkBehavior behavior = NetworkBehavior.create();
+    protected MongooseService mMongooseServiceMock;
 
     protected List<BlogPost> mBlogPosts;
 
@@ -212,8 +223,25 @@ public class BaseInstrumentedTest {
         doNothing().when(mRoomManagerMock).removeFromMUCLight(any(User.class), any(String.class));
     }
 
+    private void mockRestApi() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .baseUrl(MongooseAPI.BASE_URL).build();
+
+        MockRetrofit mockRetrofit = new MockRetrofit.Builder(retrofit).networkBehavior(behavior).build();
+
+        final BehaviorDelegate<MongooseService> delegate = mockRetrofit.create(MongooseService.class);
+
+        mMongooseServiceMock = new MongooseServiceMock(delegate);
+
+        MongooseAPI mongooseAPI = mock(MongooseAPI.class);
+        doReturn(mMongooseServiceMock).when(mongooseAPI).getAuthenticatedService();
+        MongooseAPI.setSpecialInstanceForTesting(mongooseAPI);
+    }
+
     protected void setUpTest() {
         Preferences.setTest();
+        mockRestApi();
     }
 
     protected void setUp() {

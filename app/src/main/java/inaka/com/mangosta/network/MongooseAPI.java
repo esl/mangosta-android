@@ -28,7 +28,20 @@ public class MongooseAPI {
     public static final int RESPONSE_OK = 204;
     public static final int NOT_FOUND = 404;
 
-    private static final String BASE_URL = "https://31.172.186.62:5285/api/";
+    public static final String BASE_URL = "https://31.172.186.62:5285/api/";
+
+    private static MongooseAPI mInstance;
+
+    public static MongooseAPI getInstance() {
+        if (mInstance == null) {
+            mInstance = new MongooseAPI();
+        }
+        return mInstance;
+    }
+
+    public static void setSpecialInstanceForTesting(MongooseAPI mongooseAPI) {
+        mInstance = mongooseAPI;
+    }
 
     public MongooseService getServiceWithAuthentication(String username, String password) {
 
@@ -76,7 +89,7 @@ public class MongooseAPI {
         return retrofit.create(MongooseService.class);
     }
 
-    public static MongooseService getAuthenticatedService() {
+    public MongooseService getAuthenticatedService() {
         Preferences preferences = Preferences.getInstance();
         String userJid = preferences.getUserXMPPJid();
         String password = preferences.getUserXMPPPassword();

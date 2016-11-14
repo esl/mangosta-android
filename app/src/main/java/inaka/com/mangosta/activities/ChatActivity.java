@@ -283,7 +283,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void manageRoomNameAndSubject() {
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (mongooseService != null) {
             Call<MongooseMUCLight> call = mongooseService.getMUCLightDetails(mChatJID.split("@")[0]);
@@ -574,7 +574,10 @@ public class ChatActivity extends BaseActivity {
                                 realm.beginTransaction();
                                 mChat.setName(chatName);
                                 realm.commitTransaction();
-                                realm.close();
+
+                                if (!Preferences.isTesting()) {
+                                    realm.close();
+                                }
 
                                 getSupportActionBar().setTitle(chatName);
                             }
@@ -642,7 +645,10 @@ public class ChatActivity extends BaseActivity {
                                 realm.beginTransaction();
                                 mChat.setSubject(subject);
                                 realm.commitTransaction();
-                                realm.close();
+
+                                if (!Preferences.isTesting()) {
+                                    realm.close();
+                                }
 
                                 getSupportActionBar().setSubtitle(subject);
                             }

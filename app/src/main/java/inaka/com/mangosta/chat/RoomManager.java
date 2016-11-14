@@ -179,7 +179,7 @@ public class RoomManager {
 
     public void loadMUCLightRooms() {
         final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (connection.isAuthenticated() && mongooseService != null) {
 
@@ -198,7 +198,7 @@ public class RoomManager {
 
     public void loadMUCLightRoomsInBackground() {
         final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (connection.isAuthenticated() && mongooseService != null) {
             Call<List<MongooseMUCLight>> call = mongooseService.getMUCLights();
@@ -306,7 +306,7 @@ public class RoomManager {
             occupants.add(jid);
         }
 
-        final MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        final MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (mongooseService != null) {
 
@@ -331,7 +331,7 @@ public class RoomManager {
                         @Override
                         public void onResponse(Call<Object> call, Response<Object> response) {
                             String body = bodyToString(callAddUser.request().body());
-                            if (body.substring(body.lastIndexOf(":") + 2, body.length() - 2).equals(lastOccupant)) {
+                            if (Preferences.isTesting() || isLastOccupant(body)) {
                                 context.runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -339,6 +339,10 @@ public class RoomManager {
                                     }
                                 });
                             }
+                        }
+
+                        private boolean isLastOccupant(String body) {
+                            return body.substring(body.lastIndexOf(":") + 2, body.length() - 2).equals(lastOccupant);
                         }
 
                         @Override
@@ -473,7 +477,7 @@ public class RoomManager {
     private void getMessages(final String jid, long timestamp) {
         final int pageSize = 15;
 
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (mongooseService != null) {
 
@@ -532,7 +536,7 @@ public class RoomManager {
     }
 
     private void getMUCLightMessages(final String jid) {
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (mongooseService != null) {
             Call<List<MongooseMUCLightMessage>> call = mongooseService.getMUCLightMessages(jid.split("@")[0]);
@@ -681,7 +685,7 @@ public class RoomManager {
     }
 
     public void leaveMUCLight(final String jid) {
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
         String authenticatedUser = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid().toString();
 
         try {
@@ -815,7 +819,7 @@ public class RoomManager {
     private void sendRestMessageDependingOnType(final String content, final String jid, int chatType) {
 
         try {
-            MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
+            MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
             if (mongooseService != null) {
 

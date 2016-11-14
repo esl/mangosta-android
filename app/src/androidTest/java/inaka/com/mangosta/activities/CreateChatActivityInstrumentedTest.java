@@ -1,6 +1,7 @@
 package inaka.com.mangosta.activities;
 
 import android.content.Intent;
+import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
 
@@ -252,7 +253,10 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
         selectMUCLightType();
         enterGroupChatName("test muc light");
         createGroupChat();
+
+        IdlingResource resource = startTiming(5000);
         verifyEnteredToAChat();
+        stopTiming(resource);
     }
 
 }

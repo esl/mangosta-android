@@ -2,6 +2,7 @@ package inaka.com.mangosta.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
 
@@ -141,7 +142,10 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
         composeMessage("test message");
         clickSendTextMessage();
+
+        IdlingResource resource = startTiming(5000);
         checkMessagesCount(mMessagesCount);
+        stopTiming(resource);
     }
 
     @Test
@@ -158,6 +162,9 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
 
         composeMessage("test message to be fixed");
         clickSendTextMessage();
+
+        IdlingResource resource = startTiming(5000);
+
         checkMessagesCount(mMessagesCount);
 
         onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.imageEditMessage))
@@ -180,6 +187,8 @@ public class ChatActivityInstrumentedTest extends BaseInstrumentedTest {
         onView(atPositionOnRecyclerView(R.id.chatMessagesRecyclerView, mMessagesCount - 1, R.id.messageContentTextView))
                 .check(matches(isDisplayed()))
                 .check(matches(withText("fixed message")));
+
+        stopTiming(resource);
     }
 
 }
