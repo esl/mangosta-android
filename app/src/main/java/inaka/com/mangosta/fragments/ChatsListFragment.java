@@ -1,5 +1,6 @@
 package inaka.com.mangosta.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,8 +19,6 @@ import org.jivesoftware.smack.packet.Message;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import butterknife.Bind;
@@ -31,9 +30,9 @@ import inaka.com.mangosta.adapters.ChatListAdapter;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomManagerListener;
 import inaka.com.mangosta.models.Chat;
-import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.ChatOrderComparator;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import rx.Subscription;
@@ -60,23 +59,26 @@ public class ChatsListFragment extends BaseFragment {
     public final static int MUC_CHATS_POSITION = 2;
 
     public int mPosition = 0;
+    Activity mContext;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat_list, container, false);
         ButterKnife.bind(this, view);
 
+        mContext = getActivity();
+
         Bundle bundle = getArguments();
         mPosition = bundle.getInt("position");
 
         mChats = new ArrayList<>();
 
-        mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(getActivity()));
+        mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(mContext));
 
         mChatListAdapter = getChatListAdapter();
 
         chatListRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
         chatListRecyclerView.setLayoutManager(layoutManager);
         chatListRecyclerView.setAdapter(mChatListAdapter);
 
@@ -113,24 +115,24 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public ChatListAdapter getChatListAdapter() {
-        return new ChatListAdapter(mChats, getActivity(),
+        return new ChatListAdapter(mChats, mContext,
                 new ChatListAdapter.ChatClickListener() {
                     @Override
                     public void onChatClicked(Chat chat) {
-                        Intent intent = new Intent(getActivity(), ChatActivity.class);
+                        Intent intent = new Intent(mContext, ChatActivity.class);
                         intent.putExtra(ChatActivity.CHAT_JID_PARAMETER, chat.getJid());
                         intent.putExtra(ChatActivity.CHAT_NAME_PARAMETER, XMPPUtils.getChatName(chat));
                         intent.putExtra(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
-                        getActivity().startActivity(intent);
+                        mContext.startActivity(intent);
                     }
                 });
     }
 
     public void loadChats() {
-        if (getActivity() == null) {
+        if (mContext == null) {
             changeChatsList();
         } else {
-            getActivity().runOnUiThread(new Runnable() {
+            mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     changeChatsList();
@@ -144,15 +146,15 @@ public class ChatsListFragment extends BaseFragment {
 
         switch (mPosition) {
             case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats
-                mChats.addAll(RealmManager.get1to1Chats(getRealm()));
+                mChats.addAll(RealmManager.getInstance().get1to1Chats());
                 break;
 
             case MUC_LIGHT_CHATS_POSITION: // load muc chats
-                mChats.addAll(RealmManager.getMUCLights(getRealm()));
+                mChats.addAll(RealmManager.getInstance().getMUCLights());
                 break;
 
             case MUC_CHATS_POSITION: // load muc light chats
-                mChats.addAll(RealmManager.getMUCs(getRealm()));
+                mChats.addAll(RealmManager.getInstance().getMUCs());
                 break;
         }
 
@@ -170,7 +172,7 @@ public class ChatsListFragment extends BaseFragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                RealmManager.deleteChat(roomJid);
+                RealmManager.getInstance().deleteChat(roomJid);
                 mRoomManager.loadMUCLightRoomsInBackground();
             }
         });
@@ -178,7 +180,7 @@ public class ChatsListFragment extends BaseFragment {
 
     public void loadChatsBackgroundTask() {
         if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
-            getActivity().runOnUiThread(new Runnable() {
+            mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     swipeRefreshLayout.setRefreshing(true);
@@ -190,7 +192,7 @@ public class ChatsListFragment extends BaseFragment {
             return;
         }
 
-        Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
+        Tasks.executeInBackground(mContext, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
                 switch (mPosition) {
@@ -211,7 +213,7 @@ public class ChatsListFragment extends BaseFragment {
         }, new Completion<Object>() {
             @Override
             public void onSuccess(Context context, Object object) {
-                getActivity().runOnUiThread(new Runnable() {
+                mContext.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         loadChats();
@@ -221,7 +223,7 @@ public class ChatsListFragment extends BaseFragment {
 
             @Override
             public void onError(Context context, Exception e) {
-                getActivity().runOnUiThread(new Runnable() {
+                mContext.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         loadChats();
@@ -269,33 +271,6 @@ public class ChatsListFragment extends BaseFragment {
         @Override
         public void onRoomsLoaded() {
             loadChats();
-        }
-    }
-
-    static class ChatOrderComparator implements Comparator<Chat> {
-        @Override
-        public int compare(Chat chat1, Chat chat2) {
-            ChatMessage chatMessage1 = RealmManager.getLastMessageForChat(chat1.getJid());
-            ChatMessage chatMessage2 = RealmManager.getLastMessageForChat(chat2.getJid());
-
-            Date date1 = null;
-            Date date2 = null;
-
-            if (chatMessage1 != null) {
-                date1 = chatMessage1.getDate();
-            }
-
-            if (chatMessage2 != null) {
-                date2 = chatMessage2.getDate();
-            }
-
-            if (date1 == null) {
-                return 1;
-            } else if (date2 == null) {
-                return 0;
-            } else {
-                return date2.compareTo(date1);
-            }
         }
     }
 

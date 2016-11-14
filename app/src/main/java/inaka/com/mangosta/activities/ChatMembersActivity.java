@@ -29,17 +29,13 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
-import inaka.com.mangosta.interfaces.MongooseService;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
-import inaka.com.mangosta.models.MongooseMUCLight;
-import inaka.com.mangosta.models.MongooseParticipant;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.network.MongooseAPI;
+import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ChatMembersActivity extends BaseActivity {
 
@@ -115,7 +111,10 @@ public class ChatMembersActivity extends BaseActivity {
                 if (mRoomType == Chat.TYPE_MUC) {
                     loadMUCMembers(roomJid);
                 } else if (mRoomType == Chat.TYPE_MUC_LIGHT) {
-                    loadMUCLightMembers(roomJid);
+                    List<String> jids = RoomManager.getInstance(null).loadMUCLightMembers(roomJid);
+                    for (String jid : jids) {
+                        obtainUser(XMPPUtils.fromJIDToUserName(jid));
+                    }
                 }
                 return null;
             }
@@ -129,32 +128,6 @@ public class ChatMembersActivity extends BaseActivity {
                 e.printStackTrace();
             }
         });
-    }
-
-    private void loadMUCLightMembers(String roomJid) throws XmppStringprepException, SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException {
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
-
-        if (mongooseService != null) {
-            Call<MongooseMUCLight> call = mongooseService.getMUCLightDetails(roomJid.split("@")[0]);
-            call.enqueue(new Callback<MongooseMUCLight>() {
-                @Override
-                public void onResponse(Call<MongooseMUCLight> call, Response<MongooseMUCLight> response) {
-                    MongooseMUCLight mongooseMUCLight = response.body();
-
-                    if (mongooseMUCLight != null) {
-                        List<MongooseParticipant> mongooseParticipants = mongooseMUCLight.getParticipants();
-                        for (MongooseParticipant participant : mongooseParticipants) {
-                            obtainUser(XMPPUtils.fromJIDToUserName(participant.getUser()));
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<MongooseMUCLight> call, Throwable t) {
-
-                }
-            });
-        }
     }
 
     private void loadMUCMembers(String roomJid) throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, XmppStringprepException {
@@ -186,7 +159,12 @@ public class ChatMembersActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadMembers(mRoomJid);
+
+        if (Preferences.isTesting() && !RealmManager.isTesting()) {
+            progressLoading.setVisibility(View.GONE);
+        } else {
+            loadMembers(mRoomJid);
+        }
     }
 
     @Override

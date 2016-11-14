@@ -51,7 +51,7 @@
             android:layout_weight="0.2">
 
             <Button
-                android:id="@+id/addUserToChatButton"
+                android:id="@+id/addUserButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@color/green"
@@ -61,7 +61,7 @@
                 android:visibility="gone"/>
 
             <Button
-                android:id="@+id/removeUserFromChatButton"
+                android:id="@+id/removeUserButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@color/red"

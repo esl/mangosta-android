@@ -15,7 +15,6 @@ import android.widget.Toast;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jxmpp.jid.Jid;
 
@@ -35,7 +34,7 @@ import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 
-public class ViewBlogPostDetailsActivity extends BaseActivity {
+public class BlogPostDetailsActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
@@ -62,6 +61,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
     List<BlogPostComment> mBlogPostComments;
 
     private BlogPostCommentsListAdapter commentsListAdapter;
+    public static String BLOG_POST_PARAMETER = "blogPost";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +71,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         Bundle bundle = getIntent().getExtras();
-        mBlogPost = bundle.getParcelable("blogPost");
+        mBlogPost = bundle.getParcelable(BLOG_POST_PARAMETER);
 
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setTitle(mBlogPost.getContent());
@@ -96,14 +96,14 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
                 String newComment = textNewComment.getText().toString();
 
                 if (newComment.length() > 0) {
-                    final ProgressDialog progressSendComment = ProgressDialog.show(ViewBlogPostDetailsActivity.this,
+                    final ProgressDialog progressSendComment = ProgressDialog.show(BlogPostDetailsActivity.this,
                             getResources().getString(R.string.loading), getResources().getString(R.string.sending_request), true);
 
                     try {
-                        BlogPostComment blogPostComment = sendComment(newComment);
-                        RealmManager.saveBlogPostComment(blogPostComment);
+                        BlogPostComment blogPostComment = sendBlogPostComment(newComment, mBlogPost);
+                        RealmManager.getInstance().saveBlogPostComment(blogPostComment);
 
-                        Toast.makeText(getApplicationContext(), ViewBlogPostDetailsActivity.this.getResources()
+                        Toast.makeText(getApplicationContext(), BlogPostDetailsActivity.this.getResources()
                                 .getString(R.string.comment_created), Toast.LENGTH_LONG).show();
                         textNewComment.setText("");
 
@@ -117,7 +117,7 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
                     }
 
                 } else {
-                    Toast.makeText(getApplicationContext(), ViewBlogPostDetailsActivity.this.getResources()
+                    Toast.makeText(getApplicationContext(), BlogPostDetailsActivity.this.getResources()
                             .getString(R.string.empty_message), Toast.LENGTH_SHORT).show();
                 }
 
@@ -128,24 +128,32 @@ public class ViewBlogPostDetailsActivity extends BaseActivity {
         loadBlogPostComments();
     }
 
-    private BlogPostComment sendComment(String content) throws SmackException.NotConnectedException, InterruptedException, XMPPException.XMPPErrorException, SmackException.NoResponseException {
-        Jid jid = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid();
+    public BlogPostComment sendBlogPostComment(String content, BlogPost blogPost)
+            throws SmackException.NotConnectedException, InterruptedException,
+            XMPPException.XMPPErrorException, SmackException.NoResponseException {
+        Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
         String userName = XMPPUtils.fromJIDToUserName(jid.toString());
-        Jid pubSubServiceJid = PubSubManager.getPubSubService(XMPPSession.getInstance().getXMPPConnection());
+        Jid pubSubServiceJid = XMPPSession.getInstance().getPubSubService();
 
         // create stanza
-        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(mBlogPost.getId(), userName, jid, content, new Date());
+        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(blogPost.getId(), userName, jid, content, new Date());
         PubSub publishCommentPubSub = PubSub.createPubsubPacket(pubSubServiceJid, IQ.Type.set, publishCommentExtension, null);
 
         // send stanza
-        XMPPSession.getInstance().getXMPPConnection().sendStanza(publishCommentPubSub);
+        XMPPSession.getInstance().sendStanza(publishCommentPubSub);
 
-        return new BlogPostComment(publishCommentExtension.getId(), mBlogPost.getId(), content, userName, jid.toString(), mBlogPost.getOwnerAvatarUrl(), publishCommentExtension.getPublished());
+        return new BlogPostComment(publishCommentExtension.getId(),
+                blogPost.getId(),
+                content,
+                userName,
+                jid.toString(),
+                blogPost.getOwnerAvatarUrl(),
+                publishCommentExtension.getPublished());
     }
 
     private void loadBlogPostComments() {
         mBlogPostComments.clear();
-        mBlogPostComments.addAll(RealmManager.getBlogPostComments(mBlogPost.getId()));
+        mBlogPostComments.addAll(RealmManager.getInstance().getBlogPostComments(mBlogPost.getId()));
         commentsListAdapter.notifyDataSetChanged();
     }
 

@@ -38,41 +38,33 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
-import inaka.com.mangosta.interfaces.MongooseService;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.models.requests.AddUserRequest;
-import inaka.com.mangosta.network.MongooseAPI;
-import inaka.com.mangosta.utils.MangostaApplication;
+import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 
 public class EditChatMemberActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.createChatSearchUserButton)
-    ImageButton createChatSearchUserButton;
+    @Bind(R.id.searchUserButton)
+    ImageButton searchUserButton;
 
-    @Bind(R.id.createChatSearchUserEditText)
-    EditText createChatSearchUserEditText;
+    @Bind(R.id.searchUserEditText)
+    EditText searchUserEditText;
 
-    @Bind(R.id.createChatSearchUserProgressBar)
-    ProgressBar createChatSearchUserProgressBar;
+    @Bind(R.id.searchUserProgressBar)
+    ProgressBar searchUserProgressBar;
 
-    @Bind(R.id.createChatSearchResultRecyclerView)
-    RecyclerView createChatSearchResultRecyclerView;
+    @Bind(R.id.searchResultRecyclerView)
+    RecyclerView searchResultRecyclerView;
 
-    @Bind(R.id.createChatMembersRecyclerView)
-    RecyclerView createChatMembersRecyclerView;
+    @Bind(R.id.membersRecyclerView)
+    RecyclerView membersRecyclerView;
 
     @Bind(R.id.continueFloatingButton)
     FloatingActionButton continueFloatingButton;
@@ -99,15 +91,15 @@ public class EditChatMemberActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         mChatJID = getIntent().getStringExtra(CHAT_JID_PARAMETER);
-        mChat = getRealm().where(Chat.class).equalTo("jid", mChatJID).findFirst();
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
 
         LinearLayoutManager layoutManagerSearch = new LinearLayoutManager(this);
-        createChatSearchResultRecyclerView.setHasFixedSize(true);
-        createChatSearchResultRecyclerView.setLayoutManager(layoutManagerSearch);
+        searchResultRecyclerView.setHasFixedSize(true);
+        searchResultRecyclerView.setLayoutManager(layoutManagerSearch);
 
         LinearLayoutManager layoutManagerMembers = new LinearLayoutManager(this);
-        createChatMembersRecyclerView.setHasFixedSize(true);
-        createChatMembersRecyclerView.setLayoutManager(layoutManagerMembers);
+        membersRecyclerView.setHasFixedSize(true);
+        membersRecyclerView.setLayoutManager(layoutManagerMembers);
 
         mMemberUsers = new ArrayList<>();
         mSearchUsers = new ArrayList<>();
@@ -115,29 +107,33 @@ public class EditChatMemberActivity extends BaseActivity {
         mSearchAdapter = new UsersListAdapter(this, mSearchUsers, true, false);
         mMembersAdapter = new UsersListAdapter(this, mMemberUsers, false, true);
 
-        createChatMembersRecyclerView.setAdapter(mMembersAdapter);
-        createChatSearchResultRecyclerView.setAdapter(mSearchAdapter);
+        membersRecyclerView.setAdapter(mMembersAdapter);
+        searchResultRecyclerView.setAdapter(mSearchAdapter);
 
-        createChatSearchUserButton.setOnClickListener(new View.OnClickListener() {
+        searchUserButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createChatSearchUserButton.setVisibility(View.GONE);
-                createChatSearchUserProgressBar.setVisibility(View.VISIBLE);
-                String user = createChatSearchUserEditText.getText().toString();
+                searchUserButton.setVisibility(View.GONE);
+                searchUserProgressBar.setVisibility(View.VISIBLE);
+                String user = searchUserEditText.getText().toString();
                 searchUserBackgroundTask(user);
             }
         });
 
         continueFloatingButton.setVisibility(View.INVISIBLE);
 
-        getChatMembers();
+        try {
+            getChatMembers();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void searchUserBackgroundTask(final String user) {
         Tasks.executeInBackground(EditChatMemberActivity.this, new BackgroundWork<Boolean>() {
             @Override
             public Boolean doInBackground() throws Exception {
-                return XMPPUtils.userExists(user);
+                return XMPPSession.getInstance().userExists(user);
             }
         }, new Completion<Boolean>() {
             @Override
@@ -147,15 +143,15 @@ public class EditChatMemberActivity extends BaseActivity {
                 } else {
                     showInviteDialog(user);
                 }
-                createChatSearchUserProgressBar.setVisibility(View.GONE);
-                createChatSearchUserButton.setVisibility(View.VISIBLE);
+                searchUserProgressBar.setVisibility(View.GONE);
+                searchUserButton.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onError(Context context, Exception e) {
                 Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
-                createChatSearchUserProgressBar.setVisibility(View.GONE);
-                createChatSearchUserButton.setVisibility(View.VISIBLE);
+                searchUserProgressBar.setVisibility(View.GONE);
+                searchUserButton.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -173,14 +169,14 @@ public class EditChatMemberActivity extends BaseActivity {
         return true;
     }
 
-    private void getChatMembers() {
+    private void getChatMembers() throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, XmppStringprepException {
 
-        List<Jid> jids = new ArrayList<>();
+        List<String> jids = new ArrayList<>();
 
         switch (mChat.getType()) {
 
             case Chat.TYPE_MUC_LIGHT:
-                jids = getMUCLightMembers();
+                jids = RoomManager.getInstance(null).loadMUCLightMembers(mChatJID);
                 break;
 
             case Chat.TYPE_MUC:
@@ -188,26 +184,14 @@ public class EditChatMemberActivity extends BaseActivity {
                 break;
         }
 
-        for (Jid jid : jids) {
-            membersObtainUser(XMPPUtils.fromJIDToUserName(jid.toString()));
+        for (String jid : jids) {
+            membersObtainUser(XMPPUtils.fromJIDToUserName(jid));
         }
 
     }
 
-    private List<Jid> getMUCLightMembers() {
-        List<Jid> jids = new ArrayList<>();
-        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
-        try {
-            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-            jids.addAll(mucLight.getAffiliations().keySet());
-        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
-            e.printStackTrace();
-        }
-        return jids;
-    }
-
-    private List<Jid> getMUCMembers() {
-        List<Jid> jids = new ArrayList<>();
+    private List<String> getMUCMembers() {
+        List<String> jids = new ArrayList<>();
 
         MultiUserChatManager multiUserChatManager = XMPPSession.getInstance().getMUCManager();
         try {
@@ -216,7 +200,7 @@ public class EditChatMemberActivity extends BaseActivity {
 
             for (Jid jid : occupants) {
                 String userName = jid.toString().split("/")[1];
-                jids.add(JidCreate.from(XMPPUtils.fromUserNameToJID(userName)));
+                jids.add(XMPPUtils.fromUserNameToJID(userName));
             }
 
         } catch (XmppStringprepException e) {
@@ -301,27 +285,8 @@ public class EditChatMemberActivity extends BaseActivity {
                 break;
 
             case Chat.TYPE_MUC_LIGHT:
-                removeFromMUCLight(user);
+                RoomManager.getInstance(null).removeFromMUCLight(user, mChatJID);
                 break;
-        }
-    }
-
-    private void removeFromMUCLight(User user) {
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
-
-        if (mongooseService != null) {
-            Call<Object> call = mongooseService.removeUserFromMUCLight(mChatJID.split("@")[0], XMPPUtils.fromUserNameToJID(user.getLogin()));
-            call.enqueue(new Callback<Object>() {
-                @Override
-                public void onResponse(Call<Object> call, Response<Object> response) {
-                }
-
-                @Override
-                public void onFailure(Call<Object> call, Throwable t) {
-                    Context context = MangostaApplication.getInstance();
-                    Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
-                }
-            });
         }
     }
 
@@ -343,27 +308,8 @@ public class EditChatMemberActivity extends BaseActivity {
                 break;
 
             case Chat.TYPE_MUC_LIGHT:
-                addToMUCLight(user);
+                RoomManager.getInstance(null).addToMUCLight(user, mChatJID);
                 break;
-        }
-    }
-
-    private void addToMUCLight(User user) {
-        MongooseService mongooseService = MongooseAPI.getAuthenticatedService();
-
-        if (mongooseService != null) {
-            final Call<Object> callAddUser = mongooseService.addUserToMUCLight(mChatJID.split("@")[0], new AddUserRequest(XMPPUtils.fromUserNameToJID(user.getLogin())));
-            callAddUser.enqueue(new Callback<Object>() {
-                @Override
-                public void onResponse(Call<Object> call, Response<Object> response) {
-                }
-
-                @Override
-                public void onFailure(Call<Object> call, Throwable t) {
-                    Context context = MangostaApplication.getInstance();
-                    Toast.makeText(context, context.getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
-                }
-            });
         }
     }
 

@@ -13,7 +13,6 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smackx.chatstates.ChatState;
@@ -25,6 +24,7 @@ import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
@@ -35,8 +35,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -63,6 +65,7 @@ import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.bob.BoBHash;
 import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
+import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
@@ -74,8 +77,9 @@ import retrofit2.Response;
 
 public class RoomManager {
 
-    RoomManagerListener mListener;
+    private RoomManagerListener mListener;
     private static RoomManager mInstance;
+    private static boolean mIsTesting;
 
     private RoomManager(RoomManagerListener listener) {
         mListener = listener;
@@ -88,6 +92,15 @@ public class RoomManager {
         return mInstance;
     }
 
+    public static boolean isTesting() {
+        return mIsTesting;
+    }
+
+    public static void setSpecialInstanceForTesting(RoomManager roomManager) {
+        mInstance = roomManager;
+        mIsTesting = true;
+    }
+
     public void loadMUCRooms() {
 
         final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
@@ -96,10 +109,10 @@ public class RoomManager {
 
             DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
             if (discoverItems != null) {
-                RealmManager.hideAllMUCChats();
+                RealmManager.getInstance().hideAllMUCChats();
 
                 List<DiscoverItems.Item> items = discoverItems.getItems();
-                Realm realm = RealmManager.getRealm();
+                Realm realm = RealmManager.getInstance().getRealm();
 
                 try {
                     for (DiscoverItems.Item item : items) {
@@ -150,7 +163,7 @@ public class RoomManager {
                         try {
                             Presence presence = new Presence(Presence.Type.available);
                             presence.setTo(JidCreate.from(itemJid));
-                            connection.sendStanza(presence);
+                            XMPPSession.getInstance().sendStanza(presence);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -180,7 +193,6 @@ public class RoomManager {
             } finally {
                 mListener.onRoomsLoaded();
             }
-
         }
     }
 
@@ -209,12 +221,11 @@ public class RoomManager {
     private void processMUCLightRooms(List<MongooseMUCLight> rooms) {
 
         if (rooms != null) {
-            RealmManager.hideAllMUCLightChats();
-            Realm realm = RealmManager.getRealm();
+            RealmManager.getInstance().hideAllMUCLightChats();
+            Realm realm = RealmManager.getInstance().getRealm();
 
             for (MongooseMUCLight room : rooms) {
                 String itemJid = room.getId() + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
-
 
                 Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
 
@@ -232,7 +243,7 @@ public class RoomManager {
                 realm.commitTransaction();
 
                 // set last retrieved from MAM
-                ChatMessage chatMessage = RealmManager.getLastMessageForChat(chatRoom.getJid());
+                ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(chatRoom.getJid());
                 if (chatMessage != null) {
                     realm.beginTransaction();
                     chatRoom.setLastTimestampRetrieved(chatMessage.getDate().getTime());
@@ -372,7 +383,7 @@ public class RoomManager {
     }
 
     public static void createChatIfNotExists(String chatJid, final boolean save) {
-        if (!RealmManager.chatExists(chatJid)) {
+        if (!RealmManager.getInstance().chatExists(chatJid)) {
             // save chat
             final inaka.com.mangosta.models.Chat chat = new inaka.com.mangosta.models.Chat(chatJid);
 
@@ -393,7 +404,7 @@ public class RoomManager {
 
                 chat.setShow(true);
                 chat.setDateCreated(new Date());
-                RealmManager.saveChat(chat);
+                RealmManager.getInstance().saveChat(chat);
             }
         }
     }
@@ -439,7 +450,7 @@ public class RoomManager {
     }
 
     public void loadArchivedMessages(final String chatJid) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 
         long timestamp = chat.getLastTimestampRetrieved();
@@ -502,7 +513,7 @@ public class RoomManager {
                 }
 
                 private void setLastTimestamp(long lastTimestamp) {
-                    Realm realm = RealmManager.getRealm();
+                    Realm realm = RealmManager.getInstance().getRealm();
                     realm.beginTransaction();
                     Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
                     chat.setLastTimestampRetrieved(lastTimestamp);
@@ -550,14 +561,14 @@ public class RoomManager {
 
         for (MongooseMessage message : messages) {
 
-            if (!RealmManager.chatMessageExists(message.getId()) &&
+            if (!RealmManager.getInstance().chatMessageExists(message.getId()) &&
                     !message.getTo().equals("undefined") &&
                     !message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
 
                 String jidTo = message.getTo().split("/")[0];
                 String me = XMPPSession.getInstance().getXMPPConnection().getUser().toString().split("/")[0];
 
-                Realm realm = RealmManager.getRealm();
+                Realm realm = RealmManager.getInstance().getRealm();
                 realm.beginTransaction();
 
                 ChatMessage chatMessage = makeChatMessage(message, roomJid);
@@ -582,13 +593,13 @@ public class RoomManager {
 
         for (MongooseMUCLightMessage message : messages) {
 
-            if (!RealmManager.chatMessageExists(message.getId()) &&
+            if (!RealmManager.getInstance().chatMessageExists(message.getId()) &&
                     message.getType().equals("message") &&
                     !message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
 
                 String userFrom = message.getFrom().split("/")[0];
 
-                Realm realm = RealmManager.getRealm();
+                Realm realm = RealmManager.getInstance().getRealm();
                 realm.beginTransaction();
 
                 ChatMessage chatMessage = makeMUCLightMessage(message, userFrom, roomJid);
@@ -648,9 +659,9 @@ public class RoomManager {
         try {
             Presence presence = new Presence(Presence.Type.unavailable);
             presence.setTo(JidCreate.from(jid));
-            XMPPSession.getInstance().getXMPPConnection().sendStanza(presence);
+            XMPPSession.getInstance().sendStanza(presence);
 
-            Realm realm = RealmManager.getRealm();
+            Realm realm = RealmManager.getInstance().getRealm();
             realm.beginTransaction();
 
             Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
@@ -680,7 +691,7 @@ public class RoomManager {
                 call.enqueue(new Callback<Object>() {
                     @Override
                     public void onResponse(Call<Object> call, Response<Object> response) {
-                        Realm realm = RealmManager.getRealm();
+                        Realm realm = RealmManager.getInstance().getRealm();
                         realm.beginTransaction();
 
                         Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
@@ -708,7 +719,7 @@ public class RoomManager {
     }
 
     public void leave1to1Chat(String chatJid) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
 
         Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 
@@ -862,7 +873,7 @@ public class RoomManager {
             }
 
         } else {
-            ChatManager chatManager = getChatManager();
+            ChatManager chatManager = RoomsListManager.getInstance().getChatManager();
             try {
                 chatManager.createChat(JidCreate.from(jid).asEntityJidIfPossible()).sendMessage(message);
             } catch (InterruptedException | XmppStringprepException | SmackException.NotConnectedException e) {
@@ -886,7 +897,7 @@ public class RoomManager {
     private String saveMessageLocally(String chatJid, String content, String messageId) {
         RoomManager.createChatIfNotExists(chatJid, true);
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 
         ChatMessage chatMessage = new ChatMessage();
@@ -909,9 +920,57 @@ public class RoomManager {
     }
 
     public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
-        for (RosterEntry entry : RosterManager.getBuddies()) {
-            String userJid = entry.getJid().toString();
-            RoomManager.createChatIfNotExists(userJid, true);
+        for (Jid jid : RosterManager.getInstance().getBuddies()) {
+            String userJid = jid.toString();
+            RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
+        }
+    }
+
+    public List<String> loadMUCLightMembers(String roomJid) throws XmppStringprepException, SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException {
+        MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+        MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(roomJid).asEntityBareJidIfPossible());
+
+        HashMap<Jid, MUCLightAffiliation> occupants = multiUserChatLight.getAffiliations();
+        List<String> jids = new ArrayList<>();
+
+        for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
+            Jid jid = pair.getKey();
+            if (jid != null) {
+                jids.add(jid.toString());
+            }
+        }
+        return jids;
+    }
+
+    public void addToMUCLight(User user, String chatJID) {
+        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
+        try {
+            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(chatJID).asEntityBareJidIfPossible());
+
+            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+
+            HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
+            affiliations.put(jid, MUCLightAffiliation.member);
+
+            mucLight.changeAffiliations(affiliations);
+        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeFromMUCLight(User user, String chatJID) {
+        MultiUserChatLightManager multiUserChatLightManager = XMPPSession.getInstance().getMUCLightManager();
+        try {
+            MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(chatJID).asEntityBareJidIfPossible());
+
+            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+
+            HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
+            affiliations.put(jid, MUCLightAffiliation.none);
+
+            mucLight.changeAffiliations(affiliations);
+        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
+            e.printStackTrace();
         }
     }
 
