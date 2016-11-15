@@ -97,7 +97,9 @@ public class LoginDialogFragment extends DialogFragment {
             @Override
             public void onError(Context context, Exception e) {
                 progress.dismiss();
-                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                XMPPSession.getInstance().getXMPPConnection().disconnect();
+                XMPPSession.clearInstance();
+                Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
             }
         });
     }
