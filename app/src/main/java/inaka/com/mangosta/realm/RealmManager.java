@@ -337,7 +337,9 @@ public class RealmManager {
 
         for (Chat chat : chats) {
             realm.beginTransaction();
-            chat.setShow(false);
+            if (chat.isValid()) {
+                chat.setShow(false);
+            }
             realm.copyToRealmOrUpdate(chat);
             realm.commitTransaction();
         }

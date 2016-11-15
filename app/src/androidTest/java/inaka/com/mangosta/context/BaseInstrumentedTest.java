@@ -65,7 +65,6 @@ public class BaseInstrumentedTest {
     protected RosterManager mRosterManagerMock;
     protected RoomsListManager mRoomListManagerMock;
     protected RoomManager mRoomManagerMock;
-
     private final NetworkBehavior behavior = NetworkBehavior.create();
     protected MongooseService mMongooseServiceMock;
 

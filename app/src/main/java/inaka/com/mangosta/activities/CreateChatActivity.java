@@ -23,6 +23,7 @@ import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
 import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 
 import java.util.ArrayList;
 import java.util.List;

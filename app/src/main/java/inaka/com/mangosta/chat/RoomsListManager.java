@@ -8,8 +8,11 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jivesoftware.smackx.muclight.MultiUserChatLight;
+import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.FormField;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
@@ -26,8 +29,6 @@ import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
 
 public class RoomsListManager {
@@ -115,10 +116,10 @@ public class RoomsListManager {
 
     public void sendInvitations(MultiUserChat multiUserChat, String roomName, List<User> users) {
         for (User user : users) {
-            String userJID = XMPPUtils.fromUserNameToJID(user.getLogin());
             try {
+                EntityBareJid userJID = JidCreate.entityBareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
                 multiUserChat.invite(new Message(), userJID, "I invite you to the room " + roomName);
-            } catch (SmackException.NotConnectedException | InterruptedException e) {
+            } catch (SmackException.NotConnectedException | InterruptedException | XmppStringprepException e) {
                 e.printStackTrace();
             }
         }

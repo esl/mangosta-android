@@ -21,11 +21,9 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.ErrorIQ;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
-import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.tbr.TBRManager;
@@ -33,16 +31,29 @@ import org.jivesoftware.smack.tbr.TBRTokens;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
+import org.jivesoftware.smackx.blocking.BlockingCommandManager;
+import org.jivesoftware.smackx.bob.BoBData;
+import org.jivesoftware.smackx.bob.BoBHash;
+import org.jivesoftware.smackx.bob.BoBManager;
+import org.jivesoftware.smackx.bob.element.BoBExtension;
+import org.jivesoftware.smackx.bob.element.BoBIQ;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
+import org.jivesoftware.smackx.csi.ClientStateIndicationManager;
 import org.jivesoftware.smackx.delay.packet.DelayInformation;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.jiveproperties.packet.JivePropertiesExtension;
+import org.jivesoftware.smackx.mam.MamManager;
+import org.jivesoftware.smackx.mam.element.MamElements;
 import org.jivesoftware.smackx.message_correct.element.MessageCorrectExtension;
 import org.jivesoftware.smackx.muc.InvitationListener;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatException;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jivesoftware.smackx.muc.packet.MUCUser;
+import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
+import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
+import org.jivesoftware.smackx.muclight.element.MUCLightElements;
 import org.jivesoftware.smackx.pep.PEPListener;
 import org.jivesoftware.smackx.pep.PEPManager;
 import org.jivesoftware.smackx.pubsub.EventElement;
@@ -57,12 +68,12 @@ import org.jivesoftware.smackx.search.UserSearchManager;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import org.jxmpp.util.XmppDateTime;
-import org.xmlpull.v1.XmlPullParser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -98,46 +109,8 @@ import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
-import inaka.com.mangosta.xmpp.blocking.BlockingCommandManager;
-import inaka.com.mangosta.xmpp.blocking.elements.BlockContactsIQ;
-import inaka.com.mangosta.xmpp.blocking.elements.BlockListIQ;
-import inaka.com.mangosta.xmpp.blocking.elements.UnblockContactsIQ;
-import inaka.com.mangosta.xmpp.blocking.provider.BlockContactsIQProvider;
-import inaka.com.mangosta.xmpp.blocking.provider.BlockListIQProvider;
-import inaka.com.mangosta.xmpp.blocking.provider.UnblockContactsIQProvider;
-import inaka.com.mangosta.xmpp.bob.BoBData;
-import inaka.com.mangosta.xmpp.bob.BoBHash;
-import inaka.com.mangosta.xmpp.bob.BoBManager;
-import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
-import inaka.com.mangosta.xmpp.bob.elements.BoBIQ;
-import inaka.com.mangosta.xmpp.bob.providers.BoBExtensionProvider;
-import inaka.com.mangosta.xmpp.bob.providers.BoBIQProvider;
-import inaka.com.mangosta.xmpp.csi.ClientStateIndicationManager;
-import inaka.com.mangosta.xmpp.csi.element.ClientStateIndication;
-import inaka.com.mangosta.xmpp.mam.MamManager;
-import inaka.com.mangosta.xmpp.mam.elements.MamElements;
-import inaka.com.mangosta.xmpp.mam.elements.MamFinIQ;
-import inaka.com.mangosta.xmpp.mam.elements.MamPrefsIQ;
-import inaka.com.mangosta.xmpp.mam.elements.MamQueryIQ;
-import inaka.com.mangosta.xmpp.mam.providers.MamFinIQProvider;
-import inaka.com.mangosta.xmpp.mam.providers.MamPrefsIQProvider;
-import inaka.com.mangosta.xmpp.mam.providers.MamQueryIQProvider;
-import inaka.com.mangosta.xmpp.mam.providers.MamResultProvider;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
-import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightAffiliationsIQ;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightBlockingIQ;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightConfigurationIQ;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightElements;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightInfoIQ;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightAffiliationsChangeProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightAffiliationsIQProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightBlockingIQProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightConfigurationIQProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightConfigurationsChangeProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightInfoIQProvider;
 import io.realm.Realm;
 import rx.Subscription;
 import rx.functions.Action1;
@@ -184,12 +157,15 @@ public class XMPPSession {
         if (mInstance == null) {
             mInstance = new XMPPSession();
         }
-
         return mInstance;
     }
 
     public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
         mInstance = xmppSession;
+    }
+
+    public static void clearInstance() {
+        mInstance = null;
     }
 
     private XMPPSession() {
@@ -229,7 +205,6 @@ public class XMPPSession {
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
-                RealmManager.getInstance().hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -248,7 +223,6 @@ public class XMPPSession {
             public void connectionTerminated() {
                 Log.w(XMPP_TAG, "Connection Terminated");
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Disconnected));
-                inactiveCSI();
             }
 
             @Override
@@ -335,7 +309,7 @@ public class XMPPSession {
 
         MultiUserChatManager.getInstanceFor(mXMPPConnection).addInvitationListener(new InvitationListener() {
             @Override
-            public void invitationReceived(XMPPConnection conn, MultiUserChat multiUserChat, String inviter, String reason, String password, Message message) {
+            public void invitationReceived(XMPPConnection conn, MultiUserChat multiUserChat, EntityFullJid jid, String inviter, String reason, Message message, MUCUser.Invite invite) {
                 try {
                     String userName = XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid());
                     multiUserChat.join(Resourcepart.from(userName));
@@ -521,42 +495,8 @@ public class XMPPSession {
     }
 
     private void addExtensions() {
-        // MUC Light
-        ProviderManager.addIQProvider(MUCLightInfoIQ.ELEMENT, MUCLightInfoIQ.NAMESPACE, new MUCLightInfoIQProvider());
-        ProviderManager.addExtensionProvider(MUCLightElements.AffiliationsChangeExtension.ELEMENT,
-                MUCLightElements.AffiliationsChangeExtension.NAMESPACE, new MUCLightAffiliationsChangeProvider());
-        ProviderManager.addIQProvider(MUCLightAffiliationsIQ.ELEMENT, MUCLightAffiliationsIQ.NAMESPACE, new MUCLightAffiliationsIQProvider());
-        ProviderManager.addIQProvider(MUCLightBlockingIQ.ELEMENT, MUCLightBlockingIQ.NAMESPACE, new MUCLightBlockingIQProvider());
-        ProviderManager.addIQProvider(MUCLightConfigurationIQ.ELEMENT, MUCLightConfigurationIQ.NAMESPACE, new MUCLightConfigurationIQProvider());
-        ProviderManager.addExtensionProvider(MUCLightElements.ConfigurationsChangeExtension.ELEMENT,
-                MUCLightElements.ConfigurationsChangeExtension.NAMESPACE, new MUCLightConfigurationsChangeProvider());
-
-        // MAM
-        ProviderManager.addIQProvider(MamPrefsIQ.ELEMENT, MamPrefsIQ.NAMESPACE, new MamPrefsIQProvider());
-        ProviderManager.addIQProvider(MamQueryIQ.ELEMENT, MamQueryIQ.NAMESPACE, new MamQueryIQProvider());
-        ProviderManager.addIQProvider(MamFinIQ.ELEMENT, MamFinIQ.NAMESPACE, new MamFinIQProvider());
-        ProviderManager.addExtensionProvider(MamElements.MamResultExtension.ELEMENT, MamElements.NAMESPACE, new MamResultProvider());
-
-        // Blocking Command
-        ProviderManager.addIQProvider(BlockContactsIQ.ELEMENT, BlockContactsIQ.NAMESPACE, new BlockContactsIQProvider());
-        ProviderManager.addIQProvider(BlockListIQ.ELEMENT, BlockListIQ.NAMESPACE, new BlockListIQProvider());
-        ProviderManager.addIQProvider(UnblockContactsIQ.ELEMENT, UnblockContactsIQ.NAMESPACE, new UnblockContactsIQProvider());
-
         // Microblogging
         ProviderManager.addExtensionProvider(PostEntryExtension.ELEMENT, PostEntryExtension.NAMESPACE, new PostEntryProvider());
-
-        // CSI
-        ProviderManager.addStreamFeatureProvider(ClientStateIndication.Feature.ELEMENT, ClientStateIndication.NAMESPACE,
-                new ExtensionElementProvider<ExtensionElement>() {
-                    @Override
-                    public ExtensionElement parse(XmlPullParser xmlPullParser, int i) throws Exception {
-                        return ClientStateIndication.Feature.INSTANCE;
-                    }
-                });
-
-        // BoB
-        ProviderManager.addExtensionProvider(BoBExtension.ELEMENT, BoBExtension.NAMESPACE, new BoBExtensionProvider());
-        ProviderManager.addIQProvider(BoBIQ.ELEMENT, BoBIQ.NAMESPACE, new BoBIQProvider());
     }
 
     public void sendPresence(final Presence.Type presenceType) {
@@ -718,13 +658,13 @@ public class XMPPSession {
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    mInstance = null;
+                    clearInstance();
                 }
             }
         }).start();
     }
 
-    //Room Message Subscription
+    // Room Message Subscription
     public Subscription subscribeRoomToMessages(final String roomJid, final MessageSubscriber subscriber) {
         return mMessagePublisher
                 .filter(

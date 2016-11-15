@@ -15,12 +15,17 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
+import org.jivesoftware.smackx.bob.BoBHash;
+import org.jivesoftware.smackx.bob.element.BoBExtension;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.muc.Affiliate;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
+import org.jivesoftware.smackx.muclight.MultiUserChatLight;
+import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jxmpp.jid.EntityBareJid;
@@ -63,11 +68,6 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.bob.BoBHash;
-import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
-import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 import io.realm.Realm;
 import okio.Buffer;
 import retrofit2.Call;
@@ -153,7 +153,9 @@ public class RoomManager {
 
                                 if (chatRoom != null) {
                                     realm.beginTransaction();
-                                    chatRoom.setShow(false);
+                                    if (chatRoom.isValid()) {
+                                        chatRoom.setShow(false);
+                                    }
                                     realm.copyToRealmOrUpdate(chatRoom);
                                     realm.commitTransaction();
                                 }
@@ -377,10 +379,10 @@ public class RoomManager {
 
     public static void sendInvitations(MultiUserChat multiUserChat, String roomName, List<User> users) {
         for (User user : users) {
-            String userJID = XMPPUtils.fromUserNameToJID(user.getLogin());
             try {
+                EntityBareJid userJID = JidCreate.entityBareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
                 multiUserChat.invite(new Message(), userJID, "I invite you to the room " + roomName);
-            } catch (SmackException.NotConnectedException | InterruptedException e) {
+            } catch (SmackException.NotConnectedException | InterruptedException | XmppStringprepException e) {
                 e.printStackTrace();
             }
         }
@@ -513,7 +515,6 @@ public class RoomManager {
                     } else {
                         XMPPSession.getInstance().publishQueryArchive(null);
                     }
-
                 }
 
                 private void setLastTimestamp(long lastTimestamp) {

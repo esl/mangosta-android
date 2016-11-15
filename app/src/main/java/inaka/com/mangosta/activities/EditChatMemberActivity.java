@@ -23,6 +23,7 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -317,7 +318,8 @@ public class EditChatMemberActivity extends BaseActivity {
         MultiUserChatManager multiUserChatManager = XMPPSession.getInstance().getMUCManager();
         try {
             MultiUserChat muc = multiUserChatManager.getMultiUserChat(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-            muc.invite(XMPPUtils.fromUserNameToJID(user.getLogin()), "I invite you to my chat.");
+            EntityBareJid jid = JidCreate.entityBareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            muc.invite(jid, "I invite you to my chat.");
         } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException e) {
             e.printStackTrace();
         }
