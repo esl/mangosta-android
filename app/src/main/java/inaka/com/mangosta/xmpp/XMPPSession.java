@@ -201,7 +201,7 @@ public class XMPPSession {
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
-                RealmManager.getInstance().hideAllMUCChats();
+//                RealmManager.getInstance().hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -220,7 +220,6 @@ public class XMPPSession {
             public void connectionTerminated() {
                 Log.w(XMPP_TAG, "Connection Terminated");
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Disconnected));
-                inactiveCSI();
             }
 
             @Override
