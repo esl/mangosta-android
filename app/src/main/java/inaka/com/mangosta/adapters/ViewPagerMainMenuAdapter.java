@@ -16,11 +16,11 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     private String mTabTitles[];
 
-    public ChatsListFragment mOneToOneChatsFragment;
-    public ChatsListFragment mMUCLightChatsFragment;
-    public ChatsListFragment mMUCChatsFragment;
+    private ChatsListFragment mOneToOneChatsFragment;
+    private ChatsListFragment mMUCLightChatsFragment;
+    private ChatsListFragment mMUCChatsFragment;
 
-    private Fragment mFragmentList[] = new Fragment[]{
+    public Fragment mFragmentList[] = new Fragment[]{
             mOneToOneChatsFragment,
             mMUCLightChatsFragment,
             mMUCChatsFragment

@@ -19,26 +19,23 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
-import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
 
 public class ChatMembersActivity extends BaseActivity {
 
@@ -114,7 +111,10 @@ public class ChatMembersActivity extends BaseActivity {
                 if (mRoomType == Chat.TYPE_MUC) {
                     loadMUCMembers(roomJid);
                 } else if (mRoomType == Chat.TYPE_MUC_LIGHT) {
-                    loadMUCLightMembers(roomJid);
+                    List<String> jids = RoomManager.getInstance(null).loadMUCLightMembers(roomJid);
+                    for (String jid : jids) {
+                        obtainUser(XMPPUtils.fromJIDToUserName(jid));
+                    }
                 }
                 return null;
             }
@@ -128,20 +128,6 @@ public class ChatMembersActivity extends BaseActivity {
                 e.printStackTrace();
             }
         });
-    }
-
-    private void loadMUCLightMembers(String roomJid) throws XmppStringprepException, SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException {
-        MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-        MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(roomJid).asEntityBareJidIfPossible());
-
-        HashMap<Jid, MUCLightAffiliation> occupants = multiUserChatLight.getAffiliations();
-
-        for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
-            Jid jid = pair.getKey();
-            if (jid != null) {
-                obtainUser(XMPPUtils.fromJIDToUserName(jid.toString()));
-            }
-        }
     }
 
     private void loadMUCMembers(String roomJid) throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, XmppStringprepException {
@@ -173,7 +159,12 @@ public class ChatMembersActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadMembers(mRoomJid);
+
+        if (Preferences.isTesting() && !RealmManager.isTesting()) {
+            progressLoading.setVisibility(View.GONE);
+        } else {
+            loadMembers(mRoomJid);
+        }
     }
 
     @Override

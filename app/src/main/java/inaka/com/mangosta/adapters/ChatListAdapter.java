@@ -72,7 +72,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             chatNameTextView.setText(XMPPUtils.getChatName(chat));
 
             String jid = chat.getJid();
-            ChatMessage chatMessage = RealmManager.getLastMessageForChat(jid);
+            ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(jid);
 
             if (chatMessage != null) {
                 manageLastMessage(chatMessage);

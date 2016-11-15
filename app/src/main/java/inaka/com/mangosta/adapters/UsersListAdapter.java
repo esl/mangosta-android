@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import org.jxmpp.jid.EntityFullJid;
+import org.jxmpp.jid.EntityBareJid;
 
 import java.util.List;
 
@@ -66,11 +66,11 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
         @Bind(R.id.textUserName)
         TextView textUserName;
 
-        @Bind(R.id.addUserToChatButton)
-        Button addUserToChatButton;
+        @Bind(R.id.addUserButton)
+        Button addUserButton;
 
-        @Bind(R.id.removeUserFromChatButton)
-        Button removeUserFromChatButton;
+        @Bind(R.id.removeUserButton)
+        Button removeUserButton;
 
         private Context mContext;
 
@@ -91,30 +91,30 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
             }
 
             if (isAuthorizedXMPPUser(user)) {
-                addUserToChatButton.setVisibility(View.INVISIBLE);
-                removeUserFromChatButton.setVisibility(View.INVISIBLE);
+                addUserButton.setVisibility(View.INVISIBLE);
+                removeUserButton.setVisibility(View.INVISIBLE);
             } else {
                 if (showAdd) {
-                    addUserToChatButton.setVisibility(View.VISIBLE);
+                    addUserButton.setVisibility(View.VISIBLE);
                 } else {
-                    addUserToChatButton.setVisibility(View.INVISIBLE);
+                    addUserButton.setVisibility(View.INVISIBLE);
                 }
 
                 if (showRemove) {
-                    removeUserFromChatButton.setVisibility(View.VISIBLE);
+                    removeUserButton.setVisibility(View.VISIBLE);
                 } else {
-                    removeUserFromChatButton.setVisibility(View.INVISIBLE);
+                    removeUserButton.setVisibility(View.INVISIBLE);
                 }
             }
 
-            addUserToChatButton.setOnClickListener(new View.OnClickListener() {
+            addUserButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     EventBus.getDefault().post(new UserEvent(UserEvent.Type.ADD_USER, user));
                 }
             });
 
-            removeUserFromChatButton.setOnClickListener(new View.OnClickListener() {
+            removeUserButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     EventBus.getDefault().post(new UserEvent(UserEvent.Type.REMOVE_USER, user));
@@ -133,7 +133,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
     }
 
     private static boolean isAuthorizedXMPPUser(User user) {
-        EntityFullJid userJid = XMPPSession.getInstance().getXMPPConnection().getUser();
+        EntityBareJid userJid = XMPPSession.getInstance().getUser();
         return userJid != null && user.getLogin().equals(XMPPUtils.fromJIDToUserName(userJid.toString()));
     }
 

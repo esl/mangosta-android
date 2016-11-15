@@ -48,8 +48,14 @@ import org.jivesoftware.smackx.pep.PEPManager;
 import org.jivesoftware.smackx.pubsub.EventElement;
 import org.jivesoftware.smackx.pubsub.EventElementType;
 import org.jivesoftware.smackx.pubsub.ItemsExtension;
+import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.search.ReportedData;
+import org.jivesoftware.smackx.search.UserSearch;
+import org.jivesoftware.smackx.search.UserSearchManager;
+import org.jivesoftware.smackx.xdata.Form;
+import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -82,7 +88,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
-import inaka.com.mangosta.chat.RoomManager;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
@@ -178,6 +184,10 @@ public class XMPPSession {
         return mInstance;
     }
 
+    public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
+        mInstance = xmppSession;
+    }
+
     private XMPPSession() {
         SmackConfiguration.setDefaultPacketReplyTimeout(15000);
         XMPPTCPConnectionConfiguration config = null;
@@ -215,7 +225,7 @@ public class XMPPSession {
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresence(Presence.Type.available);
-                RealmManager.hideAllMUCChats();
+                RealmManager.getInstance().hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -430,7 +440,7 @@ public class XMPPSession {
                     Date updated = postEntryExtension.getUpdated();
 
                     BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
-                    RealmManager.saveBlogPost(blogPost);
+                    RealmManager.getInstance().saveBlogPost(blogPost);
                 }
             }
         });
@@ -441,7 +451,7 @@ public class XMPPSession {
         mArchiveQueryPublisher.onNext(id);
     }
 
-    private void subscribeToMyBlogPosts() {
+    public void subscribeToMyBlogPosts() {
         PubSubManager pubSubManager = getPubSubManager();
         String nodeName = "urn:xmpp:microblog:0";
 
@@ -452,7 +462,7 @@ public class XMPPSession {
         }
 
         // subscribe to myself
-        String myJIDString = getXMPPConnection().getUser().asEntityBareJid().toString();
+        String myJIDString = getUser().asEntityBareJid().toString();
         try {
             org.jivesoftware.smackx.pubsub.Subscription subscription = pubSubManager.getNode(nodeName).subscribe(myJIDString);
             Log.wtf("Subscription state", subscription.getState().toString());
@@ -461,7 +471,7 @@ public class XMPPSession {
         }
     }
 
-    private void getXOAUTHTokens() {
+    public void getXOAUTHTokens() {
         TBRManager tbrManager = TBRManager.getInstanceFor(getXMPPConnection());
         try {
             Preferences preferences = Preferences.getInstance();
@@ -562,7 +572,7 @@ public class XMPPSession {
                             Presence presence = new Presence(presenceType);
                             presence.setTo(itemJid);
                             try {
-                                mXMPPConnection.sendStanza(presence);
+                                sendStanza(presence);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -590,7 +600,7 @@ public class XMPPSession {
     }
 
     public PubSubManager getPubSubManager() {
-        EntityBareJid myJIDString = getXMPPConnection().getUser().asEntityBareJid();
+        EntityBareJid myJIDString = getUser();
         return PubSubManager.getInstance(mXMPPConnection, myJIDString);
     }
 
@@ -696,7 +706,7 @@ public class XMPPSession {
                         for (DiscoverItems.Item item : items) {
                             Presence presence = new Presence(Presence.Type.unavailable);
                             presence.setTo(item.getEntityID());
-                            mXMPPConnection.sendStanza(presence);
+                            sendStanza(presence);
                         }
                     }
                     mReconnectionManager.disableAutomaticReconnection();
@@ -785,7 +795,7 @@ public class XMPPSession {
             if (isMessageCorrection(message)) { // message correction
                 saveMessageCorrection(message, delayDate);
             } else { // normal message received
-                if (!RealmManager.chatMessageExists(messageId)) {
+                if (!RealmManager.getInstance().chatMessageExists(messageId)) {
                     manageMessageReceived(message, delayDate, messageId);
                 }
             }
@@ -795,7 +805,7 @@ public class XMPPSession {
     private void saveMessage(Message message) {
         String messageId = assignMessageId(message);
 
-        if (RealmManager.chatMessageExists(messageId)) { // message sent confirmation
+        if (RealmManager.getInstance().chatMessageExists(messageId)) { // message sent confirmation
             manageMessageAlreadyExists(message, null, messageId);
 
         } else if (isMessageCorrection(message)) { // message correction
@@ -826,7 +836,7 @@ public class XMPPSession {
         String newMessageBody = message.getBody();
         String idInitialMessage = messageCorrectExtension.getIdInitialMessage();
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class)
@@ -867,7 +877,7 @@ public class XMPPSession {
             return;
         }
 
-        RoomManager.createChatIfNotExists(chatRoomJID, true);
+        RoomsListManager.getInstance().createChatIfNotExists(chatRoomJID, true);
 
         manageSender(jidList, chatMessage, chatRoomJID);
 
@@ -883,7 +893,7 @@ public class XMPPSession {
             chatMessage.setType(ChatMessage.TYPE_CHAT);
         }
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
 
@@ -925,7 +935,7 @@ public class XMPPSession {
     }
 
     private void manageMessageAlreadyExists(Message message, Date delayDate, String messageId) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class).equalTo("messageId", messageId).findFirst();
@@ -948,13 +958,13 @@ public class XMPPSession {
     }
 
     private Realm realmBeginTransaction() {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
         return realm;
     }
 
     private void manageSender(String[] jidList, ChatMessage chatMessage, String chatRoomJid) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJid).findFirst();
 
         if (chat.getType() == Chat.TYPE_MUC) {
@@ -1027,7 +1037,7 @@ public class XMPPSession {
     public int deleteMessagesToDelete() {
         int count = 0;
         for (String messageId : messagesToDeleteIds) {
-            RealmManager.deleteMessage(messageId);
+            RealmManager.getInstance().deleteMessage(messageId);
             count++;
         }
         messagesToDeleteIds.clear();
@@ -1055,6 +1065,118 @@ public class XMPPSession {
 
     private boolean hasAffiliationsChangeExtension(Message message) {
         return message.hasExtension(MUCLightElements.AffiliationsChangeExtension.ELEMENT, MUCLightElements.AffiliationsChangeExtension.NAMESPACE);
+    }
+
+    public void sendStanza(Stanza stanza) throws SmackException.NotConnectedException, InterruptedException {
+        if (Preferences.isTesting()) {
+            try {
+                getXMPPConnection().sendStanza(stanza);
+            } catch (SmackException.NotConnectedException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            getXMPPConnection().sendStanza(stanza);
+        }
+    }
+
+    public void createNodeToAllowComments(String blogPostId) {
+        String nodeName = "urn:xmpp:microblog:0:comments/" + blogPostId;
+        PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
+        try {
+            // create node
+            LeafNode node = pubSubManager.createNode(nodeName);
+
+            // subscribe to comments
+            String myJIDString = XMPPSession.getInstance().getUser().toString();
+            org.jivesoftware.smackx.pubsub.Subscription subscription = node.subscribe(myJIDString);
+
+            Log.wtf("Comments subscription state", subscription.getState().toString());
+        } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public EntityBareJid getUser() {
+        return getXMPPConnection().getUser().asEntityBareJid();
+    }
+
+    public Jid getPubSubService() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException {
+        return PubSubManager.getPubSubService(getXMPPConnection());
+    }
+
+    public boolean userExists(String jid) {
+        ProviderManager.addIQProvider("query", "jabber:iq:search", new UserSearch.Provider());
+        ProviderManager.addIQProvider("query", "jabber:iq:vjud", new UserSearch.Provider());
+        UserSearchManager searchManager = new UserSearchManager(getXMPPConnection());
+
+        try {
+            List<DomainBareJid> services = searchManager.getSearchServices();
+
+            if (services == null || services.size() < 1) {
+                return false;
+            }
+
+            Form searchForm;
+            try {
+                searchForm = searchManager.getSearchForm(services.get(0));
+                Form answerForm = searchForm.createAnswerForm();
+
+                try {
+                    answerForm.setAnswer("user", jid);
+                } catch (IllegalStateException ex) {
+                    ex.printStackTrace();
+                    return false;
+                }
+
+                ReportedData data;
+                try {
+                    data = searchManager.getSearchResults(answerForm, services.get(0));
+
+                    if (data.getRows() != null) {
+                        List<ReportedData.Row> rowList = data.getRows();
+
+                        return rowList.size() > 0;
+                    }
+
+                } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+
+            } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return false;
+    }
+
+    public void blockContacts(List<Jid> jids)
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().blockContacts(jids);
+    }
+
+    public void unblockContacts(List<Jid> jids)
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().unblockContacts(jids);
+    }
+
+    public List<Jid> getBlockList() throws Exception {
+        return getBlockingCommandManager().getBlockList();
+    }
+
+    public void unblockAll()
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().unblockAll();
     }
 
 }

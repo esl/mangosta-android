@@ -29,7 +29,6 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -39,15 +38,14 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -58,6 +56,7 @@ import inaka.com.mangosta.adapters.StickersAdapter;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomManagerListener;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
@@ -152,14 +151,14 @@ public class ChatActivity extends BaseActivity {
         String chatName = getIntent().getStringExtra(CHAT_NAME_PARAMETER);
         boolean isNewChat = getIntent().getBooleanExtra(IS_NEW_CHAT_PARAMETER, false);
 
-        mChat = getChatFromRealm();
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
 
         if (isNewChat) {
-            manageNewChat(chatName);
+            RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
         }
 
         if (!mChat.isShow()) {
-            setShowChat();
+            RoomsListManager.getInstance().setShowChat(getRealm(), mChat);
         }
 
         getSupportActionBar().setTitle(chatName);
@@ -179,11 +178,13 @@ public class ChatActivity extends BaseActivity {
         chatMessagesRecyclerView.setHasFixedSize(true);
         chatMessagesRecyclerView.setLayoutManager(mLayoutManagerMessages);
 
-        mMessages = RealmManager.getMessagesForChat(getRealm(), mChatJID);
+        if (!RealmManager.isTesting()) {
+            mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
+            mMessages.addChangeListener(mRealmChangeListener);
+        }
 
-        mMessages.addChangeListener(mRealmChangeListener);
-
-        mMessagesAdapter = new ChatMessagesAdapter(this, mMessages);
+        List<ChatMessage> messages = ((mMessages == null) ? new ArrayList<ChatMessage>() : mMessages);
+        mMessagesAdapter = new ChatMessagesAdapter(this, messages);
 
         chatMessagesRecyclerView.setAdapter(mMessagesAdapter);
 
@@ -263,7 +264,7 @@ public class ChatActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mChat = getChatFromRealm();
+                        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                         mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
                     }
                 });
@@ -271,27 +272,29 @@ public class ChatActivity extends BaseActivity {
         }, 15000);
     }
 
-    private Chat getChatFromRealm() {
-        return getRealm().where(Chat.class).equalTo("jid", mChatJID).findFirst();
-    }
-
     private void manageRoomNameAndSubject() {
         Tasks.executeInBackground(this, new BackgroundWork<MUCLightRoomConfiguration>() {
             @Override
             public MUCLightRoomConfiguration doInBackground() throws Exception {
-                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                return multiUserChatLight.getConfiguration();
+                if (Preferences.isTesting()) {
+                    return null;
+                } else {
+                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                    return multiUserChatLight.getConfiguration();
+                }
             }
         }, new Completion<MUCLightRoomConfiguration>() {
             @Override
             public void onSuccess(Context context, MUCLightRoomConfiguration mucLightRoomConfiguration) {
-                Realm realm = getRealm();
-                realm.beginTransaction();
-                mChat.setName(mucLightRoomConfiguration.getRoomName());
-                mChat.setSubject(mucLightRoomConfiguration.getSubject());
-                realm.copyToRealmOrUpdate(mChat);
-                realm.commitTransaction();
-                realm.close();
+                if (mucLightRoomConfiguration != null) {
+                    Realm realm = getRealm();
+                    realm.beginTransaction();
+                    mChat.setName(mucLightRoomConfiguration.getRoomName());
+                    mChat.setSubject(mucLightRoomConfiguration.getSubject());
+                    realm.copyToRealmOrUpdate(mChat);
+                    realm.commitTransaction();
+                    realm.close();
+                }
 
                 if (mChat.getSubject() != null) {
                     getSupportActionBar().setSubtitle(mChat.getSubject());
@@ -304,37 +307,6 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-    }
-
-    private void setShowChat() {
-        Realm realm = getRealm();
-        realm.beginTransaction();
-        mChat.setShow(true);
-        realm.copyToRealmOrUpdate(mChat);
-        realm.commitTransaction();
-        realm.close();
-    }
-
-    private void manageNewChat(String chatName) {
-        Realm realm = getRealm();
-        realm.beginTransaction();
-        if (mChat == null) {
-            mChat = new Chat(mChatJID);
-
-            if (mChatJID.contains(XMPPSession.MUC_SERVICE_NAME)) {
-                mChat.setType(Chat.TYPE_MUC);
-            } else if (mChatJID.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
-                mChat.setType(Chat.TYPE_MUC_LIGHT);
-            } else {
-                mChat.setType(Chat.TYPE_1_T0_1);
-            }
-
-            mChat.setDateCreated(new Date());
-        }
-        mChat.setName(chatName);
-        realm.copyToRealmOrUpdate(mChat);
-        realm.commitTransaction();
-        realm.close();
     }
 
     @Override
@@ -351,7 +323,7 @@ public class ChatActivity extends BaseActivity {
                             ChatStateExtension chatStateExtension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
                             ChatState chatState = chatStateExtension.getChatState();
 
-                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getXMPPConnection().getUser().toString());
+                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
                             String userSender = "";
 
                             String[] jidList = message.getFrom().toString().split("/");
@@ -422,7 +394,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mChat = getChatFromRealm();
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         if (mChat != null) {
             mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
         }
@@ -459,14 +431,14 @@ public class ChatActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
-                mChat = getChatFromRealm();
+                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
                 finish();
                 EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
                 break;
 
             case R.id.actionChatMembers:
-                mChat = getChatFromRealm();
+                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 Intent chatMembersIntent = new Intent(ChatActivity.this, ChatMembersActivity.class);
                 chatMembersIntent.putExtra(ChatMembersActivity.ROOM_JID_PARAMETER, mChatJID);
                 chatMembersIntent.putExtra(ChatMembersActivity.IS_ADMIN_PARAMETER, mIsOwner);
@@ -508,7 +480,7 @@ public class ChatActivity extends BaseActivity {
         User userNotFriend = new User();
         userNotFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.removeFromBuddies(userNotFriend);
+            RosterManager.getInstance().removeFromBuddies(userNotFriend);
             setMenuChatNotFriend();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_friends),
                     userNotFriend.getLogin()), Toast.LENGTH_SHORT).show();
@@ -523,7 +495,7 @@ public class ChatActivity extends BaseActivity {
         User userFriend = new User();
         userFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.addToBuddies(userFriend);
+            RosterManager.getInstance().addToBuddies(userFriend);
             setMenuChatWithFriend();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_friends),
                     userFriend.getLogin()), Toast.LENGTH_SHORT).show();
@@ -543,6 +515,7 @@ public class ChatActivity extends BaseActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(10, 0, 10, 0);
         roomNameEditText.setLayoutParams(lp);
+        roomNameEditText.setHint(getString(R.string.enter_room_name_hint));
         roomNameEditText.setText(getSupportActionBar().getTitle());
 
         linearLayout.addView(roomNameEditText);
@@ -558,8 +531,10 @@ public class ChatActivity extends BaseActivity {
                         Tasks.executeInBackground(ChatActivity.this, new BackgroundWork<Object>() {
                             @Override
                             public Object doInBackground() throws Exception {
-                                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                                multiUserChatLight.changeRoomName(chatName);
+                                if (!Preferences.isTesting()) {
+                                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                                    multiUserChatLight.changeRoomName(chatName);
+                                }
                                 return null;
                             }
                         }, new Completion<Object>() {
@@ -608,6 +583,7 @@ public class ChatActivity extends BaseActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(10, 0, 10, 0);
         roomSubjectEditText.setLayoutParams(lp);
+        roomSubjectEditText.setHint(getString(R.string.enter_room_subject_hint));
         roomSubjectEditText.setText(getSupportActionBar().getSubtitle());
 
         linearLayout.addView(roomSubjectEditText);
@@ -623,8 +599,10 @@ public class ChatActivity extends BaseActivity {
                         Tasks.executeInBackground(ChatActivity.this, new BackgroundWork<Object>() {
                             @Override
                             public Object doInBackground() throws Exception {
-                                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                                multiUserChatLight.changeSubject(subject);
+                                if (!Preferences.isTesting()) {
+                                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                                    multiUserChatLight.changeSubject(subject);
+                                }
                                 return null;
                             }
                         }, new Completion<Object>() {
@@ -682,42 +660,19 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendTextMessage() {
-        if (!XMPPSession.isInstanceNull() && XMPPSession.getInstance().isConnectedAndAuthenticated()) {
+        if (!XMPPSession.isInstanceNull()
+                && (XMPPSession.getInstance().isConnectedAndAuthenticated() || Preferences.isTesting())) {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
 
             if (!TextUtils.isEmpty(content)) {
-                String messageId = saveMessageLocally(content, ChatMessage.TYPE_CHAT);
-                mChat = getChatFromRealm();
+                String messageId = RealmManager.getInstance()
+                        .saveMessageLocally(mChat, mChatJID, content, ChatMessage.TYPE_CHAT);
+                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 mRoomManager.sendTextMessage(messageId, mChatJID, content, mChat.getType());
                 chatSendMessageEditText.setText("");
                 refreshMessagesAndScrollToEnd();
             }
         }
-    }
-
-    private String saveMessageLocally(String content, int type) {
-        RoomManager.createChatIfNotExists(mChatJID, true);
-        mChat = getChatFromRealm();
-
-        String messageId = UUID.randomUUID().toString();
-
-        ChatMessage chatMessage = new ChatMessage();
-
-        chatMessage.setMessageId(messageId);
-        chatMessage.setRoomJid(mChat.getJid());
-        chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
-        chatMessage.setStatus(ChatMessage.STATUS_SENDING);
-        chatMessage.setDate(new Date());
-        chatMessage.setType(type);
-        chatMessage.setContent(content);
-
-        Realm realm = getRealm();
-        realm.beginTransaction();
-        realm.copyToRealmOrUpdate(chatMessage);
-        realm.commitTransaction();
-        realm.close();
-
-        return messageId;
     }
 
     private void leaveChat() {
@@ -784,7 +739,7 @@ public class ChatActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mLeaving = true;
-                mChat = getChatFromRealm();
+                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
                     disconnectRoomFromServer();
                     mRoomManager.destroyMUCLight(mChatJID);
@@ -805,7 +760,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void loadArchivedMessages() {
-        mChat = getChatFromRealm();
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
 
         if (mChat == null || !mChat.isValid()) {
 
@@ -869,9 +824,11 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void scrollToEnd() {
-        int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
-        if (lastPosition <= mMessages.size() - 2 && chatMessagesRecyclerView != null) {
-            chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
+        if (mMessages != null) {
+            int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
+            if (lastPosition <= mMessages.size() - 2 && chatMessagesRecyclerView != null) {
+                chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
+            }
         }
     }
 
@@ -915,7 +872,6 @@ public class ChatActivity extends BaseActivity {
         @Override
         public void onMessageSent(Message message) {
             super.onMessageSent(message);
-
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -952,8 +908,9 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void stickerSent(String imageName) {
-        String messageId = saveMessageLocally(imageName, ChatMessage.TYPE_STICKER);
-        mChat = getChatFromRealm();
+        String messageId = RealmManager.getInstance()
+                .saveMessageLocally(mChat, mChatJID, imageName, ChatMessage.TYPE_STICKER);
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         mRoomManager.sendStickerMessage(messageId, mChatJID, imageName, mChat.getType());
         stickersRecyclerView.setVisibility(View.GONE);
         refreshMessagesAndScrollToEnd();
@@ -981,8 +938,8 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithFriend() {
         try {
-            for (RosterEntry entry : RosterManager.getBuddies()) {
-                if (mChat.getJid().equals(entry.getJid().toString())) {
+            for (Jid jid : RosterManager.getInstance().getBuddies()) {
+                if (mChat.getJid().equals(jid.toString())) {
                     return true;
                 }
             }
@@ -1007,6 +964,9 @@ public class ChatActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, MUCLightAffiliation>>() {
             @Override
             public HashMap<Jid, MUCLightAffiliation> doInBackground() throws Exception {
+                if (Preferences.isTesting()) {
+                    return null;
+                }
                 MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
                 MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
                 return multiUserChatLight.getAffiliations();
@@ -1014,13 +974,14 @@ public class ChatActivity extends BaseActivity {
         }, new Completion<HashMap<Jid, MUCLightAffiliation>>() {
             @Override
             public void onSuccess(Context context, HashMap<Jid, MUCLightAffiliation> occupants) {
-                for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
-
-                    Jid key = pair.getKey();
-                    if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
-                        MenuItem destroyItem = menu.findItem(R.id.actionDestroyChat);
-                        mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
-                        destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
+                if (occupants != null) {
+                    for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
+                        Jid key = pair.getKey();
+                        if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
+                            MenuItem destroyItem = menu.findItem(R.id.actionDestroyChat);
+                            mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
+                            destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
+                        }
                     }
                 }
             }

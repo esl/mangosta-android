@@ -6,16 +6,31 @@ import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
 import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import inaka.com.mangosta.models.User;
 
 public class RosterManager {
 
-    public static void removeAllFriends()
+    private static RosterManager mInstance;
+
+    public static RosterManager getInstance() {
+        if (mInstance == null) {
+            mInstance = new RosterManager();
+        }
+        return mInstance;
+    }
+
+    public static void setSpecialInstanceForTesting(RosterManager rosterManager) {
+        mInstance = rosterManager;
+    }
+
+    public void removeAllFriends()
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException {
@@ -28,7 +43,7 @@ public class RosterManager {
         }
     }
 
-    public static List<RosterEntry> getBuddies()
+    public List<Jid> getBuddies()
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
         Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
@@ -45,10 +60,17 @@ public class RosterManager {
             group = roster.getGroup(groupName);
         }
 
-        return group.getEntries();
+        List<Jid> buddies = new ArrayList<>();
+
+        List<RosterEntry> entries = group.getEntries();
+        for (RosterEntry entry : entries) {
+            buddies.add(entry.getJid());
+        }
+
+        return buddies;
     }
 
-    public static void removeFromBuddies(User user)
+    public void removeFromBuddies(User user)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
@@ -60,7 +82,7 @@ public class RosterManager {
         roster.removeEntry(roster.getEntry(jid));
     }
 
-    public static void addToBuddies(User user)
+    public void addToBuddies(User user)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {

@@ -1,9 +1,11 @@
 package inaka.com.mangosta.utils;
 
 import android.content.Context;
+import android.support.annotation.VisibleForTesting;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.joda.time.Period;
 
 import java.util.Date;
@@ -13,21 +15,14 @@ import inaka.com.mangosta.R;
 
 public class TimeCalculation {
 
-    public static String getTimeStringAgoSinceStringDate(Context context, String date) {
-        DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
-        return getTimeStrigAgoSinceDateTime(context, postDate);
-    }
-
     public static String getTimeStringAgoSinceDate(Context context, Date date) {
         DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
-        return getTimeStrigAgoSinceDateTime(context, postDate);
+        return getTimeStringAgoSinceDateTime(context, postDate);
     }
-
-    private static String getTimeStrigAgoSinceDateTime(Context context, DateTime dateTime) {
+    
+    private static String getTimeStringAgoSinceDateTime(Context context, DateTime dateTime) {
         DateTime now = new DateTime(DateTimeZone.getDefault());
-
         Period period = new Period(dateTime, now);
-
         String date;
         int count;
 
@@ -59,18 +54,17 @@ public class TimeCalculation {
         return String.format(Locale.getDefault(), date, count);
     }
 
-    public static int compareDates(String date1, String date2) {
-        DateTime dateTime1 = new DateTime(date1, DateTimeZone.getDefault());
-        DateTime dateTime2 = new DateTime(date2, DateTimeZone.getDefault());
-        return dateTime1.compareTo(dateTime2);
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    static boolean isMinutesDiffMax(DateTime dateTime1, DateTime dateTime2, int maxMinutes) {
+        Period period = new Period(dateTime1, dateTime2);
+        Duration duration = period.toDurationFrom(dateTime1);
+        return Math.abs(duration.toStandardMinutes().getMinutes()) <= maxMinutes;
     }
 
     public static boolean wasMinutesAgoMax(Date date, int maxMinutes) {
         DateTime now = new DateTime(DateTimeZone.getDefault());
         DateTime dateTime = new DateTime(date, DateTimeZone.getDefault());
-        Period period = new Period(dateTime, now);
-        return period.getYears() == 0 && period.getMonths() == 0 && period.getWeeks() == 0 && period.getDays() == 0
-                && period.getHours() == 0 && period.getMinutes() <= maxMinutes;
+        return isMinutesDiffMax(dateTime, now, maxMinutes);
     }
 
 }

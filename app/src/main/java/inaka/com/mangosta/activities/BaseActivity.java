@@ -10,6 +10,7 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
 
@@ -22,7 +23,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mRealm = RealmManager.getRealm();
+        mRealm = RealmManager.getInstance().getRealm();
     }
 
     @Override
@@ -30,7 +31,7 @@ public class BaseActivity extends AppCompatActivity {
         ButterKnife.unbind(this);
         EventBus.getDefault().unregister(this);
 
-        if (mRealm != null) {
+        if (mRealm != null && !Preferences.isTesting()) {
             mRealm.close();
         }
         clearReferences();
@@ -70,7 +71,7 @@ public class BaseActivity extends AppCompatActivity {
 
         Log.wtf("activities", String.valueOf(mSessionDepth));
 
-        if (mSessionDepth == 1 && XMPPSession.getInstance().getXMPPConnection().isConnected()) {
+        if (!Preferences.isTesting() && mSessionDepth == 1 && XMPPSession.getInstance().getXMPPConnection().isConnected()) {
             XMPPSession.getInstance().activeCSI();
         }
 
@@ -102,10 +103,10 @@ public class BaseActivity extends AppCompatActivity {
     public Realm getRealm() {
         try {
             if (mRealm.isClosed()) {
-                mRealm = RealmManager.getRealm();
+                mRealm = RealmManager.getInstance().getRealm();
             }
         } catch (Throwable e) {
-            mRealm = RealmManager.getRealm();
+            mRealm = RealmManager.getInstance().getRealm();
         }
         return mRealm;
     }

@@ -84,17 +84,17 @@ public class CreateBlogActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                Jid jid = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid();
+                Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
 
                 // create stanza
                 PublishPostExtension publishPostExtension = new PublishPostExtension(jid, createBlogText.getText().toString());
                 PubSub publishPostPubSub = PubSub.createPubsubPacket(jid, IQ.Type.set, publishPostExtension, null);
 
                 // send stanza
-                XMPPSession.getInstance().getXMPPConnection().sendStanza(publishPostPubSub);
+                XMPPSession.getInstance().sendStanza(publishPostPubSub);
 
                 // allow comments
-                createNodeToAllowComments(publishPostExtension.getId());
+                XMPPSession.getInstance().createNodeToAllowComments(publishPostExtension.getId());
 
                 return null;
             }
@@ -115,23 +115,6 @@ public class CreateBlogActivity extends BaseActivity {
                 e.printStackTrace();
             }
         });
-    }
-
-    private void createNodeToAllowComments(String blogPostId) {
-        String nodeName = "urn:xmpp:microblog:0:comments/" + blogPostId;
-        PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
-        try {
-            // create node
-            LeafNode node = pubSubManager.createNode(nodeName);
-
-            // subscribe to comments
-            String myJIDString = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid().toString();
-            Subscription subscription = node.subscribe(myJIDString);
-
-            Log.wtf("Comments subscription state", subscription.getState().toString());
-        } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException | InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
 }

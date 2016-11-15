@@ -33,10 +33,10 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.blocking.BlockingCommandManager;
 
 public class BlockUsersActivity extends BaseActivity {
 
@@ -116,7 +116,7 @@ public class BlockUsersActivity extends BaseActivity {
         Tasks.executeInBackground(BlockUsersActivity.this, new BackgroundWork<Boolean>() {
             @Override
             public Boolean doInBackground() throws Exception {
-                return XMPPUtils.userExists(user);
+                return XMPPSession.getInstance().userExists(user);
             }
         }, new Completion<Boolean>() {
             @Override
@@ -231,11 +231,10 @@ public class BlockUsersActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                BlockingCommandManager blockingCommandManager = XMPPSession.getInstance().getBlockingCommandManager();
                 Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
                 List<Jid> jids = new ArrayList<>();
                 jids.add(jid);
-                blockingCommandManager.blockContacts(jids);
+                XMPPSession.getInstance().blockContacts(jids);
                 return null;
             }
         }, new Completion<Object>() {
@@ -258,7 +257,11 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!Preferences.isTesting()) {
+                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
@@ -271,11 +274,10 @@ public class BlockUsersActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                BlockingCommandManager blockingCommandManager = XMPPSession.getInstance().getBlockingCommandManager();
                 Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
                 List<Jid> jids = new ArrayList<>();
                 jids.add(jid);
-                blockingCommandManager.unblockContacts(jids);
+                XMPPSession.getInstance().unblockContacts(jids);
                 return null;
             }
         }, new Completion<Object>() {
@@ -298,7 +300,11 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                if (!Preferences.isTesting()) {
+                    Toast.makeText(BlockUsersActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
@@ -311,9 +317,7 @@ public class BlockUsersActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<List<Jid>>() {
             @Override
             public List<Jid> doInBackground() throws Exception {
-                BlockingCommandManager blockingCommandManager = XMPPSession.getInstance().getBlockingCommandManager();
-                return blockingCommandManager.getBlockList();
-
+                return XMPPSession.getInstance().getBlockList();
             }
         }, new Completion<List<Jid>>() {
             @Override
@@ -336,7 +340,11 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!Preferences.isTesting()) {
+                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
@@ -349,8 +357,7 @@ public class BlockUsersActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                BlockingCommandManager blockingCommandManager = XMPPSession.getInstance().getBlockingCommandManager();
-                blockingCommandManager.unblockAll();
+                XMPPSession.getInstance().unblockAll();
                 return null;
             }
         }, new Completion<Object>() {
@@ -371,7 +378,11 @@ public class BlockUsersActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+
+                if (!Preferences.isTesting()) {
+                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }
+
                 e.printStackTrace();
             }
         });
