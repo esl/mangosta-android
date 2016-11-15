@@ -69,7 +69,6 @@ public class ChatMembersActivityInstrumentedTest extends BaseInstrumentedTest {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ChatMembersActivity.IS_ADMIN_PARAMETER, asAdmin);
         bundle.putString(ChatMembersActivity.ROOM_JID_PARAMETER, "");
-        bundle.putInt(ChatMembersActivity.ROOM_TYPE_PARAMETER, Chat.TYPE_MUC_LIGHT);
         intent.putExtras(bundle);
         mActivityTestRule.launchActivity(intent);
     }

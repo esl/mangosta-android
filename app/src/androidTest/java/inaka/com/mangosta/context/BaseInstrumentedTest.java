@@ -196,8 +196,6 @@ public class BaseInstrumentedTest {
 
         doReturn(null).when(mRoomListManagerMock).createMUCLight(anyList(), any(String.class));
 
-        doReturn(null).when(mRoomListManagerMock).createMUC(anyList(), any(String.class), any(String.class));
-
         doNothing().when(mRoomListManagerMock).setShowChat(any(Realm.class), any(Chat.class));
 
         doNothing().when(mRoomListManagerMock)

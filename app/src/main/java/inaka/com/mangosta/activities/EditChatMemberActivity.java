@@ -21,13 +21,6 @@ import com.nanotasks.Tasks;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smackx.muc.MultiUserChat;
-import org.jivesoftware.smackx.muc.MultiUserChatManager;
-import org.jxmpp.jid.EntityBareJid;
-import org.jxmpp.jid.EntityFullJid;
-import org.jxmpp.jid.Jid;
-import org.jxmpp.jid.impl.JidCreate;
-import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
@@ -171,45 +164,13 @@ public class EditChatMemberActivity extends BaseActivity {
         return true;
     }
 
-    private void getChatMembers() throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, XmppStringprepException {
-
-        List<String> jids = new ArrayList<>();
-
-        switch (mChat.getType()) {
-
-            case Chat.TYPE_MUC_LIGHT:
-                jids = RoomManager.getInstance(null).loadMUCLightMembers(mChatJID);
-                break;
-
-            case Chat.TYPE_MUC:
-                jids = getMUCMembers();
-                break;
-        }
-
+    private void getChatMembers()
+            throws SmackException.NoResponseException, XMPPException.XMPPErrorException,
+            SmackException.NotConnectedException, InterruptedException, XmppStringprepException {
+        List<String> jids = RoomManager.getInstance(null).loadMUCLightMembers(mChatJID);
         for (String jid : jids) {
             membersObtainUser(XMPPUtils.fromJIDToUserName(jid));
         }
-
-    }
-
-    private List<String> getMUCMembers() {
-        List<String> jids = new ArrayList<>();
-
-        MultiUserChatManager multiUserChatManager = XMPPSession.getInstance().getMUCManager();
-        try {
-            MultiUserChat muc = multiUserChatManager.getMultiUserChat(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-            List<EntityFullJid> occupants = muc.getOccupants();
-
-            for (Jid jid : occupants) {
-                String userName = jid.toString().split("/")[1];
-                jids.add(XMPPUtils.fromUserNameToJID(userName));
-            }
-
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
-        }
-
-        return jids;
     }
 
     @Override
@@ -280,50 +241,11 @@ public class EditChatMemberActivity extends BaseActivity {
     }
 
     private void removeUserFromChat(User user) {
-        switch (mChat.getType()) {
-
-            case Chat.TYPE_MUC:
-                removeFromMUC(user);
-                break;
-
-            case Chat.TYPE_MUC_LIGHT:
-                RoomManager.getInstance(null).removeFromMUCLight(user, mChatJID);
-                break;
-        }
-    }
-
-    private void removeFromMUC(User user) {
-        MultiUserChatManager multiUserChatManager = XMPPSession.getInstance().getMUCManager();
-        try {
-            MultiUserChat muc = multiUserChatManager.getMultiUserChat(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-            muc.kickParticipant(Resourcepart.from(user.getLogin()), "Kicked");
-        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-            e.printStackTrace();
-        }
+        RoomManager.getInstance(null).removeFromMUCLight(user, mChatJID);
     }
 
     private void addUserToChat(User user) {
-        switch (mChat.getType()) {
-
-            case Chat.TYPE_MUC:
-                inviteToMUC(user);
-                break;
-
-            case Chat.TYPE_MUC_LIGHT:
-                RoomManager.getInstance(null).addToMUCLight(user, mChatJID);
-                break;
-        }
-    }
-
-    private void inviteToMUC(User user) {
-        MultiUserChatManager multiUserChatManager = XMPPSession.getInstance().getMUCManager();
-        try {
-            MultiUserChat muc = multiUserChatManager.getMultiUserChat(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-            EntityBareJid jid = JidCreate.entityBareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
-            muc.invite(jid, "I invite you to my chat.");
-        } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException e) {
-            e.printStackTrace();
-        }
+        RoomManager.getInstance(null).addToMUCLight(user, mChatJID);
     }
 
     private boolean userInList(User user, List<User> list) {

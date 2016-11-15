@@ -152,10 +152,6 @@ public class ChatsListFragment extends BaseFragment {
             case MUC_LIGHT_CHATS_POSITION: // load muc chats
                 mChats.addAll(RealmManager.getInstance().getMUCLights());
                 break;
-
-            case MUC_CHATS_POSITION: // load muc light chats
-                mChats.addAll(RealmManager.getInstance().getMUCs());
-                break;
         }
 
         Collections.sort(mChats, new ChatOrderComparator());
@@ -192,10 +188,6 @@ public class ChatsListFragment extends BaseFragment {
                 switch (mPosition) {
                     case MUC_LIGHT_CHATS_POSITION: // load muc chats
                         mRoomManager.loadMUCLightRooms();
-                        break;
-
-                    case MUC_CHATS_POSITION: // load muc light chats
-                        mRoomManager.loadMUCRooms();
                         break;
 
                     case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats from friends

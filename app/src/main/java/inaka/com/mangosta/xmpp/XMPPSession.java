@@ -39,7 +39,6 @@ import org.jivesoftware.smackx.bob.element.BoBExtension;
 import org.jivesoftware.smackx.bob.element.BoBIQ;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.csi.ClientStateIndicationManager;
-import org.jivesoftware.smackx.delay.packet.DelayInformation;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.jiveproperties.packet.JivePropertiesExtension;
@@ -847,13 +846,6 @@ public class XMPPSession {
             return;
         }
 
-        if (chatRoom.getType() == Chat.TYPE_MUC) {
-            DelayInformation delayInformation = message.getExtension(DelayInformation.ELEMENT, DelayInformation.NAMESPACE);
-            if (delayDate != null) {
-                delayDate = delayInformation.getStamp();
-            }
-        }
-
         // assign date
         manageDelayDate(delayDate, chatMessage);
 
@@ -907,13 +899,7 @@ public class XMPPSession {
         Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJid).findFirst();
 
-        if (chat.getType() == Chat.TYPE_MUC) {
-
-            if (jidList.length > 1) {
-                chatMessage.setUserSender(jidList[1]);
-            }
-
-        } else if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
+        if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
             if (jidList.length > 1) {
                 chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[1]));
             }

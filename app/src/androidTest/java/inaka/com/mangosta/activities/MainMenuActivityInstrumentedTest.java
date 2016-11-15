@@ -42,10 +42,8 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =
             new ActivityTestRule<>(MainMenuActivity.class);
 
-    private List<String> mMUCNames;
     private List<String> mMUCLightNames;
     private List<String> mOneToOneChatNames;
-    private List<Chat> mMUCs;
     private List<Chat> mMUCLights;
     private List<Chat> mOneToOneChats;
 
@@ -53,16 +51,6 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
     public void beforeTests() {
         obtain1to1Chats();
         obtainMUCLights();
-        obtainMUCs();
-    }
-
-    private void obtainMUCs() {
-        mMUCs = RealmManager.getInstance().getMUCs();
-        Collections.sort(mMUCs, new ChatOrderComparator());
-        mMUCNames = new ArrayList<>();
-        for (Chat chat : mMUCs) {
-            mMUCNames.add(chat.getName());
-        }
     }
 
     private void obtainMUCLights() {
@@ -138,28 +126,6 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
 
         checkRecyclerViewContent(mMUCLightNames);
-
-        stopTiming(resource);
-    }
-
-    @Test
-    public void initializeMUCList() throws Exception {
-        assumeTrue(isUserLoggedIn());
-
-        // move to the 3rd tab
-        onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft())
-                .perform(swipeLeft());
-
-        IdlingResource resource = startTiming(5000);
-
-        // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_CHATS_POSITION);
-
-        // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mMUCs.size());
-
-        checkRecyclerViewContent(mMUCNames);
 
         stopTiming(resource);
     }

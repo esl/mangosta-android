@@ -10,7 +10,7 @@ import inaka.com.mangosta.fragments.ChatsListFragment;
 
 public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
-    private final int PAGE_COUNT = 3;
+    private final int PAGE_COUNT = 2;
 
     private FragmentManager mFragmentManager;
 
@@ -18,22 +18,18 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     private ChatsListFragment mOneToOneChatsFragment;
     private ChatsListFragment mMUCLightChatsFragment;
-    private ChatsListFragment mMUCChatsFragment;
 
     public Fragment mFragmentList[] = new Fragment[]{
             mOneToOneChatsFragment,
             mMUCLightChatsFragment,
-            mMUCChatsFragment
     };
 
     private String mOneToOneChatsFragmentTag;
-    private String mMUCChatsFragmentTag;
     private String mMUCLightChatsFragmentTag;
 
     private String mFragmentListTags[] = new String[]{
             mOneToOneChatsFragmentTag,
             mMUCLightChatsFragmentTag,
-            mMUCChatsFragmentTag
     };
 
     public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitles[]) {
