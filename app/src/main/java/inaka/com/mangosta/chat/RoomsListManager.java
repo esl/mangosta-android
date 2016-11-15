@@ -87,7 +87,7 @@ public class RoomsListManager {
                 } else {
                     chat.setType(Chat.TYPE_1_T0_1);
                     if (!chatJid.equals(Preferences.getInstance().getUserXMPPJid())) {
-                        chat.setName("Chat with " + XMPPUtils.fromJIDToUserName(chatJid));
+                        chat.setName(XMPPUtils.fromJIDToUserName(chatJid));
                     }
                 }
 

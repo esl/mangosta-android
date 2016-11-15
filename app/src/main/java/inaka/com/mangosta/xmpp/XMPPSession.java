@@ -88,7 +88,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -96,7 +95,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
@@ -908,9 +906,7 @@ public class XMPPSession {
             chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[0]));
 
             if (!jidList[0].equals(Preferences.getInstance().getUserXMPPJid())) {
-                String roomName = String.format(Locale.getDefault(),
-                        MangostaApplication.getInstance().getString(R.string.chat_with),
-                        XMPPUtils.fromJIDToUserName(jidList[0]));
+                String roomName = XMPPUtils.fromJIDToUserName(jidList[0]);
                 realm.beginTransaction();
                 chat.setName(roomName);
                 realm.copyToRealmOrUpdate(chat);

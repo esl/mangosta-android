@@ -15,7 +15,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
-import inaka.com.mangosta.fragments.ChatsListFragment;
+import inaka.com.mangosta.fragments.ChatsListsFragment;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.Preferences;
@@ -51,9 +51,8 @@ public class MainMenuActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         String tabTitles[] = new String[]{
-                getResources().getString(R.string.title_tab_1_to_1_chats),
-                getResources().getString(R.string.title_tab_muc_light_chats),
-                getResources().getString(R.string.title_tab_muc_chats)};
+                getResources().getString(R.string.title_tab_chats),
+                getResources().getString(R.string.title_tab_social_media)};
 
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
@@ -142,7 +141,6 @@ public class MainMenuActivity extends BaseActivity {
         user.setLogin(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
 
         Bundle bundle = new Bundle();
-        bundle.putBoolean(UserProfileActivity.AUTH_USER_PARAMETER, true);
         bundle.putParcelable(UserProfileActivity.USER_PARAMETER, user);
 
         userOptionsActivityIntent.putExtras(bundle);
@@ -164,7 +162,7 @@ public class MainMenuActivity extends BaseActivity {
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:
-                goToMyProfile();
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
                 break;
         }
     }
@@ -176,10 +174,10 @@ public class MainMenuActivity extends BaseActivity {
     }
 
     private void reloadChats() {
-        ChatsListFragment mChatsListFragment = (ChatsListFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
-                .getRegisteredFragment(mViewpagerMainMenu.getCurrentItem());
-        if (mChatsListFragment != null) {
-            mChatsListFragment.loadChats();
+        ChatsListsFragment mChatsListsFragment = (ChatsListsFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
+                .getRegisteredFragment(0);
+        if (mChatsListsFragment != null) {
+            mChatsListsFragment.loadChats();
         }
     }
 }

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -39,48 +38,49 @@ import rx.Subscription;
 import rx.functions.Action1;
 
 
-public class ChatsListFragment extends BaseFragment {
+public class ChatsListsFragment extends BaseFragment {
 
-    @Bind(R.id.chatListRecyclerView)
-    RecyclerView chatListRecyclerView;
+    @Bind(R.id.groupChatsRecyclerView)
+    RecyclerView groupChatsRecyclerView;
 
-    @Bind(R.id.swipeRefreshLayout)
-    public SwipeRefreshLayout swipeRefreshLayout;
+    @Bind(R.id.oneToOneChatsRecyclerView)
+    RecyclerView oneToOneChatsRecyclerView;
 
     private RoomManager mRoomManager;
-    private List<Chat> mChats;
-    private ChatListAdapter mChatListAdapter;
+    private List<Chat> mGroupChats;
+    private List<Chat> mOneToOneChats;
+
+    private ChatListAdapter mGroupChatsAdapter;
+    private ChatListAdapter mOneToOneChatsAdapter;
 
     Subscription mMessageSubscription;
     Subscription mMessageSentAlertSubscription;
 
-    public final static int ONE_TO_ONE_CHATS_POSITION = 0;
-    public final static int MUC_LIGHT_CHATS_POSITION = 1;
-    public final static int MUC_CHATS_POSITION = 2;
-
-    public int mPosition = 0;
     Activity mContext;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_chat_list, container, false);
+        View view = inflater.inflate(R.layout.fragment_chats_lists, container, false);
         ButterKnife.bind(this, view);
 
         mContext = getActivity();
 
-        Bundle bundle = getArguments();
-        mPosition = bundle.getInt("position");
-
-        mChats = new ArrayList<>();
+        mGroupChats = new ArrayList<>();
+        mOneToOneChats = new ArrayList<>();
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(mContext));
 
-        mChatListAdapter = getChatListAdapter();
+        mGroupChatsAdapter = getGroupChatsAdapter();
+        groupChatsRecyclerView.setHasFixedSize(true);
+        LinearLayoutManager layoutManagerGroupChats = new LinearLayoutManager(mContext);
+        groupChatsRecyclerView.setLayoutManager(layoutManagerGroupChats);
+        groupChatsRecyclerView.setAdapter(mGroupChatsAdapter);
 
-        chatListRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
-        chatListRecyclerView.setLayoutManager(layoutManager);
-        chatListRecyclerView.setAdapter(mChatListAdapter);
+        mOneToOneChatsAdapter = getOneToOneChatsAdapter();
+        oneToOneChatsRecyclerView.setHasFixedSize(true);
+        LinearLayoutManager layoutManagerOneToOneChats = new LinearLayoutManager(mContext);
+        oneToOneChatsRecyclerView.setLayoutManager(layoutManagerOneToOneChats);
+        oneToOneChatsRecyclerView.setAdapter(mOneToOneChatsAdapter);
 
         mMessageSubscription = XMPPSession.getInstance().subscribeToMessages(new Action1<Message>() {
             @Override
@@ -96,26 +96,21 @@ public class ChatsListFragment extends BaseFragment {
             }
         });
 
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // Refresh items
-                loadChatsBackgroundTask();
-            }
-        });
-
-        swipeRefreshLayout.setColorSchemeResources(
-                R.color.blue_light_background,
-                R.color.colorPrimaryLight,
-                R.color.colorPrimary);
-
         loadChatsBackgroundTask();
 
         return view;
     }
 
-    public ChatListAdapter getChatListAdapter() {
-        return new ChatListAdapter(mChats, mContext,
+    public ChatListAdapter getGroupChatsAdapter() {
+        return getChatListAdapter(mGroupChats);
+    }
+
+    public ChatListAdapter getOneToOneChatsAdapter() {
+        return getChatListAdapter(mOneToOneChats);
+    }
+
+    private ChatListAdapter getChatListAdapter(List<Chat> chats) {
+        return new ChatListAdapter(chats, mContext,
                 new ChatListAdapter.ChatClickListener() {
                     @Override
                     public void onChatClicked(Chat chat) {
@@ -142,26 +137,25 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     private void changeChatsList() {
-        mChats.clear();
+        mGroupChats.clear();
+        mOneToOneChats.clear();
 
-        switch (mPosition) {
-            case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats
-                mChats.addAll(RealmManager.getInstance().get1to1Chats());
-                break;
+        mGroupChats.addAll(RealmManager.getInstance().getMUCLights());
+        mOneToOneChats.addAll(RealmManager.getInstance().get1to1Chats());
 
-            case MUC_LIGHT_CHATS_POSITION: // load muc chats
-                mChats.addAll(RealmManager.getInstance().getMUCLights());
-                break;
+        Collections.sort(mGroupChats, new ChatOrderComparator());
+        Collections.sort(mOneToOneChats, new ChatOrderComparator());
+
+        if (mOneToOneChatsAdapter == null) {
+            mOneToOneChatsAdapter = getOneToOneChatsAdapter();
         }
 
-        Collections.sort(mChats, new ChatOrderComparator());
-
-        if (mChatListAdapter == null) {
-            mChatListAdapter = getChatListAdapter();
+        if (mGroupChatsAdapter == null) {
+            mGroupChatsAdapter = getGroupChatsAdapter();
         }
 
-        mChatListAdapter.notifyDataSetChanged();
-        swipeRefreshLayout.setRefreshing(false);
+        mOneToOneChatsAdapter.notifyDataSetChanged();
+        mGroupChatsAdapter.notifyDataSetChanged();
     }
 
     private void loadChatsAfterRoomLeft() {
@@ -169,15 +163,6 @@ public class ChatsListFragment extends BaseFragment {
     }
 
     public void loadChatsBackgroundTask() {
-        if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
-            mContext.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    swipeRefreshLayout.setRefreshing(true);
-                }
-            });
-        }
-
         if (mRoomManager == null) {
             return;
         }
@@ -185,15 +170,8 @@ public class ChatsListFragment extends BaseFragment {
         Tasks.executeInBackground(mContext, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                switch (mPosition) {
-                    case MUC_LIGHT_CHATS_POSITION: // load muc chats
-                        mRoomManager.loadMUCLightRooms();
-                        break;
-
-                    case ONE_TO_ONE_CHATS_POSITION: // load 1 to 1 chats from friends
-                        mRoomManager.loadRosterFriendsChats();
-                        break;
-                }
+                mRoomManager.loadMUCLightRooms(); // load group chats
+                mRoomManager.loadRosterFriendsChats(); // load 1 to 1 chats from friends
                 return null;
             }
         }, new Completion<Object>() {

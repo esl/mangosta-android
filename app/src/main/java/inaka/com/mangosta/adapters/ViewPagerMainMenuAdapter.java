@@ -6,30 +6,34 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.view.ViewGroup;
 
-import inaka.com.mangosta.fragments.ChatsListFragment;
+import inaka.com.mangosta.fragments.BlogsListFragment;
+import inaka.com.mangosta.fragments.ChatsListsFragment;
 
 public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     private final int PAGE_COUNT = 2;
 
+    public static final int CHATS_FRAGMENT_POSITION = 0;
+    public static final int SOCIAL_MEDIA_FRAGMENT_POSITION = 1;
+
     private FragmentManager mFragmentManager;
 
     private String mTabTitles[];
 
-    private ChatsListFragment mOneToOneChatsFragment;
-    private ChatsListFragment mMUCLightChatsFragment;
+    private BlogsListFragment mSocialMediaFragment;
+    private ChatsListsFragment mChatsFragment;
 
     public Fragment mFragmentList[] = new Fragment[]{
-            mOneToOneChatsFragment,
-            mMUCLightChatsFragment,
+            mChatsFragment,
+            mSocialMediaFragment,
     };
 
-    private String mOneToOneChatsFragmentTag;
-    private String mMUCLightChatsFragmentTag;
+    private String mChatsFragmentTag;
+    private String mSocialMediaFragmentTag;
 
     private String mFragmentListTags[] = new String[]{
-            mOneToOneChatsFragmentTag,
-            mMUCLightChatsFragmentTag,
+            mChatsFragmentTag,
+            mSocialMediaFragmentTag,
     };
 
     public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitles[]) {
@@ -48,9 +52,21 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
         Fragment fragment;
         if (mFragmentList[position] == null) {
-            ChatsListFragment chatsListFragment = new ChatsListFragment();
-            chatsListFragment.loadChatsBackgroundTask();
-            mFragmentList[position] = chatsListFragment;
+
+            switch (position) {
+                case CHATS_FRAGMENT_POSITION:
+                    ChatsListsFragment chatsListsFragment = new ChatsListsFragment();
+                    chatsListsFragment.loadChatsBackgroundTask();
+                    mFragmentList[position] = chatsListsFragment;
+                    break;
+
+                case SOCIAL_MEDIA_FRAGMENT_POSITION:
+                    BlogsListFragment blogsListFragment = new BlogsListFragment();
+                    blogsListFragment.loadBlogPosts();
+                    mFragmentList[position] = blogsListFragment;
+                    break;
+            }
+
             fragment = mFragmentList[position];
         } else {
             fragment = this.mFragmentManager.findFragmentByTag(mFragmentListTags[position]);
@@ -90,21 +106,24 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
     }
 
     public void syncChats() {
-        for (Fragment fragment : mFragmentList) {
-            ChatsListFragment chatsListFragment = ((ChatsListFragment) fragment);
-            if (chatsListFragment != null) {
-                chatsListFragment.loadChatsBackgroundTask();
-            }
+        ChatsListsFragment chatsListsFragment = ((ChatsListsFragment) mFragmentList[CHATS_FRAGMENT_POSITION]);
+        if (chatsListsFragment != null) {
+            chatsListsFragment.loadChatsBackgroundTask();
         }
     }
 
     public void reloadChats() {
-        for (Fragment fragment : mFragmentList) {
-            ChatsListFragment chatsListFragment = ((ChatsListFragment) fragment);
-            if (chatsListFragment != null) {
-                chatsListFragment.loadChats();
-            }
+        ChatsListsFragment chatsListsFragment = ((ChatsListsFragment) mFragmentList[CHATS_FRAGMENT_POSITION]);
+        if (chatsListsFragment != null) {
+            chatsListsFragment.loadChats();
         }
     }
+    public void reloadBlogPosts() {
+        BlogsListFragment blogsListFragment = ((BlogsListFragment) mFragmentList[SOCIAL_MEDIA_FRAGMENT_POSITION]);
+        if (blogsListFragment != null) {
+            blogsListFragment.loadBlogPosts();
+        }
+    }
+
 
 }

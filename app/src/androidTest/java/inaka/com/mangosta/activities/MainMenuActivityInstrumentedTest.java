@@ -19,7 +19,7 @@ import java.util.List;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
-import inaka.com.mangosta.fragments.ChatsListFragment;
+import inaka.com.mangosta.fragments.ChatsListsFragment;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.RecyclerViewInteraction;
 import inaka.com.mangosta.realm.RealmManager;
@@ -71,18 +71,33 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         }
     }
 
-    private int getChatsCount(ChatsListFragment chatsListFragment) {
-        return chatsListFragment.getChatListAdapter().getItemCount();
+    private int getGroupChatsCount(ChatsListsFragment chatsListsFragment) {
+        return chatsListsFragment.getGroupChatsAdapter().getItemCount();
     }
 
-    private ChatsListFragment getChatsListFragment(int index) {
+    private int getOneToOneChatsCount(ChatsListsFragment chatsListsFragment) {
+        return chatsListsFragment.getOneToOneChatsAdapter().getItemCount();
+    }
+
+    private ChatsListsFragment getChatsListFragment() {
         MainMenuActivity mainMenuActivity = mMainMenuActivityActivityTestRule.getActivity();
         ViewPagerMainMenuAdapter adapter = ((ViewPagerMainMenuAdapter) mainMenuActivity.mViewpagerMainMenu.getAdapter());
-        return (ChatsListFragment) adapter.mFragmentList[index];
+        return (ChatsListsFragment) adapter.mFragmentList[0];
     }
 
-    private void checkRecyclerViewContent(final List<String> chatNames) {
-        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.chatListRecyclerView), ViewMatchers.isDisplayed()))
+    private void checkGroupChatsRecyclerViewContent(final List<String> chatNames) {
+        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.groupChatsRecyclerView), ViewMatchers.isDisplayed()))
+                .withItems(chatNames)
+                .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
+                    @Override
+                    public void check(String chatName, View view, NoMatchingViewException e) {
+                        matches(hasDescendant(withText(chatName))).check(view, e);
+                    }
+                });
+    }
+
+    private void checkOneToOneChatsRecyclerViewContent(final List<String> chatNames) {
+        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.oneToOneChatsRecyclerView), ViewMatchers.isDisplayed()))
                 .withItems(chatNames)
                 .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
                     @Override
@@ -99,12 +114,12 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         IdlingResource resource = startTiming(5000);
 
         // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.ONE_TO_ONE_CHATS_POSITION);
+        ChatsListsFragment chatsListsFragment = getChatsListFragment();
 
         // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mOneToOneChats.size());
+        assertEquals(getOneToOneChatsCount(chatsListsFragment), mOneToOneChats.size());
 
-        checkRecyclerViewContent(mOneToOneChatNames);
+        checkOneToOneChatsRecyclerViewContent(mOneToOneChatNames);
 
         stopTiming(resource);
     }
@@ -120,12 +135,12 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         IdlingResource resource = startTiming(5000);
 
         // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_LIGHT_CHATS_POSITION);
+        ChatsListsFragment chatsListsFragment = getChatsListFragment();
 
         // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
+        assertEquals(getGroupChatsCount(chatsListsFragment), mMUCLights.size());
 
-        checkRecyclerViewContent(mMUCLightNames);
+        checkGroupChatsRecyclerViewContent(mMUCLightNames);
 
         stopTiming(resource);
     }

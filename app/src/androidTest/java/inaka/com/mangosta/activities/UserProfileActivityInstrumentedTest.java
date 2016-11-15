@@ -60,7 +60,6 @@ public class UserProfileActivityInstrumentedTest extends BaseInstrumentedTest {
 
         Bundle bundle = new Bundle();
         bundle.putParcelable(UserProfileActivity.USER_PARAMETER, mUser);
-        bundle.putBoolean(UserProfileActivity.AUTH_USER_PARAMETER, true);
         intent.putExtras(bundle);
 
         mActivityTestRule.launchActivity(intent);
