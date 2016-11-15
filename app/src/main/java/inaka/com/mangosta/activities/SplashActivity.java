@@ -76,7 +76,7 @@ public class SplashActivity extends FragmentActivity {
             public void onError(Context context, Exception e) {
                 XMPPSession.getInstance().getXMPPConnection().disconnect();
                 XMPPSession.clearInstance();
-                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
             }
         });
     }
