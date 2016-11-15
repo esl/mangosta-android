@@ -23,6 +23,7 @@ import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
 import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,6 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 
 public class CreateChatActivity extends BaseActivity {
 
