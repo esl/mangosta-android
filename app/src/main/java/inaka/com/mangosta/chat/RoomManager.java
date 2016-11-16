@@ -20,9 +20,6 @@ import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.mam.MamManager;
-import org.jivesoftware.smackx.muc.Affiliate;
-import org.jivesoftware.smackx.muc.MultiUserChat;
-import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
 import org.jivesoftware.smackx.muclight.MUCLightRoomConfiguration;
 import org.jivesoftware.smackx.muclight.MultiUserChatLight;
@@ -258,31 +255,6 @@ public class RoomManager {
                     mListener.onRoomLeft();
                 }
 
-            }
-        }).start();
-    }
-
-    public void loadMembers(final String jid) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (jid.contains(XMPPSession.MUC_SERVICE_NAME)) {
-                    MultiUserChatManager manager = XMPPSession.getInstance().getMUCManager();
-
-                    List<Affiliate> members = new ArrayList<>();
-
-                    try {
-                        MultiUserChat muc = manager.getMultiUserChat(JidCreate.from(jid).asEntityBareJidIfPossible());
-
-                        //Members and owners are added to the same list.
-                        members.addAll(muc.getMembers());
-                        members.addAll(muc.getOwners());
-                    } catch (Exception e) {
-                        mListener.onError(e.getLocalizedMessage());
-                    } finally {
-                        mListener.onRoomMembersLoaded(members);
-                    }
-                }
             }
         }).start();
     }

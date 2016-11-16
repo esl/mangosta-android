@@ -122,7 +122,6 @@ public class XMPPSession {
 
     public static final String SERVER_NAME = "xmpp.erlang-solutions.com";
     public static final String SERVICE_NAME = "erlang-solutions.com";
-    public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
     // received
@@ -197,7 +196,6 @@ public class XMPPSession {
                 super.authenticated(connection, resumed);
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                sendPresence(Presence.Type.available);
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -208,7 +206,6 @@ public class XMPPSession {
                 Log.w(XMPP_TAG, "Connection Successful");
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
-                sendPresence(Presence.Type.available);
                 activeCSI();
             }
 
@@ -492,34 +489,6 @@ public class XMPPSession {
         ProviderManager.addExtensionProvider(PostEntryExtension.ELEMENT, PostEntryExtension.NAMESPACE, new PostEntryProvider());
     }
 
-    public void sendPresence(final Presence.Type presenceType) {
-
-        if (mXMPPConnection.isAuthenticated()) {
-
-            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-            if (discoverItems != null) {
-                List<DiscoverItems.Item> items = discoverItems.getItems();
-
-                for (final DiscoverItems.Item item : items) {
-
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Jid itemJid = item.getEntityID();
-                            Presence presence = new Presence(presenceType);
-                            presence.setTo(itemJid);
-                            try {
-                                sendStanza(presence);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }).start();
-                }
-            }
-        }
-    }
-
     public MultiUserChatManager getMUCManager() {
         return MultiUserChatManager.getInstanceFor(mXMPPConnection);
     }
@@ -543,16 +512,6 @@ public class XMPPSession {
 
     public BoBManager getBoBManager() {
         return BoBManager.getInstanceFor(mXMPPConnection);
-    }
-
-    public DiscoverItems discoverMUCItems() {
-        DiscoverItems discoverItems = null;
-        try {
-            discoverItems = ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).discoverItems(JidCreate.from(MUC_SERVICE_NAME));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return discoverItems;
     }
 
     public DiscoverItems discoverMUCLightItems() {
@@ -619,11 +578,8 @@ public class XMPPSession {
             preferences.setUserXMPPPassword(password);
 
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
-
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
         }
 
     }
@@ -637,15 +593,6 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
-                    DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-                    if (discoverItems != null) {
-                        List<DiscoverItems.Item> items = discoverItems.getItems();
-                        for (DiscoverItems.Item item : items) {
-                            Presence presence = new Presence(Presence.Type.unavailable);
-                            presence.setTo(item.getEntityID());
-                            sendStanza(presence);
-                        }
-                    }
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
                 } catch (Exception e) {

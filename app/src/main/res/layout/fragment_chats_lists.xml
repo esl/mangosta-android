@@ -13,6 +13,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
             android:padding="5dp"
             android:text="@string/title_rooms"
             android:textColor="@color/complete_white"
@@ -29,6 +30,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
             android:padding="5dp"
             android:text="@string/title_people"
             android:textColor="@color/complete_white"

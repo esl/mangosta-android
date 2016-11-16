@@ -363,7 +363,6 @@ public class ChatActivity extends BaseActivity {
                 switch (chatConnection.getStatus()) {
                     case Connected:
                     case Authenticated:
-                        mRoomManager.loadMembers(mChatJID);
                         break;
                     case Connecting:
                     case Disconnected:
@@ -371,10 +370,6 @@ public class ChatActivity extends BaseActivity {
                 }
             }
         });
-
-        if (XMPPSession.getInstance().isConnectedAndAuthenticated()) {
-            mRoomManager.loadMembers(mChatJID);
-        }
 
     }
 
