@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +18,6 @@ import com.nanotasks.Tasks;
 import org.jivesoftware.smack.packet.Message;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import butterknife.Bind;
@@ -31,14 +31,15 @@ import inaka.com.mangosta.chat.RoomManagerListener;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
-import inaka.com.mangosta.utils.ChatOrderComparator;
+import inaka.com.mangosta.ui.itemTouchHelper.OnStartDragListener;
+import inaka.com.mangosta.ui.itemTouchHelper.SimpleItemTouchHelperCallback;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import rx.Subscription;
 import rx.functions.Action1;
 
 
-public class ChatsListsFragment extends BaseFragment {
+public class ChatsListsFragment extends BaseFragment implements OnStartDragListener {
 
     @Bind(R.id.groupChatsRecyclerView)
     RecyclerView groupChatsRecyclerView;
@@ -70,17 +71,9 @@ public class ChatsListsFragment extends BaseFragment {
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(mContext));
 
-        mGroupChatsAdapter = getGroupChatsAdapter();
-        groupChatsRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager layoutManagerGroupChats = new LinearLayoutManager(mContext);
-        groupChatsRecyclerView.setLayoutManager(layoutManagerGroupChats);
-        groupChatsRecyclerView.setAdapter(mGroupChatsAdapter);
+        initGroupChatsRecyclerView();
 
-        mOneToOneChatsAdapter = getOneToOneChatsAdapter();
-        oneToOneChatsRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager layoutManagerOneToOneChats = new LinearLayoutManager(mContext);
-        oneToOneChatsRecyclerView.setLayoutManager(layoutManagerOneToOneChats);
-        oneToOneChatsRecyclerView.setAdapter(mOneToOneChatsAdapter);
+        initOneToOneChatsRecyclerView();
 
         mMessageSubscription = XMPPSession.getInstance().subscribeToMessages(new Action1<Message>() {
             @Override
@@ -99,6 +92,32 @@ public class ChatsListsFragment extends BaseFragment {
         loadChatsBackgroundTask();
 
         return view;
+    }
+
+    private void initGroupChatsRecyclerView() {
+        mGroupChatsAdapter = getGroupChatsAdapter();
+        groupChatsRecyclerView.setHasFixedSize(true);
+//        groupChatsRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        LinearLayoutManager layoutManagerGroupChats = new LinearLayoutManager(mContext);
+        groupChatsRecyclerView.setLayoutManager(layoutManagerGroupChats);
+        groupChatsRecyclerView.setAdapter(mGroupChatsAdapter);
+
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mGroupChatsAdapter);
+        ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(callback);
+        mItemTouchHelper.attachToRecyclerView(groupChatsRecyclerView);
+    }
+
+    private void initOneToOneChatsRecyclerView() {
+        mOneToOneChatsAdapter = getOneToOneChatsAdapter();
+        oneToOneChatsRecyclerView.setHasFixedSize(true);
+//        oneToOneChatsRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        LinearLayoutManager layoutManagerOneToOneChats = new LinearLayoutManager(mContext);
+        oneToOneChatsRecyclerView.setLayoutManager(layoutManagerOneToOneChats);
+        oneToOneChatsRecyclerView.setAdapter(mOneToOneChatsAdapter);
+
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mOneToOneChatsAdapter);
+        ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(callback);
+        mItemTouchHelper.attachToRecyclerView(oneToOneChatsRecyclerView);
     }
 
     public ChatListAdapter getGroupChatsAdapter() {
@@ -120,7 +139,7 @@ public class ChatsListsFragment extends BaseFragment {
                         intent.putExtra(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
                         mContext.startActivity(intent);
                     }
-                });
+                }, this);
     }
 
     public void loadChats() {
@@ -143,8 +162,8 @@ public class ChatsListsFragment extends BaseFragment {
         mGroupChats.addAll(RealmManager.getInstance().getMUCLights());
         mOneToOneChats.addAll(RealmManager.getInstance().get1to1Chats());
 
-        Collections.sort(mGroupChats, new ChatOrderComparator());
-        Collections.sort(mOneToOneChats, new ChatOrderComparator());
+//        Collections.sort(mGroupChats, new ChatOrderComparator());
+//        Collections.sort(mOneToOneChats, new ChatOrderComparator());
 
         if (mOneToOneChatsAdapter == null) {
             mOneToOneChatsAdapter = getOneToOneChatsAdapter();
@@ -219,6 +238,11 @@ public class ChatsListsFragment extends BaseFragment {
                 loadChatsBackgroundTask();
                 break;
         }
+    }
+
+    @Override
+    public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
+
     }
 
     private class RoomManagerChatListListener extends RoomManagerListener {

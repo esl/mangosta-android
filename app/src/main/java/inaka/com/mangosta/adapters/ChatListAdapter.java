@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,18 +21,36 @@ import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.ui.ViewHolderType;
+import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperAdapter;
+import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperViewHolder;
+import inaka.com.mangosta.ui.itemTouchHelper.OnStartDragListener;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
-public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder> {
+public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder>
+        implements ItemTouchHelperAdapter {
 
     private List<Chat> mChats;
     private Context mContext;
     private ChatClickListener mChatClickListener;
 
-    public ChatListAdapter(List<Chat> chats, Context context, ChatClickListener chatClickListener) {
+    public ChatListAdapter(List<Chat> chats, Context context, ChatClickListener chatClickListener,
+                           OnStartDragListener dragStartListener) {
         this.mChats = chats;
         this.mContext = context;
         this.mChatClickListener = chatClickListener;
+    }
+
+    @Override
+    public boolean onItemMove(int fromPosition, int toPosition) {
+        Collections.swap(mChats, fromPosition, toPosition);
+        notifyItemMoved(fromPosition, toPosition);
+        return true;
+    }
+
+    @Override
+    public void onItemDismiss(int position) {
+        mChats.remove(position);
+        notifyItemRemoved(position);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -40,7 +59,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         }
     }
 
-    public static class ChatViewHolder extends ChatListAdapter.ViewHolder {
+    public static class ChatViewHolder extends ChatListAdapter.ViewHolder
+            implements ItemTouchHelperViewHolder {
 
         @Bind(R.id.chatNameTextView)
         TextView chatNameTextView;
@@ -119,6 +139,17 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             }
 
         }
+
+        @Override
+        public void onItemSelected() {
+            itemView.setBackgroundColor(mContext.getResources().getColor(R.color.colorPrimaryLight));
+        }
+
+        @Override
+        public void onItemClear() {
+            itemView.setBackgroundColor(mContext.getResources().getColor(R.color.background_chat));
+        }
+
     }
 
     @Override
