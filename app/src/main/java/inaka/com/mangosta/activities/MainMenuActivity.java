@@ -36,9 +36,6 @@ public class MainMenuActivity extends BaseActivity {
     @Bind(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
-    @Bind(R.id.manageFriendsFloatingButton)
-    FloatingActionButton manageFriendsFloatingButton;
-
     public boolean mRoomsLoaded = false;
 
     @Override
@@ -59,7 +56,6 @@ public class MainMenuActivity extends BaseActivity {
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
         createNewBlogFloatingButton.setIcon(R.mipmap.ic_add_blog);
-        manageFriendsFloatingButton.setIcon(R.mipmap.ic_friends);
 
         createNewChatFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,14 +69,6 @@ public class MainMenuActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainMenuActivity.this, CreateBlogActivity.class);
-                MainMenuActivity.this.startActivity(intent);
-            }
-        });
-
-        manageFriendsFloatingButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
                 MainMenuActivity.this.startActivity(intent);
             }
         });
@@ -129,6 +117,12 @@ public class MainMenuActivity extends BaseActivity {
                 return true;
             }
 
+            case R.id.actionManageFriends: {
+                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
+                MainMenuActivity.this.startActivity(intent);
+                return true;
+            }
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -158,7 +152,7 @@ public class MainMenuActivity extends BaseActivity {
             case GO_BACK_FROM_CHAT:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
                 break;
-            case GO_BACK_FROM_MANAGE_FRIENDS:
+            case FRIENDS_CHANGED:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:

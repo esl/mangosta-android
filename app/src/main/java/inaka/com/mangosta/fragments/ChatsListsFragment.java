@@ -263,7 +263,7 @@ public class ChatsListsFragment extends BaseFragment {
             case GO_BACK_FROM_CHAT:
                 loadChats();
                 break;
-            case GO_BACK_FROM_MANAGE_FRIENDS:
+            case FRIENDS_CHANGED:
                 loadChatsBackgroundTask();
                 break;
         }

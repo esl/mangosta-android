@@ -30,7 +30,7 @@
 
     <string name="title_button_create_chat">Create chat</string>
     <string name="title_button_create_blog">Create blog</string>
-    <string name="title_button_manage_friends">Manage friends</string>
+    <string name="action_manage_friends">Manage friends</string>
 
     <string name="date_seconds_ago"
             tools:ignore="PluralsCandidate">%1$d seconds ago</string>
