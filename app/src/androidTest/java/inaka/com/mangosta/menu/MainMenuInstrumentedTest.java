@@ -44,6 +44,10 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
         // click to see hided menu items
         openActionBarOverflowOrOptionsMenu(getContext());
 
+        onView(withText(R.string.action_manage_friends))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()));
+
         onView(withText(R.string.action_block_users))
                 .check(matches(isDisplayed()))
                 .check(matches(isEnabled()));
@@ -68,6 +72,26 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
         pressBack();
 
         onView(withId(R.id.actionUserOptions))
+                .check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void goToManageFriendsWithMenuItem() throws Exception {
+        assumeTrue(isUserLoggedIn());
+
+        onView(withId(R.id.actionManageFriends))
+                .check(matches(isClickable()))
+                .perform(click())
+                .check(doesNotExist());
+
+        onView(withId(R.id.manageFriendsSearchUserLayout))
+                .check(matches(isDisplayed()));
+
+        pressBack();
+
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+
+        onView(withId(R.id.actionManageFriends))
                 .check(matches(isDisplayed()));
     }
 

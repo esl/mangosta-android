@@ -35,10 +35,6 @@ public class MainFloatingButtonsInstrumentedTest extends BaseInstrumentedTest {
         onView(withId(R.id.createNewChatFloatingButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()));
-
-        onView(withId(R.id.manageFriendsFloatingButton))
-                .check(matches(isDisplayed()))
-                .check(matches(isClickable()));
     }
 
 }
