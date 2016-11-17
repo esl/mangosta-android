@@ -103,7 +103,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                 if (chat.getImageUrl() != null) {
                     Picasso.with(mContext).load(chat.getImageUrl()).noFade().fit().into(chatImageView);
                 } else {
-                    Picasso.with(mContext).load(R.mipmap.ic_1to1chat).noFade().fit().into(chatImageView);
+                    Picasso.with(mContext).load(R.mipmap.ic_user).noFade().fit().into(chatImageView);
                 }
             } else { // muc or muclight
                 Picasso.with(mContext).load(R.mipmap.ic_groupchat).noFade().fit().into(chatImageView);

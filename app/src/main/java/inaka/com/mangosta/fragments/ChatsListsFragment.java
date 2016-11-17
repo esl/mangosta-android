@@ -10,6 +10,8 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
@@ -48,6 +50,18 @@ public class ChatsListsFragment extends BaseFragment {
     @Bind(R.id.oneToOneChatsRecyclerView)
     RecyclerView oneToOneChatsRecyclerView;
 
+    @Bind(R.id.expandGroupChatsImage)
+    ImageView expandGroupChatsImage;
+
+    @Bind(R.id.expandOneToOneChatsImage)
+    ImageView expandOneToOneChatsImage;
+
+    @Bind(R.id.expandGroupChatsLayout)
+    LinearLayout expandGroupChatsLayout;
+
+    @Bind(R.id.expandOneToOneChatsLayout)
+    LinearLayout expandOneToOneChatsLayout;
+
     private RoomManager mRoomManager;
     private List<Chat> mGroupChats;
     private List<Chat> mOneToOneChats;
@@ -66,15 +80,16 @@ public class ChatsListsFragment extends BaseFragment {
         ButterKnife.bind(this, view);
 
         mContext = getActivity();
-
-        mGroupChats = new ArrayList<>();
-        mOneToOneChats = new ArrayList<>();
-
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(mContext));
 
+        mGroupChats = new ArrayList<>();
         initGroupChatsRecyclerView();
 
+        mOneToOneChats = new ArrayList<>();
         initOneToOneChatsRecyclerView();
+
+        setExpandLayout(expandGroupChatsLayout, groupChatsRecyclerView, expandGroupChatsImage);
+        setExpandLayout(expandOneToOneChatsLayout, oneToOneChatsRecyclerView, expandOneToOneChatsImage);
 
         mMessageSubscription = XMPPSession.getInstance().subscribeToMessages(new Action1<Message>() {
             @Override
@@ -93,6 +108,21 @@ public class ChatsListsFragment extends BaseFragment {
         loadChatsBackgroundTask();
 
         return view;
+    }
+
+    private void setExpandLayout(LinearLayout layout, final RecyclerView recyclerView, final ImageView imageView) {
+        layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (recyclerView.getVisibility() == View.VISIBLE) {
+                    recyclerView.setVisibility(View.GONE);
+                    imageView.setImageResource(R.mipmap.ic_expand_less);
+                } else {
+                    recyclerView.setVisibility(View.VISIBLE);
+                    imageView.setImageResource(R.mipmap.ic_expand_more);
+                }
+            }
+        });
     }
 
     private void initGroupChatsRecyclerView() {
