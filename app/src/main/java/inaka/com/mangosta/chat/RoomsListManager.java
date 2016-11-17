@@ -83,9 +83,11 @@ public class RoomsListManager {
 
                 if (chatJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
                     chat.setType(Chat.TYPE_MUC_LIGHT);
+                    chat.setSortPosition(RealmManager.getInstance().getMUCLights().size());
                     findMUCLightName(chat);
                 } else {
                     chat.setType(Chat.TYPE_1_T0_1);
+                    chat.setSortPosition(RealmManager.getInstance().get1to1Chats().size());
                     if (!chatJid.equals(Preferences.getInstance().getUserXMPPJid())) {
                         chat.setName(XMPPUtils.fromJIDToUserName(chatJid));
                     }
@@ -133,8 +135,10 @@ public class RoomsListManager {
 
             if (chatJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
                 chat.setType(Chat.TYPE_MUC_LIGHT);
+                chat.setSortPosition(RealmManager.getInstance().getMUCLights().size());
             } else {
                 chat.setType(Chat.TYPE_1_T0_1);
+                chat.setSortPosition(RealmManager.getInstance().get1to1Chats().size());
             }
 
             chat.setDateCreated(new Date());

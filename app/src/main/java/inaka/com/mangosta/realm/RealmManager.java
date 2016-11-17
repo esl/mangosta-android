@@ -338,4 +338,17 @@ public class RealmManager {
         return messageId;
     }
 
+    public void updateChatsSortPosition(List<Chat> chats) {
+        Realm realm = getRealm();
+
+        for (int i = 0; i < chats.size(); i++) {
+            Chat chat = chats.get(i);
+
+            realm.beginTransaction();
+            chat.setSortPosition(i);
+            realm.copyToRealmOrUpdate(chat);
+            realm.commitTransaction();
+        }
+    }
+
 }

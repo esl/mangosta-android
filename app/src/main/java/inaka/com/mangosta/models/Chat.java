@@ -20,6 +20,7 @@ public class Chat extends RealmObject {
     private boolean show;
     private Date dateCreated;
     private String lastRetrievedFromMAM;
+    private int sortPosition;
 
     public Chat() {
     }
@@ -98,6 +99,14 @@ public class Chat extends RealmObject {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public int getSortPosition() {
+        return sortPosition;
+    }
+
+    public void setSortPosition(int sortPosition) {
+        this.sortPosition = sortPosition;
     }
 
 }

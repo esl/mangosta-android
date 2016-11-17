@@ -23,7 +23,6 @@ import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.ui.ViewHolderType;
 import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperAdapter;
 import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperViewHolder;
-import inaka.com.mangosta.ui.itemTouchHelper.OnStartDragListener;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder>
@@ -33,8 +32,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     private Context mContext;
     private ChatClickListener mChatClickListener;
 
-    public ChatListAdapter(List<Chat> chats, Context context, ChatClickListener chatClickListener,
-                           OnStartDragListener dragStartListener) {
+    public ChatListAdapter(List<Chat> chats, Context context, ChatClickListener chatClickListener) {
         this.mChats = chats;
         this.mContext = context;
         this.mChatClickListener = chatClickListener;
@@ -44,6 +42,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     public boolean onItemMove(int fromPosition, int toPosition) {
         Collections.swap(mChats, fromPosition, toPosition);
         notifyItemMoved(fromPosition, toPosition);
+        RealmManager.getInstance().updateChatsSortPosition(mChats);
         return true;
     }
 
