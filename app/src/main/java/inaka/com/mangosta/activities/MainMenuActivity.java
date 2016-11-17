@@ -162,6 +162,7 @@ public class MainMenuActivity extends BaseActivity {
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:
+                mViewpagerMainMenu.setCurrentItem(ViewPagerMainMenuAdapter.SOCIAL_MEDIA_FRAGMENT_POSITION);
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
                 break;
         }
