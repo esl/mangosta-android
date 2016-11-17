@@ -153,6 +153,7 @@ public class ChatActivity extends BaseActivity {
 
         if (isNewChat) {
             RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
+            mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         }
 
         if (!mChat.isShow()) {
