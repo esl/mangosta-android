@@ -5,6 +5,7 @@ import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +34,12 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     @Rule
     public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =
             new ActivityTestRule<>(MainMenuActivity.class);
+
+    @Override
+    @Before
+    public void setUp() {
+        super.setUp();
+    }
 
     @Test
     public void menuItemsAvailability() throws Exception {
@@ -78,6 +85,8 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     @Test
     public void goToManageFriendsWithMenuItem() throws Exception {
         assumeTrue(isUserLoggedIn());
+
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
         onView(withId(R.id.actionManageFriends))
                 .check(matches(isClickable()))
