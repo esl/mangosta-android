@@ -17,6 +17,7 @@ import inaka.com.mangosta.xmpp.XMPPUtils;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertTrue;
@@ -52,6 +53,9 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
         assumeTrue(isUserLoggedIn());
 
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
+
+        onView(withId(R.id.viewpagerMainMenu))
+                .check(matches(isDisplayed()));
 
         assumeNotNull(XMPPSession.getInstance().getXMPPConnection());
         assumeNotNull(XMPPSession.getInstance().getXMPPConnection().getUser());
