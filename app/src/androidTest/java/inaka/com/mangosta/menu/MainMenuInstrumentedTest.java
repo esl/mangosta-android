@@ -88,10 +88,10 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        onView(withId(R.id.actionManageFriends))
-                .check(matches(isClickable()))
-                .perform(click())
-                .check(doesNotExist());
+        onView(withText(R.string.action_manage_friends))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .perform(click());
 
         onView(withId(R.id.manageFriendsSearchUserLayout))
                 .check(matches(isDisplayed()));
@@ -100,7 +100,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        onView(withId(R.id.actionManageFriends))
+        onView(withText(R.string.action_manage_friends))
                 .check(matches(isDisplayed()));
     }
 

@@ -10,7 +10,6 @@ import inaka.com.mangosta.activities.MainMenuActivity;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
 
 import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -24,10 +23,6 @@ public class MainFloatingButtonsInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void checkFloatingButtonsAvailability() throws Exception {
-        onView(withId(R.id.multipleActions))
-                .check(matches(isDisplayed()))
-                .perform(click());
-
         onView(withId(R.id.createNewBlogFloatingButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()));

@@ -134,6 +134,7 @@ public class BaseInstrumentedTest {
         doReturn(mRealmMock.where(ChatMessage.class).findAll())
                 .when(mRealmManagerMock)
                 .getMessagesForChat(any(Realm.class), any(String.class));
+        doNothing().when(mRealmManagerMock).deleteAll();
 
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
     }

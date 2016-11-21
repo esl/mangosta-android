@@ -18,6 +18,7 @@ import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.fragments.ChatsListsFragment;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -89,10 +90,7 @@ public class MainMenuActivity extends BaseActivity {
 
             case R.id.actionSignOut: {
                 Preferences.getInstance().deleteAll();
-
-                getRealm().beginTransaction();
-                getRealm().deleteAll();
-                getRealm().commitTransaction();
+                RealmManager.getInstance().deleteAll();
 
                 XMPPSession.getInstance().logoff();
 

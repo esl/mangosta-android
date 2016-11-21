@@ -351,4 +351,10 @@ public class RealmManager {
         }
     }
 
+    public void deleteAll() {
+        getRealm().beginTransaction();
+        getRealm().deleteAll();
+        getRealm().commitTransaction();
+    }
+
 }
