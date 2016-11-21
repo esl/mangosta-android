@@ -8,8 +8,7 @@ import io.realm.annotations.PrimaryKey;
 public class Chat extends RealmObject {
 
     public static final int TYPE_1_T0_1 = 0;
-    public static final int TYPE_MUC = 1;
-    public static final int TYPE_MUC_LIGHT = 2;
+    public static final int TYPE_MUC_LIGHT = 1;
 
     @PrimaryKey
     private String jid;
@@ -21,6 +20,7 @@ public class Chat extends RealmObject {
     private boolean show;
     private Date dateCreated;
     private long lastTimestampRetrieved;
+    private int sortPosition;
 
     public Chat() {
     }
@@ -99,6 +99,14 @@ public class Chat extends RealmObject {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public int getSortPosition() {
+        return sortPosition;
+    }
+
+    public void setSortPosition(int sortPosition) {
+        this.sortPosition = sortPosition;
     }
 
 }

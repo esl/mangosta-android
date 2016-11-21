@@ -5,6 +5,7 @@ import android.support.test.espresso.IdlingResource;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +35,12 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =
             new ActivityTestRule<>(MainMenuActivity.class);
 
+    @Override
+    @Before
+    public void setUp() {
+        super.setUp();
+    }
+
     @Test
     public void menuItemsAvailability() throws Exception {
         onView(withId(R.id.actionUserOptions))
@@ -43,6 +50,10 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
         // click to see hided menu items
         openActionBarOverflowOrOptionsMenu(getContext());
+
+        onView(withText(R.string.action_manage_friends))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()));
 
         onView(withText(R.string.action_block_users))
                 .check(matches(isDisplayed()))
@@ -68,6 +79,28 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
         pressBack();
 
         onView(withId(R.id.actionUserOptions))
+                .check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void goToManageFriendsWithMenuItem() throws Exception {
+        assumeTrue(isUserLoggedIn());
+
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+
+        onView(withText(R.string.action_manage_friends))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .perform(click());
+
+        onView(withId(R.id.manageFriendsSearchUserLayout))
+                .check(matches(isDisplayed()));
+
+        pressBack();
+
+        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
+
+        onView(withText(R.string.action_manage_friends))
                 .check(matches(isDisplayed()));
     }
 

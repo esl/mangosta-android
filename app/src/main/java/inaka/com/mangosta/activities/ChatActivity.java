@@ -32,8 +32,6 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
-import org.jivesoftware.smackx.muc.MultiUserChat;
-import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
 import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
@@ -165,6 +163,7 @@ public class ChatActivity extends BaseActivity {
 
         if (isNewChat) {
             RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
+            mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         }
 
         if (!mChat.isShow()) {
@@ -217,11 +216,6 @@ public class ChatActivity extends BaseActivity {
                 loadArchivedMessages();
             }
         });
-
-        // Not enable MAM refresh with MUC
-        if (mChat.getType() == Chat.TYPE_MUC) {
-            loadMessagesSwipeRefreshLayout.setEnabled(false);
-        }
 
         chatSendMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -345,12 +339,6 @@ public class ChatActivity extends BaseActivity {
                                     userSender = XMPPUtils.fromJIDToUserName(jidList[0]);
                                     break;
 
-                                case Chat.TYPE_MUC:
-                                    if (jidList.length > 1) {
-                                        userSender = jidList[1];
-                                    }
-                                    break;
-
                                 case Chat.TYPE_MUC_LIGHT:
                                     if (jidList.length > 1) {
                                         userSender = XMPPUtils.fromJIDToUserName(jidList[1]);
@@ -402,7 +390,6 @@ public class ChatActivity extends BaseActivity {
                 switch (chatConnection.getStatus()) {
                     case Connected:
                     case Authenticated:
-                        mRoomManager.loadMembers(mChatJID);
                         break;
                     case Connecting:
                     case Disconnected:
@@ -410,10 +397,6 @@ public class ChatActivity extends BaseActivity {
                 }
             }
         });
-
-        if (XMPPSession.getInstance().isConnectedAndAuthenticated()) {
-            mRoomManager.loadMembers(mChatJID);
-        }
 
     }
 
@@ -468,7 +451,6 @@ public class ChatActivity extends BaseActivity {
                 Intent chatMembersIntent = new Intent(ChatActivity.this, ChatMembersActivity.class);
                 chatMembersIntent.putExtra(ChatMembersActivity.ROOM_JID_PARAMETER, mChatJID);
                 chatMembersIntent.putExtra(ChatMembersActivity.IS_ADMIN_PARAMETER, mIsOwner);
-                chatMembersIntent.putExtra(ChatMembersActivity.ROOM_TYPE_PARAMETER, mChat.getType());
                 startActivity(chatMembersIntent);
                 break;
 
@@ -735,12 +717,6 @@ public class ChatActivity extends BaseActivity {
 
                 switch (chat.getType()) {
 
-                    case Chat.TYPE_MUC:
-                        realm.close();
-                        disconnectRoomFromServer();
-                        mRoomManager.leaveMUC(mChatJID);
-                        break;
-
                     case Chat.TYPE_MUC_LIGHT:
                         realm.close();
                         disconnectRoomFromServer();
@@ -991,9 +967,6 @@ public class ChatActivity extends BaseActivity {
             case Chat.TYPE_MUC_LIGHT:
                 manageMUCLightAdmins(menu);
                 break;
-            case Chat.TYPE_MUC:
-                manageMUCAdmins();
-                break;
         }
     }
 
@@ -1019,33 +992,6 @@ public class ChatActivity extends BaseActivity {
                             mIsOwner = pair.getValue().equals(MUCLightAffiliation.owner);
                             destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
                         }
-                    }
-                }
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    private void manageMUCAdmins() {
-        Tasks.executeInBackground(this, new BackgroundWork<List<Affiliate>>() {
-            @Override
-            public List<Affiliate> doInBackground() throws Exception {
-                MultiUserChatManager mucManager = XMPPSession.getInstance().getMUCManager();
-                MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                List<Affiliate> admins = muc.getAdmins();
-                admins.addAll(muc.getOwners());
-                return admins;
-            }
-        }, new Completion<List<Affiliate>>() {
-            @Override
-            public void onSuccess(Context context, List<Affiliate> admins) {
-                for (Affiliate affiliate : admins) {
-                    if (affiliate.getJid().toString().equals(Preferences.getInstance().getUserXMPPJid())) {
-                        mIsOwner = true;
                     }
                 }
             }

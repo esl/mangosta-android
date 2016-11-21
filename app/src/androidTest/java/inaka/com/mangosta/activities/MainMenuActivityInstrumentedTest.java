@@ -1,5 +1,6 @@
 package inaka.com.mangosta.activities;
 
+import android.content.Intent;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.matcher.ViewMatchers;
@@ -19,7 +20,8 @@ import java.util.List;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
-import inaka.com.mangosta.fragments.ChatsListFragment;
+import inaka.com.mangosta.fragments.ChatsListsFragment;
+import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.RecyclerViewInteraction;
 import inaka.com.mangosta.realm.RealmManager;
@@ -29,6 +31,7 @@ import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.swipeLeft;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
@@ -40,29 +43,18 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule<MainMenuActivity> mMainMenuActivityActivityTestRule =
-            new ActivityTestRule<>(MainMenuActivity.class);
+            new ActivityTestRule<>(MainMenuActivity.class, true, false);
 
-    private List<String> mMUCNames;
     private List<String> mMUCLightNames;
     private List<String> mOneToOneChatNames;
-    private List<Chat> mMUCs;
     private List<Chat> mMUCLights;
     private List<Chat> mOneToOneChats;
+    private List<String> mBlogPostsContent;
 
     @Before
     public void beforeTests() {
         obtain1to1Chats();
         obtainMUCLights();
-        obtainMUCs();
-    }
-
-    private void obtainMUCs() {
-        mMUCs = RealmManager.getInstance().getMUCs();
-        Collections.sort(mMUCs, new ChatOrderComparator());
-        mMUCNames = new ArrayList<>();
-        for (Chat chat : mMUCs) {
-            mMUCNames.add(chat.getName());
-        }
     }
 
     private void obtainMUCLights() {
@@ -83,18 +75,22 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
         }
     }
 
-    private int getChatsCount(ChatsListFragment chatsListFragment) {
-        return chatsListFragment.getChatListAdapter().getItemCount();
+    private int getGroupChatsCount(ChatsListsFragment chatsListsFragment) {
+        return chatsListsFragment.getGroupChatsAdapter().getItemCount();
     }
 
-    private ChatsListFragment getChatsListFragment(int index) {
+    private int getOneToOneChatsCount(ChatsListsFragment chatsListsFragment) {
+        return chatsListsFragment.getOneToOneChatsAdapter().getItemCount();
+    }
+
+    private ChatsListsFragment getChatsListFragment() {
         MainMenuActivity mainMenuActivity = mMainMenuActivityActivityTestRule.getActivity();
         ViewPagerMainMenuAdapter adapter = ((ViewPagerMainMenuAdapter) mainMenuActivity.mViewpagerMainMenu.getAdapter());
-        return (ChatsListFragment) adapter.mFragmentList[index];
+        return (ChatsListsFragment) adapter.mFragmentList[0];
     }
 
-    private void checkRecyclerViewContent(final List<String> chatNames) {
-        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.chatListRecyclerView), ViewMatchers.isDisplayed()))
+    private void checkGroupChatsRecyclerViewContent(final List<String> chatNames) {
+        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.groupChatsRecyclerView), ViewMatchers.isDisplayed()))
                 .withItems(chatNames)
                 .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
                     @Override
@@ -104,64 +100,92 @@ public class MainMenuActivityInstrumentedTest extends BaseInstrumentedTest {
                 });
     }
 
+    private void checkOneToOneChatsRecyclerViewContent(final List<String> chatNames) {
+        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.oneToOneChatsRecyclerView), ViewMatchers.isDisplayed()))
+                .withItems(chatNames)
+                .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
+                    @Override
+                    public void check(String chatName, View view, NoMatchingViewException e) {
+                        matches(hasDescendant(withText(chatName))).check(view, e);
+                    }
+                });
+    }
+
+    private void checkBlogPostsRecyclerViewContent(final List<String> blogPosts) {
+        RecyclerViewInteraction.<String>onRecyclerView(allOf(withId(R.id.blogsRecyclerView), ViewMatchers.isDisplayed()))
+                .withItems(blogPosts)
+                .check(new RecyclerViewInteraction.ItemViewAssertion<String>() {
+                    @Override
+                    public void check(String blogPost, View view, NoMatchingViewException e) {
+                        matches(hasDescendant(withText(blogPost))).check(view, e);
+                    }
+                });
+    }
+
+    private void launchActivity() {
+        Intent intent = new Intent(getContext(), MainMenuActivity.class);
+        mMainMenuActivityActivityTestRule.launchActivity(intent);
+    }
+
     @Test
     public void initializeOneToOneChatsList() throws Exception {
+        launchActivity();
+
         assumeTrue(isUserLoggedIn());
 
         IdlingResource resource = startTiming(5000);
 
         // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.ONE_TO_ONE_CHATS_POSITION);
+        ChatsListsFragment chatsListsFragment = getChatsListFragment();
 
         // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mOneToOneChats.size());
+        assertEquals(getOneToOneChatsCount(chatsListsFragment), mOneToOneChats.size());
 
-        checkRecyclerViewContent(mOneToOneChatNames);
+        checkOneToOneChatsRecyclerViewContent(mOneToOneChatNames);
 
         stopTiming(resource);
     }
 
     @Test
     public void initializeMUCLightList() throws Exception {
-        assumeTrue(isUserLoggedIn());
+        launchActivity();
 
-        // move to the 2nd tab
-        onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft());
+        assumeTrue(isUserLoggedIn());
 
         IdlingResource resource = startTiming(5000);
 
         // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_LIGHT_CHATS_POSITION);
+        ChatsListsFragment chatsListsFragment = getChatsListFragment();
 
         // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mMUCLights.size());
+        assertEquals(getGroupChatsCount(chatsListsFragment), mMUCLights.size());
 
-        checkRecyclerViewContent(mMUCLightNames);
+        checkGroupChatsRecyclerViewContent(mMUCLightNames);
 
         stopTiming(resource);
     }
 
     @Test
-    public void initializeMUCList() throws Exception {
-        assumeTrue(isUserLoggedIn());
+    public void blogPostsList() throws Exception {
+        super.setUp();
 
-        // move to the 3rd tab
+        initBlogPosts();
+
+        mBlogPostsContent = new ArrayList<>();
+        for (BlogPost blogPost : mBlogPosts) {
+            mBlogPostsContent.add(blogPost.getContent());
+        }
+
+        launchActivity();
+
+        // move to the 2nd tab
         onView(withId(R.id.viewpagerMainMenu))
-                .perform(swipeLeft())
                 .perform(swipeLeft());
 
-        IdlingResource resource = startTiming(5000);
+        onView(withId(R.id.blogsRecyclerView))
+                .check(matches(isDisplayed()));
 
-        // Obtain the one to one chats fragment
-        ChatsListFragment chatsListFragment = getChatsListFragment(ChatsListFragment.MUC_CHATS_POSITION);
-
-        // Check if it loads the correct amount of chats
-        assertEquals(getChatsCount(chatsListFragment), mMUCs.size());
-
-        checkRecyclerViewContent(mMUCNames);
-
-        stopTiming(resource);
+        checkBlogPostsRecyclerViewContent(mBlogPostsContent);
     }
 
 }

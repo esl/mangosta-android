@@ -144,6 +144,7 @@ public class BaseInstrumentedTest {
         doReturn(mRealmMock.where(ChatMessage.class).findAll())
                 .when(mRealmManagerMock)
                 .getMessagesForChat(any(Realm.class), any(String.class));
+        doNothing().when(mRealmManagerMock).deleteAll();
 
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
     }
@@ -205,8 +206,6 @@ public class BaseInstrumentedTest {
         doNothing().when(mRoomListManagerMock).createCommonChat(any(String.class));
 
         doReturn(null).when(mRoomListManagerMock).createMUCLight(anyList(), any(String.class));
-
-        doReturn(null).when(mRoomListManagerMock).createMUC(anyList(), any(String.class), any(String.class));
 
         doNothing().when(mRoomListManagerMock).setShowChat(any(Realm.class), any(Chat.class));
 

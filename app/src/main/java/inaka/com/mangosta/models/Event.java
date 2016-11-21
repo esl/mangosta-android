@@ -6,7 +6,7 @@ public class Event {
         ROOMS_LOADED,
         STICKER_SENT,
         GO_BACK_FROM_CHAT,
-        GO_BACK_FROM_MANAGE_FRIENDS,
+        FRIENDS_CHANGED,
         BLOG_POST_CREATED
     }
 
