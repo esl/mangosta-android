@@ -231,25 +231,11 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void createMUC() throws Exception {
-        addUser1();
-        addUser2();
-        pressButtonToCreateChat();
-        checkDialogToSelectRoomNameIsOpened();
-        selectMUCType();
-        enterGroupChatName("test muc");
-        createGroupChat();
-        verifyEnteredToAChat();
-    }
-
-
-    @Test
     public void createdMUCLight() throws Exception {
         addUser1();
         addUser2();
         pressButtonToCreateChat();
         checkDialogToSelectRoomNameIsOpened();
-        selectMUCLightType();
         enterGroupChatName("test muc light");
         createGroupChat();
         verifyEnteredToAChat();

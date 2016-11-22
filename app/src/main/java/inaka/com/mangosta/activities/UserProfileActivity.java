@@ -1,9 +1,6 @@
 package inaka.com.mangosta.activities;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -15,7 +12,6 @@ import com.astuetz.PagerSlidingTabStrip;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.fragments.BlogsListFragment;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
@@ -39,11 +35,6 @@ public class UserProfileActivity extends BaseActivity {
     @Bind(R.id.imageAvatarUserProfile)
     ImageView imageAvatarUserProfile;
 
-    private User mUser;
-    private boolean mIsAuthenticatedUser;
-    private BlogsListFragment mBlogsFragment;
-
-    public final static String AUTH_USER_PARAMETER = "auth_user";
     public final static String USER_PARAMETER = "user";
 
     @Override
@@ -57,18 +48,13 @@ public class UserProfileActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         Bundle bundle = getIntent().getExtras();
-        mIsAuthenticatedUser = bundle.getBoolean(AUTH_USER_PARAMETER);
-        mUser = bundle.getParcelable(USER_PARAMETER);
+        User user = bundle.getParcelable(USER_PARAMETER);
 
-        if (mUser != null) {
-            setTitle(mUser.getLogin());
-            textLoginUserProfile.setText(mUser.getLogin());
-            textNameUserProfile.setText(XMPPUtils.fromUserNameToJID(mUser.getLogin()));
+        if (user != null) {
+            setTitle(user.getLogin());
+            textLoginUserProfile.setText(user.getLogin());
+            textNameUserProfile.setText(XMPPUtils.fromUserNameToJID(user.getLogin()));
         }
-
-        mBlogsFragment = new BlogsListFragment();
-        viewpagerProfile.setAdapter(new UserPagerAdapter(getSupportFragmentManager()));
-        slidingTabStrip.setViewPager(viewpagerProfile);
     }
 
     @Override
@@ -84,48 +70,9 @@ public class UserProfileActivity extends BaseActivity {
         return true;
     }
 
-    private boolean isTheAuthenticatedUser() {
-        return mIsAuthenticatedUser || XMPPUtils.isAutenticatedUser(mUser);
-    }
-
-    private class UserPagerAdapter extends FragmentPagerAdapter {
-
-        public UserPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            switch (position) {
-                case 0:
-                    return mBlogsFragment;
-
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case 0:
-                    return getText(R.string.title_tab_blogs);
-
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return isTheAuthenticatedUser() ? 1 : 0;
-        }
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        mBlogsFragment.loadBlogPosts();
     }
 
 }

@@ -23,14 +23,14 @@
     <string name="action_remove_from_friends">Remove user from friends</string>
     <string name="action_delete_chat">Delete</string>
 
-    <string name="title_tab_1_to_1_chats">1 to 1</string>
-    <string name="title_tab_muc_light_chats">MUC Light</string>
-    <string name="title_tab_muc_chats">MUC</string>
-    <string name="title_tab_blogs">Blogs</string>
+    <string name="title_tab_chats">Chats</string>
+    <string name="title_tab_social_media">Social Media</string>
+    <string name="title_rooms">ROOMS</string>
+    <string name="title_people">PEOPLE</string>
 
     <string name="title_button_create_chat">Create chat</string>
     <string name="title_button_create_blog">Create blog</string>
-    <string name="title_button_manage_friends">Manage friends</string>
+    <string name="action_manage_friends">Manage friends</string>
 
     <string name="date_seconds_ago"
             tools:ignore="PluralsCandidate">%1$d seconds ago</string>

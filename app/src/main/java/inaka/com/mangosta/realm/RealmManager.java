@@ -58,22 +58,6 @@ public class RealmManager {
         realm.close();
     }
 
-    public List<Chat> getMUCs() {
-        List<Chat> chatList = new ArrayList<>();
-
-        Realm realm = getRealm();
-        RealmResults<Chat> chats = realm.where(Chat.class)
-                .equalTo("show", true)
-                .equalTo("type", Chat.TYPE_MUC)
-                .findAll();
-
-        for (Chat chat : chats) {
-            chatList.add(chat);
-        }
-
-        return chatList;
-    }
-
     public List<Chat> getMUCLights() {
         List<Chat> chatList = new ArrayList<>();
 
@@ -282,16 +266,6 @@ public class RealmManager {
         realm.close();
     }
 
-    public void removeAllMUCChats() {
-        Realm realm = getRealm();
-        realm.beginTransaction();
-        realm.where(Chat.class)
-                .equalTo("type", Chat.TYPE_MUC)
-                .findAll().deleteAllFromRealm();
-        realm.commitTransaction();
-        realm.close();
-    }
-
     public void removeAllMUCLightChats() {
         Realm realm = getRealm();
         realm.beginTransaction();
@@ -331,10 +305,6 @@ public class RealmManager {
         realm.close();
     }
 
-    public void hideAllMUCChats() {
-        hideAllChatsOfType(Chat.TYPE_MUC);
-    }
-
     public void hideAllMUCLightChats() {
         hideAllChatsOfType(Chat.TYPE_MUC_LIGHT);
     }
@@ -366,6 +336,25 @@ public class RealmManager {
         realm.close();
 
         return messageId;
+    }
+
+    public void updateChatsSortPosition(List<Chat> chats) {
+        Realm realm = getRealm();
+
+        for (int i = 0; i < chats.size(); i++) {
+            Chat chat = chats.get(i);
+
+            realm.beginTransaction();
+            chat.setSortPosition(i);
+            realm.copyToRealmOrUpdate(chat);
+            realm.commitTransaction();
+        }
+    }
+
+    public void deleteAll() {
+        getRealm().beginTransaction();
+        getRealm().deleteAll();
+        getRealm().commitTransaction();
     }
 
 }

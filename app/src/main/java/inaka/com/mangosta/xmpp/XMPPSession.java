@@ -39,7 +39,6 @@ import org.jivesoftware.smackx.bob.element.BoBExtension;
 import org.jivesoftware.smackx.bob.element.BoBIQ;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.csi.ClientStateIndicationManager;
-import org.jivesoftware.smackx.delay.packet.DelayInformation;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.jiveproperties.packet.JivePropertiesExtension;
@@ -89,7 +88,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -97,7 +95,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
@@ -125,7 +122,6 @@ public class XMPPSession {
 
     public static final String SERVER_NAME = "xmpp.erlang-solutions.com";
     public static final String SERVICE_NAME = "erlang-solutions.com";
-    public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
     // received
@@ -200,7 +196,6 @@ public class XMPPSession {
                 super.authenticated(connection, resumed);
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                sendPresence(Presence.Type.available);
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -211,7 +206,6 @@ public class XMPPSession {
                 Log.w(XMPP_TAG, "Connection Successful");
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
-                sendPresence(Presence.Type.available);
                 activeCSI();
             }
 
@@ -495,34 +489,6 @@ public class XMPPSession {
         ProviderManager.addExtensionProvider(PostEntryExtension.ELEMENT, PostEntryExtension.NAMESPACE, new PostEntryProvider());
     }
 
-    public void sendPresence(final Presence.Type presenceType) {
-
-        if (mXMPPConnection.isAuthenticated()) {
-
-            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-            if (discoverItems != null) {
-                List<DiscoverItems.Item> items = discoverItems.getItems();
-
-                for (final DiscoverItems.Item item : items) {
-
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Jid itemJid = item.getEntityID();
-                            Presence presence = new Presence(presenceType);
-                            presence.setTo(itemJid);
-                            try {
-                                sendStanza(presence);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }).start();
-                }
-            }
-        }
-    }
-
     public MultiUserChatManager getMUCManager() {
         return MultiUserChatManager.getInstanceFor(mXMPPConnection);
     }
@@ -546,16 +512,6 @@ public class XMPPSession {
 
     public BoBManager getBoBManager() {
         return BoBManager.getInstanceFor(mXMPPConnection);
-    }
-
-    public DiscoverItems discoverMUCItems() {
-        DiscoverItems discoverItems = null;
-        try {
-            discoverItems = ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).discoverItems(JidCreate.from(MUC_SERVICE_NAME));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return discoverItems;
     }
 
     public DiscoverItems discoverMUCLightItems() {
@@ -622,11 +578,8 @@ public class XMPPSession {
             preferences.setUserXMPPPassword(password);
 
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
-
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
         }
 
     }
@@ -640,15 +593,6 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
-                    DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-                    if (discoverItems != null) {
-                        List<DiscoverItems.Item> items = discoverItems.getItems();
-                        for (DiscoverItems.Item item : items) {
-                            Presence presence = new Presence(Presence.Type.unavailable);
-                            presence.setTo(item.getEntityID());
-                            sendStanza(presence);
-                        }
-                    }
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
                 } catch (Exception e) {
@@ -847,13 +791,6 @@ public class XMPPSession {
             return;
         }
 
-        if (chatRoom.getType() == Chat.TYPE_MUC) {
-            DelayInformation delayInformation = message.getExtension(DelayInformation.ELEMENT, DelayInformation.NAMESPACE);
-            if (delayDate != null) {
-                delayDate = delayInformation.getStamp();
-            }
-        }
-
         // assign date
         manageDelayDate(delayDate, chatMessage);
 
@@ -907,13 +844,7 @@ public class XMPPSession {
         Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJid).findFirst();
 
-        if (chat.getType() == Chat.TYPE_MUC) {
-
-            if (jidList.length > 1) {
-                chatMessage.setUserSender(jidList[1]);
-            }
-
-        } else if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
+        if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
             if (jidList.length > 1) {
                 chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[1]));
             }
@@ -922,9 +853,7 @@ public class XMPPSession {
             chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[0]));
 
             if (!jidList[0].equals(Preferences.getInstance().getUserXMPPJid())) {
-                String roomName = String.format(Locale.getDefault(),
-                        MangostaApplication.getInstance().getString(R.string.chat_with),
-                        XMPPUtils.fromJIDToUserName(jidList[0]));
+                String roomName = XMPPUtils.fromJIDToUserName(jidList[0]);
                 realm.beginTransaction();
                 chat.setName(roomName);
                 realm.copyToRealmOrUpdate(chat);

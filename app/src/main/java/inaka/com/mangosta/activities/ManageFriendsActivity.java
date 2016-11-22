@@ -194,7 +194,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
-                EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_MANAGE_FRIENDS));
+                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
                 finish();
                 break;
         }
@@ -245,6 +245,7 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
+
                 if (manageFriendsUsersUnfriendAllButton != null) {
                     mFriends.add(user);
                     mFriendsAdapter.notifyDataSetChanged();
@@ -252,6 +253,8 @@ public class ManageFriendsActivity extends BaseActivity {
                     mSearchUsers.clear();
                     mSearchAdapter.notifyDataSetChanged();
                 }
+
+                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
             }
 
             @Override
@@ -285,6 +288,7 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
+
                 if (mFriends != null && mFriendsAdapter != null && manageFriendsUsersUnfriendAllButton != null) {
                     mFriends.remove(user);
                     mFriendsAdapter.notifyDataSetChanged();
@@ -292,6 +296,8 @@ public class ManageFriendsActivity extends BaseActivity {
                         manageFriendsUsersUnfriendAllButton.setVisibility(View.INVISIBLE);
                     }
                 }
+
+                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
             }
 
             @Override
@@ -370,6 +376,8 @@ public class ManageFriendsActivity extends BaseActivity {
                     mFriendsAdapter.notifyDataSetChanged();
                     manageFriendsUsersUnfriendAllButton.setVisibility(View.INVISIBLE);
                 }
+
+                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
             }
 
             @Override
@@ -390,7 +398,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_MANAGE_FRIENDS));
+        EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
         super.onBackPressed();
     }
 

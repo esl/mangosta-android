@@ -11,7 +11,6 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
@@ -21,17 +20,12 @@ import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.mam.MamManager;
-import org.jivesoftware.smackx.muc.Affiliate;
-import org.jivesoftware.smackx.muc.MultiUserChat;
-import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
 import org.jivesoftware.smackx.muclight.MUCLightRoomConfiguration;
 import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
-import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
-import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
@@ -76,82 +70,6 @@ public class RoomManager {
     public static void setSpecialInstanceForTesting(RoomManager roomManager) {
         mInstance = roomManager;
         mIsTesting = true;
-    }
-
-    public void loadMUCRooms() {
-
-        final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
-
-        if (connection.isAuthenticated()) {
-
-            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-            if (discoverItems != null) {
-                RealmManager.getInstance().hideAllMUCChats();
-
-                List<DiscoverItems.Item> items = discoverItems.getItems();
-                Realm realm = RealmManager.getInstance().getRealm();
-
-                try {
-                    for (DiscoverItems.Item item : items) {
-                        String itemJid = item.getEntityID().toString();
-                        String userJid = Preferences.getInstance().getUserXMPPJid();
-
-                        if (itemJid.contains(XMPPSession.MUC_SERVICE_NAME)) {
-                            EntityBareJid jid = item.getEntityID().asEntityBareJidIfPossible();
-                            MultiUserChat multiUserChat = MultiUserChatManager.getInstanceFor(connection).getMultiUserChat(jid);
-
-                            Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
-
-                            try {
-
-                                if (chatRoom == null) {
-                                    chatRoom = new Chat();
-                                    chatRoom.setJid(item.getEntityID().toString());
-                                    chatRoom.setName(item.getName());
-                                    chatRoom.setType(Chat.TYPE_MUC);
-
-                                    realm.beginTransaction();
-                                    realm.copyToRealmOrUpdate(chatRoom);
-                                    realm.commitTransaction();
-                                }
-
-                                if (!chatRoom.isShow()) {
-                                    String userName = XMPPUtils.fromJIDToUserName(userJid);
-                                    multiUserChat.join(Resourcepart.from(userName));
-
-                                    realm.beginTransaction();
-                                    chatRoom.setShow(true);
-                                    realm.copyToRealmOrUpdate(chatRoom);
-                                    realm.commitTransaction();
-                                }
-
-                            } catch (Exception e) {
-                                e.printStackTrace();
-
-                                if (chatRoom != null) {
-                                    realm.beginTransaction();
-                                    chatRoom.setShow(false);
-                                    realm.copyToRealmOrUpdate(chatRoom);
-                                    realm.commitTransaction();
-                                }
-                            }
-                        }
-
-                        try {
-                            Presence presence = new Presence(Presence.Type.available);
-                            presence.setTo(JidCreate.from(itemJid));
-                            XMPPSession.getInstance().sendStanza(presence);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } finally {
-                    realm.close();
-                    mListener.onRoomsLoaded();
-                }
-
-            }
-        }
     }
 
     public void loadMUCLightRooms() {
@@ -279,32 +197,6 @@ public class RoomManager {
         });
     }
 
-    public void leaveMUC(final String jid) {
-
-        try {
-            Presence presence = new Presence(Presence.Type.unavailable);
-            presence.setTo(JidCreate.from(jid));
-            XMPPSession.getInstance().sendStanza(presence);
-
-            Realm realm = RealmManager.getInstance().getRealm();
-            realm.beginTransaction();
-
-            Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
-            if (chat != null) {
-                chat.setShow(false);
-            }
-
-            realm.commitTransaction();
-            realm.close();
-
-        } catch (Exception e) {
-            mListener.onError(e.getLocalizedMessage());
-        } finally {
-            mListener.onRoomLeft();
-        }
-
-    }
-
     public void leaveMUCLight(final String jid) {
 
         MultiUserChatLightManager manager = XMPPSession.getInstance().getMUCLightManager();
@@ -367,31 +259,6 @@ public class RoomManager {
         }).start();
     }
 
-    public void loadMembers(final String jid) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (jid.contains(XMPPSession.MUC_SERVICE_NAME)) {
-                    MultiUserChatManager manager = XMPPSession.getInstance().getMUCManager();
-
-                    List<Affiliate> members = new ArrayList<>();
-
-                    try {
-                        MultiUserChat muc = manager.getMultiUserChat(JidCreate.from(jid).asEntityBareJidIfPossible());
-
-                        //Members and owners are added to the same list.
-                        members.addAll(muc.getMembers());
-                        members.addAll(muc.getOwners());
-                    } catch (Exception e) {
-                        mListener.onError(e.getLocalizedMessage());
-                    } finally {
-                        mListener.onRoomMembersLoaded(members);
-                    }
-                }
-            }
-        }).start();
-    }
-
     public void sendTextMessage(String messageId, String jid, String content, int chatType) {
         sendMessage(messageId, jid, content, chatType, false);
     }
@@ -429,19 +296,7 @@ public class RoomManager {
     }
 
     private void sendMessageDependingOnType(Message message, String jid, int chatType) {
-        if (chatType == Chat.TYPE_MUC) {
-            MultiUserChatManager manager = XMPPSession.getInstance().getMUCManager();
-
-            try {
-                MultiUserChat muc = manager.getMultiUserChat(JidCreate.from(jid).asEntityBareJidIfPossible());
-                muc.sendMessage(message);
-            } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException e) {
-                mListener.onError(e.getLocalizedMessage());
-            } finally {
-                mListener.onMessageSent(message);
-            }
-
-        } else if (chatType == Chat.TYPE_MUC_LIGHT) {
+        if (chatType == Chat.TYPE_MUC_LIGHT) {
             MultiUserChatLightManager manager = XMPPSession.getInstance().getMUCLightManager();
 
             try {
