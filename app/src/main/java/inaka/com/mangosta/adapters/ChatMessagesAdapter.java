@@ -122,7 +122,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
         }
 
         if (chatMessage.isUnread()) {
-            Realm realm = RealmManager.getRealm();
+            Realm realm = RealmManager.getInstance().getRealm();
             realm.beginTransaction();
             chatMessage.setUnread(false);
             realm.copyToRealmOrUpdate(chatMessage);
@@ -231,6 +231,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
             lp.setMargins(10, 0, 10, 0);
             messageEditText.setLayoutParams(lp);
             messageEditText.setText(chatMessage.getContent());
+            messageEditText.setHint(mContext.getString(R.string.hint_edit_text));
 
             linearLayout.addView(messageEditText);
 
@@ -240,7 +241,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                     .setView(linearLayout)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            Realm realm = RealmManager.getRealm();
+                            Realm realm = RealmManager.getInstance().getRealm();
                             try {
                                 // prepare correction message
                                 Jid roomJid = JidCreate.from(chatMessage.getRoomJid());
@@ -258,7 +259,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                                 }
 
                                 // send correction message
-                                XMPPSession.getInstance().getXMPPConnection().sendStanza(message);
+                                XMPPSession.getInstance().sendStanza(message);
 
                                 // update message if 1 to 1 chat
                                 if (chat.getType() == Chat.TYPE_1_T0_1) {
@@ -375,7 +376,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
     }
 
     private static boolean messageIsLastOneSentByMe(ChatMessage chatMessage) {
-        return RealmManager.getLastMessageSentByMeForChat(chatMessage.getRoomJid()).getMessageId().equals(chatMessage.getMessageId());
+        return RealmManager.getInstance().getLastMessageSentByMeForChat(chatMessage.getRoomJid()).getMessageId().equals(chatMessage.getMessageId());
     }
 
 }

@@ -28,7 +28,7 @@ public class SplashActivity extends FragmentActivity {
     @Bind(R.id.progressLoading)
     ProgressBar progressLoading;
 
-    final int WAIT_TIME = 2000;
+    public static final int WAIT_TIME = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +74,9 @@ public class SplashActivity extends FragmentActivity {
 
             @Override
             public void onError(Context context, Exception e) {
-                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                XMPPSession.getInstance().getXMPPConnection().disconnect();
+                XMPPSession.clearInstance();
+                Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
             }
         });
     }

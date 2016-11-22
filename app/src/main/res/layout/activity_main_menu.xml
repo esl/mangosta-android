@@ -55,14 +55,6 @@
             fab:fab_colorPressed="@color/colorPrimary"
             fab:fab_title="@string/title_button_create_chat"/>
 
-        <com.getbase.floatingactionbutton.FloatingActionButton
-            android:id="@+id/manageFriendsFloatingButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            fab:fab_colorNormal="@color/colorPrimaryLight"
-            fab:fab_colorPressed="@color/colorPrimary"
-            fab:fab_title="@string/title_button_manage_friends"/>
-
     </com.getbase.floatingactionbutton.FloatingActionsMenu>
 
 </android.support.design.widget.CoordinatorLayout>

@@ -1,8 +1,11 @@
 package inaka.com.mangosta.realm;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.BlogPostComment;
 import inaka.com.mangosta.models.Chat;
@@ -16,7 +19,26 @@ import io.realm.Sort;
 
 public class RealmManager {
 
-    public static void saveChatMessage(ChatMessage chatMessage) {
+    private static RealmManager mInstance;
+    private static boolean mIsTesting = false;
+
+    public static RealmManager getInstance() {
+        if (mInstance == null) {
+            mInstance = new RealmManager();
+        }
+        return mInstance;
+    }
+
+    public static void setSpecialInstanceForTesting(RealmManager realmManager) {
+        mInstance = realmManager;
+        mIsTesting = true;
+    }
+
+    public static boolean isTesting() {
+        return mIsTesting;
+    }
+
+    public void saveChatMessage(ChatMessage chatMessage) {
         Realm realm = getRealm();
 
         realm.beginTransaction();
@@ -26,7 +48,7 @@ public class RealmManager {
         realm.close();
     }
 
-    public static void saveChat(Chat chat) {
+    public void saveChat(Chat chat) {
         Realm realm = getRealm();
 
         realm.beginTransaction();
@@ -36,24 +58,10 @@ public class RealmManager {
         realm.close();
     }
 
-    public static List<Chat> getMUCs(Realm realm) {
+    public List<Chat> getMUCLights() {
         List<Chat> chatList = new ArrayList<>();
 
-        RealmResults<Chat> chats = realm.where(Chat.class)
-                .equalTo("show", true)
-                .equalTo("type", Chat.TYPE_MUC)
-                .findAll();
-
-        for (Chat chat : chats) {
-            chatList.add(chat);
-        }
-
-        return chatList;
-    }
-
-    public static List<Chat> getMUCLights(Realm realm) {
-        List<Chat> chatList = new ArrayList<>();
-
+        Realm realm = getRealm();
         RealmResults<Chat> chats = realm.where(Chat.class)
                 .equalTo("show", true)
                 .equalTo("type", Chat.TYPE_MUC_LIGHT)
@@ -66,9 +74,10 @@ public class RealmManager {
         return chatList;
     }
 
-    public static List<Chat> get1to1Chats(Realm realm) {
+    public List<Chat> get1to1Chats() {
         List<Chat> chatList = new ArrayList<>();
 
+        Realm realm = getRealm();
         RealmResults<Chat> chats = realm.where(Chat.class)
                 .equalTo("show", true)
                 .equalTo("type", Chat.TYPE_1_T0_1)
@@ -82,7 +91,7 @@ public class RealmManager {
         return chatList;
     }
 
-    public static boolean chatExists(String chatFromJID) {
+    public boolean chatExists(String chatFromJID) {
         Realm realm = getRealm();
 
         boolean hasChat = realm.where(Chat.class)
@@ -94,7 +103,7 @@ public class RealmManager {
         return hasChat;
     }
 
-    public static boolean chatMessageExists(String messageId) {
+    public boolean chatMessageExists(String messageId) {
         Realm realm = getRealm();
 
         boolean hasChat = realm.where(ChatMessage.class)
@@ -106,7 +115,7 @@ public class RealmManager {
         return hasChat;
     }
 
-    public static ChatMessage getChatMessage(String messageId) {
+    public ChatMessage getChatMessage(String messageId) {
         Realm realm = getRealm();
         ChatMessage chatMessage =
                 realm.where(ChatMessage.class)
@@ -117,7 +126,7 @@ public class RealmManager {
         return chatMessage;
     }
 
-    public static Chat getChat(String chatJid) {
+    public Chat getChat(String chatJid) {
         Realm realm = getRealm();
         Chat chat = realm.where(Chat.class)
                 .equalTo("jid", chatJid)
@@ -127,19 +136,19 @@ public class RealmManager {
         return chat;
     }
 
-    public static Realm getRealm() {
+    public Realm getRealm() {
         Realm.init(MangostaApplication.getInstance());
         return Realm.getDefaultInstance();
     }
 
-    public static RealmResults<ChatMessage> getMessagesForChat(Realm realm, String jid) {
+    public RealmResults<ChatMessage> getMessagesForChat(Realm realm, String jid) {
         return realm.where(ChatMessage.class)
                 .equalTo("roomJid", jid)
                 .isNotEmpty("content")
                 .findAllSorted("date", Sort.ASCENDING);
     }
 
-    public static ChatMessage getLastMessageSentByMeForChat(String jid) {
+    public ChatMessage getLastMessageSentByMeForChat(String jid) {
         Realm realm = getRealm();
         RealmResults<ChatMessage> chatMessages =
                 realm.where(ChatMessage.class)
@@ -152,7 +161,7 @@ public class RealmManager {
         return chatMessages.last();
     }
 
-    public static ChatMessage getLastMessageForChat(String jid) {
+    public ChatMessage getLastMessageForChat(String jid) {
         List<ChatMessage> chatMessages = new ArrayList<>();
         for (ChatMessage chatMessage : getMessagesForChat(getRealm(), jid)) {
             chatMessages.add(chatMessage);
@@ -164,7 +173,7 @@ public class RealmManager {
         }
     }
 
-    public static void saveBlogPost(BlogPost blogPost) {
+    public void saveBlogPost(BlogPost blogPost) {
         Realm realm = getRealm();
 
         realm.beginTransaction();
@@ -174,7 +183,7 @@ public class RealmManager {
         realm.close();
     }
 
-    public static List<BlogPost> getBlogPosts() {
+    public List<BlogPost> getBlogPosts() {
         List<BlogPost> blogPosts = new ArrayList<>();
 
         Realm realm = getRealm();
@@ -188,7 +197,7 @@ public class RealmManager {
         return blogPosts;
     }
 
-    public static void saveBlogPostComment(BlogPostComment comment) {
+    public void saveBlogPostComment(BlogPostComment comment) {
         Realm realm = getRealm();
 
         realm.beginTransaction();
@@ -198,7 +207,7 @@ public class RealmManager {
         realm.close();
     }
 
-    public static List<BlogPostComment> getBlogPostComments(String blogPostId) {
+    public List<BlogPostComment> getBlogPostComments(String blogPostId) {
         List<BlogPostComment> comments = new ArrayList<>();
 
         Realm realm = getRealm();
@@ -214,7 +223,7 @@ public class RealmManager {
         return comments;
     }
 
-    public static void deleteMessage(String messageId) {
+    public void deleteMessage(String messageId) {
         Realm realm = getRealm();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class)
@@ -230,17 +239,34 @@ public class RealmManager {
         realm.close();
     }
 
-    public static void removeAllMUCChats() {
+    public void deleteChatAndItsMessages(String jid) {
         Realm realm = getRealm();
-        realm.beginTransaction();
-        realm.where(Chat.class)
-                .equalTo("type", Chat.TYPE_MUC)
-                .findAll().deleteAllFromRealm();
-        realm.commitTransaction();
+
+        Chat chat = realm.where(Chat.class)
+                .equalTo("jid", jid)
+                .findFirst();
+
+        if (chat != null) {
+            realm.beginTransaction();
+            chat.deleteFromRealm();
+            realm.commitTransaction();
+        }
+
+        RealmResults<ChatMessage> chatMessages =
+                realm.where(ChatMessage.class)
+                        .equalTo("roomJid", jid)
+                        .findAll();
+
+        for (ChatMessage chatMessage : chatMessages) {
+            realm.beginTransaction();
+            chatMessage.deleteFromRealm();
+            realm.commitTransaction();
+        }
+
         realm.close();
     }
 
-    public static void removeAllMUCLightChats() {
+    public void removeAllMUCLightChats() {
         Realm realm = getRealm();
         realm.beginTransaction();
         realm.where(Chat.class)
@@ -250,7 +276,7 @@ public class RealmManager {
         realm.close();
     }
 
-    public static void removeAllOneToOneChats() {
+    public void removeAllOneToOneChats() {
         Realm realm = getRealm();
         realm.beginTransaction();
         realm.where(Chat.class)
@@ -260,7 +286,7 @@ public class RealmManager {
         realm.close();
     }
 
-    public static void hideAllChatsOfType(int type) {
+    public void hideAllChatsOfType(int type) {
         Realm realm = getRealm();
 
         RealmResults<Chat> chats = realm.where(Chat.class)
@@ -269,7 +295,9 @@ public class RealmManager {
 
         for (Chat chat : chats) {
             realm.beginTransaction();
-            chat.setShow(false);
+            if (chat.isValid()) {
+                chat.setShow(false);
+            }
             realm.copyToRealmOrUpdate(chat);
             realm.commitTransaction();
         }
@@ -277,12 +305,56 @@ public class RealmManager {
         realm.close();
     }
 
-    public static void hideAllMUCChats() {
-        hideAllChatsOfType(Chat.TYPE_MUC);
+    public void hideAllMUCLightChats() {
+        hideAllChatsOfType(Chat.TYPE_MUC_LIGHT);
     }
 
-    public static void hideAllMUCLightChats() {
-        hideAllChatsOfType(Chat.TYPE_MUC_LIGHT);
+    public Chat getChatFromRealm(Realm realm, String mChatJID) {
+        return realm.where(Chat.class).equalTo("jid", mChatJID).findFirst();
+    }
+
+    public String saveMessageLocally(Chat chat, String chatJID, String content, int type) {
+        RoomsListManager.getInstance().createChatIfNotExists(chatJID, true);
+        chat = RealmManager.getInstance().getChatFromRealm(getRealm(), chatJID);
+
+        String messageId = UUID.randomUUID().toString();
+
+        ChatMessage chatMessage = new ChatMessage();
+
+        chatMessage.setMessageId(messageId);
+        chatMessage.setRoomJid(chat.getJid());
+        chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+        chatMessage.setStatus(ChatMessage.STATUS_SENDING);
+        chatMessage.setDate(new Date());
+        chatMessage.setType(type);
+        chatMessage.setContent(content);
+
+        Realm realm = getRealm();
+        realm.beginTransaction();
+        realm.copyToRealmOrUpdate(chatMessage);
+        realm.commitTransaction();
+        realm.close();
+
+        return messageId;
+    }
+
+    public void updateChatsSortPosition(List<Chat> chats) {
+        Realm realm = getRealm();
+
+        for (int i = 0; i < chats.size(); i++) {
+            Chat chat = chats.get(i);
+
+            realm.beginTransaction();
+            chat.setSortPosition(i);
+            realm.copyToRealmOrUpdate(chat);
+            realm.commitTransaction();
+        }
+    }
+
+    public void deleteAll() {
+        getRealm().beginTransaction();
+        getRealm().deleteAll();
+        getRealm().commitTransaction();
     }
 
 }

@@ -13,8 +13,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
@@ -22,43 +20,44 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
-import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
-import inaka.com.mangosta.chat.RoomManager;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
+import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLight;
 
 public class CreateChatActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.createChatSearchUserButton)
+    @Bind(R.id.searchUserButton)
     ImageButton createChatSearchUserButton;
 
-    @Bind(R.id.createChatSearchUserEditText)
+    @Bind(R.id.searchUserEditText)
     EditText createChatSearchUserEditText;
 
-    @Bind(R.id.createChatSearchUserProgressBar)
+    @Bind(R.id.searchUserProgressBar)
     ProgressBar createChatSearchUserProgressBar;
 
-    @Bind(R.id.createChatSearchResultRecyclerView)
+    @Bind(R.id.searchResultRecyclerView)
     RecyclerView createChatSearchResultRecyclerView;
 
-    @Bind(R.id.createChatMembersRecyclerView)
+    @Bind(R.id.membersRecyclerView)
     RecyclerView createChatMembersRecyclerView;
 
     @Bind(R.id.continueFloatingButton)
@@ -120,7 +119,7 @@ public class CreateChatActivity extends BaseActivity {
         Tasks.executeInBackground(CreateChatActivity.this, new BackgroundWork<String>() {
             @Override
             public String doInBackground() throws Exception {
-                if (XMPPUtils.userExists(user)) {
+                if (XMPPSession.getInstance().userExists(user)) {
                     obtainUser(user);
                 } else {
                     showInviteDialog(user);
@@ -243,7 +242,8 @@ public class CreateChatActivity extends BaseActivity {
             Toast.makeText(this, getString(R.string.add_people_to_create_chat), Toast.LENGTH_LONG).show();
 
         } else if (memberUsers.size() == 1) {   // 1 to 1 chat
-            String chatJid = RoomManager.createCommonChat(memberUsers.get(0));
+            String chatJid = XMPPUtils.fromUserNameToJID(memberUsers.get(0).getLogin());
+            RoomsListManager.getInstance().createCommonChat(chatJid);
             NavigateToChat.go(chatJid, String.format(Locale.getDefault(), getString(R.string.chat_with), XMPPUtils.fromJIDToUserName(chatJid)), this);
 
         } else {    // muc or muc light
@@ -258,6 +258,7 @@ public class CreateChatActivity extends BaseActivity {
         linearLayout.setOrientation(LinearLayout.VERTICAL);
 
         final EditText roomNameEditText = new EditText(this);
+        roomNameEditText.setHint(R.string.enter_room_name_hint);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -266,20 +267,6 @@ public class CreateChatActivity extends BaseActivity {
 
         linearLayout.addView(roomNameEditText);
 
-        final RadioGroup radioGroup = new RadioGroup(this);
-
-        final RadioButton radioButtonMUCLight = new RadioButton(this);
-        radioButtonMUCLight.setText(getString(R.string.muc_light_chat_type));
-        radioGroup.addView(radioButtonMUCLight);
-
-        final RadioButton radioButtonMUC = new RadioButton(this);
-        radioButtonMUC.setText(getString(R.string.muc_chat_type));
-        radioGroup.addView(radioButtonMUC);
-
-        linearLayout.addView(radioGroup);
-
-        radioGroup.check(radioButtonMUCLight.getId());
-
         AlertDialog dialog = new AlertDialog.Builder(CreateChatActivity.this)
                 .setTitle(getString(R.string.room_name))
                 .setMessage(getString(R.string.enter_room_name))
@@ -287,31 +274,16 @@ public class CreateChatActivity extends BaseActivity {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         String chatName = roomNameEditText.getText().toString();
-                        String nickName = XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid());
 
-                        int radioButtonId = radioGroup.getCheckedRadioButtonId();
+                        MultiUserChatLight multiUserChatLight = RoomsListManager.getInstance().createMUCLight(memberUsers, chatName);
 
-                        if (radioButtonId == radioButtonMUCLight.getId()) {
-                            MultiUserChatLight multiUserChatLight = RoomManager.createMUCLight(memberUsers, chatName);
-
-                            if (multiUserChatLight != null) {
-                                NavigateToChat.go(multiUserChatLight.getRoom().toString(), chatName, CreateChatActivity.this);
-                            } else {
-                                Toast.makeText(CreateChatActivity.this, getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
-                            }
-
+                        if (multiUserChatLight != null || Preferences.isTesting()) {
+                            String roomJid = (multiUserChatLight == null) ?
+                                    UUID.randomUUID().toString() : multiUserChatLight.getRoom().toString();
+                            NavigateToChat.go(roomJid, chatName, CreateChatActivity.this);
+                        } else {
+                            Toast.makeText(CreateChatActivity.this, getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
                         }
-
-                        if (radioButtonId == radioButtonMUC.getId()) {
-                            MultiUserChat multiUserChat = RoomManager.createMUC(memberUsers, chatName, nickName);
-
-                            if (multiUserChat != null) {
-                                NavigateToChat.go(multiUserChat.getRoom().toString(), chatName, CreateChatActivity.this);
-                            } else {
-                                Toast.makeText(CreateChatActivity.this, getString(R.string.error_create_chat), Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
                     }
                 })
                 .show();

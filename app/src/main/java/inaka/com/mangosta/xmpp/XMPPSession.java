@@ -21,11 +21,9 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.ErrorIQ;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
-import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.tbr.TBRManager;
@@ -33,30 +31,48 @@ import org.jivesoftware.smack.tbr.TBRTokens;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
+import org.jivesoftware.smackx.blocking.BlockingCommandManager;
+import org.jivesoftware.smackx.bob.BoBData;
+import org.jivesoftware.smackx.bob.BoBHash;
+import org.jivesoftware.smackx.bob.BoBManager;
+import org.jivesoftware.smackx.bob.element.BoBExtension;
+import org.jivesoftware.smackx.bob.element.BoBIQ;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
-import org.jivesoftware.smackx.delay.packet.DelayInformation;
+import org.jivesoftware.smackx.csi.ClientStateIndicationManager;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.jiveproperties.packet.JivePropertiesExtension;
+import org.jivesoftware.smackx.mam.MamManager;
+import org.jivesoftware.smackx.mam.element.MamElements;
 import org.jivesoftware.smackx.message_correct.element.MessageCorrectExtension;
 import org.jivesoftware.smackx.muc.InvitationListener;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatException;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jivesoftware.smackx.muc.packet.MUCUser;
+import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
+import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
+import org.jivesoftware.smackx.muclight.element.MUCLightElements;
 import org.jivesoftware.smackx.pep.PEPListener;
 import org.jivesoftware.smackx.pep.PEPManager;
 import org.jivesoftware.smackx.pubsub.EventElement;
 import org.jivesoftware.smackx.pubsub.EventElementType;
 import org.jivesoftware.smackx.pubsub.ItemsExtension;
+import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.search.ReportedData;
+import org.jivesoftware.smackx.search.UserSearch;
+import org.jivesoftware.smackx.search.UserSearchManager;
+import org.jivesoftware.smackx.xdata.Form;
+import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 import org.jxmpp.util.XmppDateTime;
-import org.xmlpull.v1.XmlPullParser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -72,7 +88,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -80,9 +95,8 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import inaka.com.mangosta.R;
 import inaka.com.mangosta.chat.ChatConnection;
-import inaka.com.mangosta.chat.RoomManager;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
@@ -90,46 +104,8 @@ import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
-import inaka.com.mangosta.xmpp.blocking.BlockingCommandManager;
-import inaka.com.mangosta.xmpp.blocking.elements.BlockContactsIQ;
-import inaka.com.mangosta.xmpp.blocking.elements.BlockListIQ;
-import inaka.com.mangosta.xmpp.blocking.elements.UnblockContactsIQ;
-import inaka.com.mangosta.xmpp.blocking.provider.BlockContactsIQProvider;
-import inaka.com.mangosta.xmpp.blocking.provider.BlockListIQProvider;
-import inaka.com.mangosta.xmpp.blocking.provider.UnblockContactsIQProvider;
-import inaka.com.mangosta.xmpp.bob.BoBData;
-import inaka.com.mangosta.xmpp.bob.BoBHash;
-import inaka.com.mangosta.xmpp.bob.BoBManager;
-import inaka.com.mangosta.xmpp.bob.elements.BoBExtension;
-import inaka.com.mangosta.xmpp.bob.elements.BoBIQ;
-import inaka.com.mangosta.xmpp.bob.providers.BoBExtensionProvider;
-import inaka.com.mangosta.xmpp.bob.providers.BoBIQProvider;
-import inaka.com.mangosta.xmpp.csi.ClientStateIndicationManager;
-import inaka.com.mangosta.xmpp.csi.element.ClientStateIndication;
-import inaka.com.mangosta.xmpp.mam.MamManager;
-import inaka.com.mangosta.xmpp.mam.elements.MamElements;
-import inaka.com.mangosta.xmpp.mam.elements.MamFinIQ;
-import inaka.com.mangosta.xmpp.mam.elements.MamPrefsIQ;
-import inaka.com.mangosta.xmpp.mam.elements.MamQueryIQ;
-import inaka.com.mangosta.xmpp.mam.providers.MamFinIQProvider;
-import inaka.com.mangosta.xmpp.mam.providers.MamPrefsIQProvider;
-import inaka.com.mangosta.xmpp.mam.providers.MamQueryIQProvider;
-import inaka.com.mangosta.xmpp.mam.providers.MamResultProvider;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
-import inaka.com.mangosta.xmpp.muclight.MUCLightAffiliation;
-import inaka.com.mangosta.xmpp.muclight.MultiUserChatLightManager;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightAffiliationsIQ;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightBlockingIQ;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightConfigurationIQ;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightElements;
-import inaka.com.mangosta.xmpp.muclight.elements.MUCLightInfoIQ;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightAffiliationsChangeProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightAffiliationsIQProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightBlockingIQProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightConfigurationIQProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightConfigurationsChangeProvider;
-import inaka.com.mangosta.xmpp.muclight.providers.MUCLightInfoIQProvider;
 import io.realm.Realm;
 import rx.Subscription;
 import rx.functions.Action1;
@@ -146,7 +122,6 @@ public class XMPPSession {
 
     public static final String SERVER_NAME = "xmpp.erlang-solutions.com";
     public static final String SERVICE_NAME = "erlang-solutions.com";
-    public static final String MUC_SERVICE_NAME = "muc.erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
     // received
@@ -174,8 +149,15 @@ public class XMPPSession {
         if (mInstance == null) {
             mInstance = new XMPPSession();
         }
-
         return mInstance;
+    }
+
+    public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
+        mInstance = xmppSession;
+    }
+
+    public static void clearInstance() {
+        mInstance = null;
     }
 
     private XMPPSession() {
@@ -214,8 +196,6 @@ public class XMPPSession {
                 super.authenticated(connection, resumed);
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                sendPresence(Presence.Type.available);
-                RealmManager.hideAllMUCChats();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -226,7 +206,6 @@ public class XMPPSession {
                 Log.w(XMPP_TAG, "Connection Successful");
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
-                sendPresence(Presence.Type.available);
                 activeCSI();
             }
 
@@ -234,7 +213,6 @@ public class XMPPSession {
             public void connectionTerminated() {
                 Log.w(XMPP_TAG, "Connection Terminated");
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Disconnected));
-                inactiveCSI();
             }
 
             @Override
@@ -321,7 +299,7 @@ public class XMPPSession {
 
         MultiUserChatManager.getInstanceFor(mXMPPConnection).addInvitationListener(new InvitationListener() {
             @Override
-            public void invitationReceived(XMPPConnection conn, MultiUserChat multiUserChat, String inviter, String reason, String password, Message message) {
+            public void invitationReceived(XMPPConnection conn, MultiUserChat multiUserChat, EntityFullJid jid, String inviter, String reason, Message message, MUCUser.Invite invite) {
                 try {
                     String userName = XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid());
                     multiUserChat.join(Resourcepart.from(userName));
@@ -430,7 +408,7 @@ public class XMPPSession {
                     Date updated = postEntryExtension.getUpdated();
 
                     BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
-                    RealmManager.saveBlogPost(blogPost);
+                    RealmManager.getInstance().saveBlogPost(blogPost);
                 }
             }
         });
@@ -441,7 +419,7 @@ public class XMPPSession {
         mArchiveQueryPublisher.onNext(id);
     }
 
-    private void subscribeToMyBlogPosts() {
+    public void subscribeToMyBlogPosts() {
         PubSubManager pubSubManager = getPubSubManager();
         String nodeName = "urn:xmpp:microblog:0";
 
@@ -452,7 +430,7 @@ public class XMPPSession {
         }
 
         // subscribe to myself
-        String myJIDString = getXMPPConnection().getUser().asEntityBareJid().toString();
+        String myJIDString = getUser().asEntityBareJid().toString();
         try {
             org.jivesoftware.smackx.pubsub.Subscription subscription = pubSubManager.getNode(nodeName).subscribe(myJIDString);
             Log.wtf("Subscription state", subscription.getState().toString());
@@ -461,7 +439,7 @@ public class XMPPSession {
         }
     }
 
-    private void getXOAUTHTokens() {
+    public void getXOAUTHTokens() {
         TBRManager tbrManager = TBRManager.getInstanceFor(getXMPPConnection());
         try {
             Preferences preferences = Preferences.getInstance();
@@ -507,70 +485,8 @@ public class XMPPSession {
     }
 
     private void addExtensions() {
-        // MUC Light
-        ProviderManager.addIQProvider(MUCLightInfoIQ.ELEMENT, MUCLightInfoIQ.NAMESPACE, new MUCLightInfoIQProvider());
-        ProviderManager.addExtensionProvider(MUCLightElements.AffiliationsChangeExtension.ELEMENT,
-                MUCLightElements.AffiliationsChangeExtension.NAMESPACE, new MUCLightAffiliationsChangeProvider());
-        ProviderManager.addIQProvider(MUCLightAffiliationsIQ.ELEMENT, MUCLightAffiliationsIQ.NAMESPACE, new MUCLightAffiliationsIQProvider());
-        ProviderManager.addIQProvider(MUCLightBlockingIQ.ELEMENT, MUCLightBlockingIQ.NAMESPACE, new MUCLightBlockingIQProvider());
-        ProviderManager.addIQProvider(MUCLightConfigurationIQ.ELEMENT, MUCLightConfigurationIQ.NAMESPACE, new MUCLightConfigurationIQProvider());
-        ProviderManager.addExtensionProvider(MUCLightElements.ConfigurationsChangeExtension.ELEMENT,
-                MUCLightElements.ConfigurationsChangeExtension.NAMESPACE, new MUCLightConfigurationsChangeProvider());
-
-        // MAM
-        ProviderManager.addIQProvider(MamPrefsIQ.ELEMENT, MamPrefsIQ.NAMESPACE, new MamPrefsIQProvider());
-        ProviderManager.addIQProvider(MamQueryIQ.ELEMENT, MamQueryIQ.NAMESPACE, new MamQueryIQProvider());
-        ProviderManager.addIQProvider(MamFinIQ.ELEMENT, MamFinIQ.NAMESPACE, new MamFinIQProvider());
-        ProviderManager.addExtensionProvider(MamElements.MamResultExtension.ELEMENT, MamElements.NAMESPACE, new MamResultProvider());
-
-        // Blocking Command
-        ProviderManager.addIQProvider(BlockContactsIQ.ELEMENT, BlockContactsIQ.NAMESPACE, new BlockContactsIQProvider());
-        ProviderManager.addIQProvider(BlockListIQ.ELEMENT, BlockListIQ.NAMESPACE, new BlockListIQProvider());
-        ProviderManager.addIQProvider(UnblockContactsIQ.ELEMENT, UnblockContactsIQ.NAMESPACE, new UnblockContactsIQProvider());
-
         // Microblogging
         ProviderManager.addExtensionProvider(PostEntryExtension.ELEMENT, PostEntryExtension.NAMESPACE, new PostEntryProvider());
-
-        // CSI
-        ProviderManager.addStreamFeatureProvider(ClientStateIndication.Feature.ELEMENT, ClientStateIndication.NAMESPACE,
-                new ExtensionElementProvider<ExtensionElement>() {
-                    @Override
-                    public ExtensionElement parse(XmlPullParser xmlPullParser, int i) throws Exception {
-                        return ClientStateIndication.Feature.INSTANCE;
-                    }
-                });
-
-        // BoB
-        ProviderManager.addExtensionProvider(BoBExtension.ELEMENT, BoBExtension.NAMESPACE, new BoBExtensionProvider());
-        ProviderManager.addIQProvider(BoBIQ.ELEMENT, BoBIQ.NAMESPACE, new BoBIQProvider());
-    }
-
-    public void sendPresence(final Presence.Type presenceType) {
-
-        if (mXMPPConnection.isAuthenticated()) {
-
-            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-            if (discoverItems != null) {
-                List<DiscoverItems.Item> items = discoverItems.getItems();
-
-                for (final DiscoverItems.Item item : items) {
-
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Jid itemJid = item.getEntityID();
-                            Presence presence = new Presence(presenceType);
-                            presence.setTo(itemJid);
-                            try {
-                                mXMPPConnection.sendStanza(presence);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }).start();
-                }
-            }
-        }
     }
 
     public MultiUserChatManager getMUCManager() {
@@ -590,22 +506,12 @@ public class XMPPSession {
     }
 
     public PubSubManager getPubSubManager() {
-        EntityBareJid myJIDString = getXMPPConnection().getUser().asEntityBareJid();
+        EntityBareJid myJIDString = getUser();
         return PubSubManager.getInstance(mXMPPConnection, myJIDString);
     }
 
     public BoBManager getBoBManager() {
         return BoBManager.getInstanceFor(mXMPPConnection);
-    }
-
-    public DiscoverItems discoverMUCItems() {
-        DiscoverItems discoverItems = null;
-        try {
-            discoverItems = ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).discoverItems(JidCreate.from(MUC_SERVICE_NAME));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return discoverItems;
     }
 
     public DiscoverItems discoverMUCLightItems() {
@@ -672,11 +578,8 @@ public class XMPPSession {
             preferences.setUserXMPPPassword(password);
 
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
-
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
         }
 
     }
@@ -690,27 +593,18 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
-                    DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCItems();
-                    if (discoverItems != null) {
-                        List<DiscoverItems.Item> items = discoverItems.getItems();
-                        for (DiscoverItems.Item item : items) {
-                            Presence presence = new Presence(Presence.Type.unavailable);
-                            presence.setTo(item.getEntityID());
-                            mXMPPConnection.sendStanza(presence);
-                        }
-                    }
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    mInstance = null;
+                    clearInstance();
                 }
             }
         }).start();
     }
 
-    //Room Message Subscription
+    // Room Message Subscription
     public Subscription subscribeRoomToMessages(final String roomJid, final MessageSubscriber subscriber) {
         return mMessagePublisher
                 .filter(
@@ -785,7 +679,7 @@ public class XMPPSession {
             if (isMessageCorrection(message)) { // message correction
                 saveMessageCorrection(message, delayDate);
             } else { // normal message received
-                if (!RealmManager.chatMessageExists(messageId)) {
+                if (!RealmManager.getInstance().chatMessageExists(messageId)) {
                     manageMessageReceived(message, delayDate, messageId);
                 }
             }
@@ -795,7 +689,7 @@ public class XMPPSession {
     private void saveMessage(Message message) {
         String messageId = assignMessageId(message);
 
-        if (RealmManager.chatMessageExists(messageId)) { // message sent confirmation
+        if (RealmManager.getInstance().chatMessageExists(messageId)) { // message sent confirmation
             manageMessageAlreadyExists(message, null, messageId);
 
         } else if (isMessageCorrection(message)) { // message correction
@@ -826,7 +720,7 @@ public class XMPPSession {
         String newMessageBody = message.getBody();
         String idInitialMessage = messageCorrectExtension.getIdInitialMessage();
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class)
@@ -867,7 +761,7 @@ public class XMPPSession {
             return;
         }
 
-        RoomManager.createChatIfNotExists(chatRoomJID, true);
+        RoomsListManager.getInstance().createChatIfNotExists(chatRoomJID, true);
 
         manageSender(jidList, chatMessage, chatRoomJID);
 
@@ -883,7 +777,7 @@ public class XMPPSession {
             chatMessage.setType(ChatMessage.TYPE_CHAT);
         }
 
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
 
@@ -895,13 +789,6 @@ public class XMPPSession {
             realm.commitTransaction();
             realm.close();
             return;
-        }
-
-        if (chatRoom.getType() == Chat.TYPE_MUC) {
-            DelayInformation delayInformation = message.getExtension(DelayInformation.ELEMENT, DelayInformation.NAMESPACE);
-            if (delayDate != null) {
-                delayDate = delayInformation.getStamp();
-            }
         }
 
         // assign date
@@ -925,7 +812,7 @@ public class XMPPSession {
     }
 
     private void manageMessageAlreadyExists(Message message, Date delayDate, String messageId) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
 
         ChatMessage chatMessage = realm.where(ChatMessage.class).equalTo("messageId", messageId).findFirst();
@@ -948,22 +835,16 @@ public class XMPPSession {
     }
 
     private Realm realmBeginTransaction() {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         realm.beginTransaction();
         return realm;
     }
 
     private void manageSender(String[] jidList, ChatMessage chatMessage, String chatRoomJid) {
-        Realm realm = RealmManager.getRealm();
+        Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJid).findFirst();
 
-        if (chat.getType() == Chat.TYPE_MUC) {
-
-            if (jidList.length > 1) {
-                chatMessage.setUserSender(jidList[1]);
-            }
-
-        } else if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
+        if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
             if (jidList.length > 1) {
                 chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[1]));
             }
@@ -972,9 +853,7 @@ public class XMPPSession {
             chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[0]));
 
             if (!jidList[0].equals(Preferences.getInstance().getUserXMPPJid())) {
-                String roomName = String.format(Locale.getDefault(),
-                        MangostaApplication.getInstance().getString(R.string.chat_with),
-                        XMPPUtils.fromJIDToUserName(jidList[0]));
+                String roomName = XMPPUtils.fromJIDToUserName(jidList[0]);
                 realm.beginTransaction();
                 chat.setName(roomName);
                 realm.copyToRealmOrUpdate(chat);
@@ -1027,7 +906,7 @@ public class XMPPSession {
     public int deleteMessagesToDelete() {
         int count = 0;
         for (String messageId : messagesToDeleteIds) {
-            RealmManager.deleteMessage(messageId);
+            RealmManager.getInstance().deleteMessage(messageId);
             count++;
         }
         messagesToDeleteIds.clear();
@@ -1055,6 +934,118 @@ public class XMPPSession {
 
     private boolean hasAffiliationsChangeExtension(Message message) {
         return message.hasExtension(MUCLightElements.AffiliationsChangeExtension.ELEMENT, MUCLightElements.AffiliationsChangeExtension.NAMESPACE);
+    }
+
+    public void sendStanza(Stanza stanza) throws SmackException.NotConnectedException, InterruptedException {
+        if (Preferences.isTesting()) {
+            try {
+                getXMPPConnection().sendStanza(stanza);
+            } catch (SmackException.NotConnectedException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            getXMPPConnection().sendStanza(stanza);
+        }
+    }
+
+    public void createNodeToAllowComments(String blogPostId) {
+        String nodeName = "urn:xmpp:microblog:0:comments/" + blogPostId;
+        PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
+        try {
+            // create node
+            LeafNode node = pubSubManager.createNode(nodeName);
+
+            // subscribe to comments
+            String myJIDString = XMPPSession.getInstance().getUser().toString();
+            org.jivesoftware.smackx.pubsub.Subscription subscription = node.subscribe(myJIDString);
+
+            Log.wtf("Comments subscription state", subscription.getState().toString());
+        } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public EntityBareJid getUser() {
+        return getXMPPConnection().getUser().asEntityBareJid();
+    }
+
+    public Jid getPubSubService() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException, SmackException.NoResponseException {
+        return PubSubManager.getPubSubService(getXMPPConnection());
+    }
+
+    public boolean userExists(String jid) {
+        ProviderManager.addIQProvider("query", "jabber:iq:search", new UserSearch.Provider());
+        ProviderManager.addIQProvider("query", "jabber:iq:vjud", new UserSearch.Provider());
+        UserSearchManager searchManager = new UserSearchManager(getXMPPConnection());
+
+        try {
+            List<DomainBareJid> services = searchManager.getSearchServices();
+
+            if (services == null || services.size() < 1) {
+                return false;
+            }
+
+            Form searchForm;
+            try {
+                searchForm = searchManager.getSearchForm(services.get(0));
+                Form answerForm = searchForm.createAnswerForm();
+
+                try {
+                    answerForm.setAnswer("user", jid);
+                } catch (IllegalStateException ex) {
+                    ex.printStackTrace();
+                    return false;
+                }
+
+                ReportedData data;
+                try {
+                    data = searchManager.getSearchResults(answerForm, services.get(0));
+
+                    if (data.getRows() != null) {
+                        List<ReportedData.Row> rowList = data.getRows();
+
+                        return rowList.size() > 0;
+                    }
+
+                } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+
+            } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return false;
+    }
+
+    public void blockContacts(List<Jid> jids)
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().blockContacts(jids);
+    }
+
+    public void unblockContacts(List<Jid> jids)
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().unblockContacts(jids);
+    }
+
+    public List<Jid> getBlockList() throws Exception {
+        return getBlockingCommandManager().getBlockList();
+    }
+
+    public void unblockAll()
+            throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, SmackException.NoResponseException {
+        getBlockingCommandManager().unblockAll();
     }
 
 }

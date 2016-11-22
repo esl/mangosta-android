@@ -26,6 +26,7 @@ public class Preferences {
 
     private SharedPreferences mPreferences;
     private static Preferences mInstance;
+    private static boolean mIsTesting = false;
 
     private Preferences(Context context) {
         this.mPreferences = context.getSharedPreferences(APP_SHARED_PREFS, Activity.MODE_PRIVATE);
@@ -36,6 +37,14 @@ public class Preferences {
             mInstance = new Preferences(MangostaApplication.getInstance());
         }
         return mInstance;
+    }
+
+    public static void setTest() {
+        mIsTesting = true;
+    }
+
+    public static boolean isTesting() {
+        return mIsTesting;
     }
 
     public String getXmppOauthAccessToken() {

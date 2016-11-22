@@ -61,7 +61,7 @@
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
-            android:name=".activities.ViewBlogPostDetailsActivity"
+            android:name=".activities.BlogPostDetailsActivity"
             android:label="@string/title_activity_blog_post_details"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>

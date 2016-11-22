@@ -15,9 +15,10 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
-import inaka.com.mangosta.fragments.ChatsListFragment;
+import inaka.com.mangosta.fragments.ChatsListsFragment;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -36,9 +37,6 @@ public class MainMenuActivity extends BaseActivity {
     @Bind(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
-    @Bind(R.id.manageFriendsFloatingButton)
-    FloatingActionButton manageFriendsFloatingButton;
-
     public boolean mRoomsLoaded = false;
 
     @Override
@@ -51,16 +49,14 @@ public class MainMenuActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         String tabTitles[] = new String[]{
-                getResources().getString(R.string.title_tab_1_to_1_chats),
-                getResources().getString(R.string.title_tab_muc_light_chats),
-                getResources().getString(R.string.title_tab_muc_chats)};
+                getResources().getString(R.string.title_tab_chats),
+                getResources().getString(R.string.title_tab_social_media)};
 
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
         createNewBlogFloatingButton.setIcon(R.mipmap.ic_add_blog);
-        manageFriendsFloatingButton.setIcon(R.mipmap.ic_friends);
 
         createNewChatFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,14 +70,6 @@ public class MainMenuActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainMenuActivity.this, CreateBlogActivity.class);
-                MainMenuActivity.this.startActivity(intent);
-            }
-        });
-
-        manageFriendsFloatingButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
                 MainMenuActivity.this.startActivity(intent);
             }
         });
@@ -102,10 +90,7 @@ public class MainMenuActivity extends BaseActivity {
 
             case R.id.actionSignOut: {
                 Preferences.getInstance().deleteAll();
-
-                getRealm().beginTransaction();
-                getRealm().deleteAll();
-                getRealm().commitTransaction();
+                RealmManager.getInstance().deleteAll();
 
                 XMPPSession.getInstance().logoff();
 
@@ -130,6 +115,12 @@ public class MainMenuActivity extends BaseActivity {
                 return true;
             }
 
+            case R.id.actionManageFriends: {
+                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
+                MainMenuActivity.this.startActivity(intent);
+                return true;
+            }
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -142,7 +133,6 @@ public class MainMenuActivity extends BaseActivity {
         user.setLogin(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
 
         Bundle bundle = new Bundle();
-        bundle.putBoolean(UserProfileActivity.AUTH_USER_PARAMETER, true);
         bundle.putParcelable(UserProfileActivity.USER_PARAMETER, user);
 
         userOptionsActivityIntent.putExtras(bundle);
@@ -160,11 +150,12 @@ public class MainMenuActivity extends BaseActivity {
             case GO_BACK_FROM_CHAT:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
                 break;
-            case GO_BACK_FROM_MANAGE_FRIENDS:
+            case FRIENDS_CHANGED:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:
-                goToMyProfile();
+                mViewpagerMainMenu.setCurrentItem(ViewPagerMainMenuAdapter.SOCIAL_MEDIA_FRAGMENT_POSITION);
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
                 break;
         }
     }
@@ -176,10 +167,10 @@ public class MainMenuActivity extends BaseActivity {
     }
 
     private void reloadChats() {
-        ChatsListFragment mChatsListFragment = (ChatsListFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
-                .getRegisteredFragment(mViewpagerMainMenu.getCurrentItem());
-        if (mChatsListFragment != null) {
-            mChatsListFragment.loadChats();
+        ChatsListsFragment mChatsListsFragment = (ChatsListsFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
+                .getRegisteredFragment(0);
+        if (mChatsListsFragment != null) {
+            mChatsListsFragment.loadChats();
         }
     }
 }

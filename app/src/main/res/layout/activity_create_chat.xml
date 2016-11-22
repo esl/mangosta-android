@@ -40,7 +40,7 @@
             android:weightSum="1">
 
             <EditText
-                android:id="@+id/createChatSearchUserEditText"
+                android:id="@+id/searchUserEditText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -51,13 +51,13 @@
                 android:layout_height="wrap_content">
 
                 <ImageButton
-                    android:id="@+id/createChatSearchUserButton"
+                    android:id="@+id/searchUserButton"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:background="@android:drawable/ic_menu_search"/>
 
                 <ProgressBar
-                    android:id="@+id/createChatSearchUserProgressBar"
+                    android:id="@+id/searchUserProgressBar"
                     style="?android:attr/progressBarStyle"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
@@ -68,7 +68,7 @@
         </LinearLayout>
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/createChatSearchResultRecyclerView"
+            android:id="@+id/searchResultRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/createChatSearchUserLayout"
@@ -78,7 +78,7 @@
             android:id="@+id/createChatMembersTitleLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/createChatSearchResultRecyclerView"
+            android:layout_below="@id/searchResultRecyclerView"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:orientation="vertical">
@@ -97,7 +97,7 @@
         </LinearLayout>
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/createChatMembersRecyclerView"
+            android:id="@+id/membersRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/createChatMembersTitleLayout"

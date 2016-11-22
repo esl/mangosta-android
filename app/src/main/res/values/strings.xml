@@ -23,14 +23,14 @@
     <string name="action_remove_from_friends">Remove user from friends</string>
     <string name="action_delete_chat">Delete</string>
 
-    <string name="title_tab_1_to_1_chats">1 to 1</string>
-    <string name="title_tab_muc_light_chats">MUC Light</string>
-    <string name="title_tab_muc_chats">MUC</string>
-    <string name="title_tab_blogs">Blogs</string>
+    <string name="title_tab_chats">Chats</string>
+    <string name="title_tab_social_media">Social Media</string>
+    <string name="title_rooms">ROOMS</string>
+    <string name="title_people">PEOPLE</string>
 
     <string name="title_button_create_chat">Create chat</string>
     <string name="title_button_create_blog">Create blog</string>
-    <string name="title_button_manage_friends">Manage friends</string>
+    <string name="action_manage_friends">Manage friends</string>
 
     <string name="date_seconds_ago"
             tools:ignore="PluralsCandidate">%1$d seconds ago</string>
@@ -46,6 +46,7 @@
     <string name="sending_request">Sending the request &#8230;</string>
     <string name="empty_message">Empty message</string>
     <string name="error_create_chat">ERROR! Could not create chat.</string>
+    <string name="error_login">ERROR! Could not log in, please verify your data.</string>
 
     <string name="search_user_hint">Search user</string>
     <string name="title_chat_members">Chat members</string>
@@ -59,9 +60,11 @@
     <string name="chat_with">Chat with %1$s</string>
     <string name="room_name">Room name</string>
     <string name="enter_room_name">Enter a name for the room</string>
+    <string name="enter_room_name_hint">Enter room name here</string>
     <string name="enter_new_room_name">Enter a name for the room</string>
     <string name="room_name_changed">Room name changed</string>
     <string name="room_subject">Room subject</string>
+    <string name="enter_room_subject_hint">Enter room subject here</string>
     <string name="enter_new_room_subject">Enter a new subject for the room</string>
     <string name="room_subject_changed">Room subject changed</string>
     <string name="want_to_leave_chat">Do you want to leave this chat?</string>
