@@ -196,6 +196,7 @@ public class XMPPSession {
                 super.authenticated(connection, resumed);
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+                sendPresence(Presence.Type.available);
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -206,6 +207,7 @@ public class XMPPSession {
                 Log.w(XMPP_TAG, "Connection Successful");
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
+                sendPresence(Presence.Type.available);
                 activeCSI();
             }
 
@@ -578,8 +580,10 @@ public class XMPPSession {
             preferences.setUserXMPPPassword(password);
 
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+            sendPresence(Presence.Type.available);
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+            sendPresence(Presence.Type.available);
         }
 
     }
@@ -593,6 +597,15 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
+                    HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+                    if (buddies != null) {
+                        for (final Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
+                            Presence presence = new Presence(Presence.Type.unavailable);
+                            presence.setTo(pair.getKey());
+                            sendStanza(presence);
+                        }
+                    }
+
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
                 } catch (Exception e) {
@@ -669,6 +682,36 @@ public class XMPPSession {
 
     public static boolean isInstanceNull() {
         return mInstance == null;
+    }
+
+    public void sendPresence(final Presence.Type presenceType) {
+        if (mXMPPConnection.isAuthenticated()) {
+            try {
+                HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+
+                if (buddies != null) {
+
+                    for (final Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Presence presence = new Presence(presenceType);
+                                presence.setTo(pair.getKey());
+                                try {
+                                    sendStanza(presence);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
+                    }
+                }
+
+            } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
     private void saveMamMessage(Message message, Date delayDate) {
