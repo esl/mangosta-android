@@ -11,6 +11,7 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
@@ -345,8 +346,9 @@ public class RoomManager {
     }
 
     public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
-        for (Jid jid : RosterManager.getInstance().getBuddies()) {
-            String userJid = jid.toString();
+        HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+        for (Map.Entry pair : buddies.entrySet()) {
+            String userJid = pair.getKey().toString();
             RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
         }
     }

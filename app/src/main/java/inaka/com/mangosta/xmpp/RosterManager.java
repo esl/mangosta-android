@@ -2,6 +2,7 @@ package inaka.com.mangosta.xmpp;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
@@ -10,7 +11,7 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import inaka.com.mangosta.models.User;
@@ -43,7 +44,7 @@ public class RosterManager {
         }
     }
 
-    public List<Jid> getBuddies()
+    public HashMap<Jid, Presence.Type> getBuddies()
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
         Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
@@ -60,11 +61,13 @@ public class RosterManager {
             group = roster.getGroup(groupName);
         }
 
-        List<Jid> buddies = new ArrayList<>();
+        HashMap<Jid, Presence.Type> buddies = new HashMap<>();
 
         List<RosterEntry> entries = group.getEntries();
         for (RosterEntry entry : entries) {
-            buddies.add(entry.getJid());
+            BareJid jid = entry.getJid();
+            Presence.Type status = roster.getPresence(jid).getType();
+            buddies.put(jid, status);
         }
 
         return buddies;

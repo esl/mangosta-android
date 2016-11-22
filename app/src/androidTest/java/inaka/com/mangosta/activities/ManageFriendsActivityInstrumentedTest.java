@@ -4,14 +4,14 @@ import android.content.Intent;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v7.widget.RecyclerView;
 
+import org.jivesoftware.smack.packet.Presence;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.context.BaseInstrumentedTest;
@@ -37,7 +37,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
     public ActivityTestRule mActivityTestRule =
             new ActivityTestRule<>(ManageFriendsActivity.class, true, false);
 
-    private List<Jid> mFriends;
+    private HashMap<Jid, Presence.Type> mFriends;
 
     @Before
     @Override
@@ -61,11 +61,11 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
     }
 
     private void setFriends() {
-        mFriends = new ArrayList<>();
+        mFriends = new HashMap<>();
         try {
-            mFriends.add(JidCreate.from("friend1@sarasa.com"));
-            mFriends.add(JidCreate.from("friend2@sarasa.com"));
-            mFriends.add(JidCreate.from("friend3@sarasa.com"));
+            mFriends.put(JidCreate.from("friend1@sarasa.com"), Presence.Type.fromString("available"));
+            mFriends.put(JidCreate.from("friend2@sarasa.com"), Presence.Type.fromString("available"));
+            mFriends.put(JidCreate.from("friend3@sarasa.com"), Presence.Type.fromString("available"));
             doReturn(mFriends).when(mRosterManagerMock).getBuddies();
         } catch (Exception e) {
             e.printStackTrace();

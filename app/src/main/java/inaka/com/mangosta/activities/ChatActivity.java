@@ -914,8 +914,9 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithFriend() {
         try {
-            for (Jid jid : RosterManager.getInstance().getBuddies()) {
-                if (mChat.getJid().equals(jid.toString())) {
+            HashMap<Jid, String> buddies = RosterManager.getInstance().getBuddies();
+            for (Map.Entry pair : buddies.entrySet()) {
+                if (mChat.getJid().equals(pair.getKey().toString())) {
                     return true;
                 }
             }
