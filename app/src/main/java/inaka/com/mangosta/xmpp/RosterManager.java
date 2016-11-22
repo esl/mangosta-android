@@ -13,6 +13,7 @@ import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import inaka.com.mangosta.models.User;
 
@@ -97,6 +98,27 @@ public class RosterManager {
         String name = user.getLogin();
         String[] groups = new String[]{"Buddies"};
         roster.createEntry(jid, name, groups);
+    }
+
+    public Presence.Type getStatusFromFriend(User user) {
+        return getStatusFromFriend(user.getLogin());
+    }
+
+    public Presence.Type getStatusFromFriend(String name) {
+        try {
+            HashMap<Jid, Presence.Type> buddies = getBuddies();
+
+            for (Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
+                if (XMPPUtils.fromJIDToUserName(pair.getKey().toString()).equals(name)) {
+                    return pair.getValue();
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return Presence.Type.unavailable;
     }
 
 }

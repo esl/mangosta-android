@@ -3,6 +3,10 @@ package inaka.com.mangosta.activities;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
@@ -29,6 +33,7 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -167,6 +172,8 @@ public class ChatActivity extends BaseActivity {
 
         if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
             manageRoomNameAndSubject();
+        } else {
+            setOneToOneChatConnectionStatus();
         }
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListener(ChatActivity.this));
@@ -248,6 +255,25 @@ public class ChatActivity extends BaseActivity {
         mStickersAdapter = new StickersAdapter(this, Arrays.asList(mStickersNameList));
 
         stickersRecyclerView.setAdapter(mStickersAdapter);
+    }
+
+    private void setOneToOneChatConnectionStatus() {
+        String userName = XMPPUtils.fromJIDToUserName(mChatJID);
+        Drawable drawable;
+        if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+            drawable = getDrawable(R.mipmap.ic_connected);
+        } else {
+            drawable = getDrawable(R.mipmap.ic_disconnected);
+        }
+        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+
+        Bitmap outputimage = Bitmap.createBitmap(bitmap.getWidth() + 15, bitmap.getHeight() + 15, Bitmap.Config.ARGB_8888);
+        Canvas can = new Canvas(outputimage);
+        can.drawBitmap(bitmap, 0, 20, null);
+
+        Drawable logo = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(outputimage, 40, 40, true));
+        getSupportActionBar().setLogo(logo);
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
     }
 
     private void schedulePauseTimer() {
@@ -914,7 +940,7 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithFriend() {
         try {
-            HashMap<Jid, String> buddies = RosterManager.getInstance().getBuddies();
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
             for (Map.Entry pair : buddies.entrySet()) {
                 if (mChat.getJid().equals(pair.getKey().toString())) {
                     return true;

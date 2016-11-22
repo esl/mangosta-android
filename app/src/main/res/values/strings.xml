@@ -23,8 +23,8 @@
     <string name="action_remove_from_friends">Remove user from friends</string>
     <string name="action_delete_chat">Delete</string>
 
-    <string name="title_tab_chats">Chats</string>
-    <string name="title_tab_social_media">Social Media</string>
+    <string name="title_tab_chat">Chat</string>
+    <string name="title_tab_social">Social</string>
     <string name="title_rooms">ROOMS</string>
     <string name="title_people">PEOPLE</string>
 
