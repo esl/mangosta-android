@@ -29,6 +29,7 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smackx.blocking.element.BlockedErrorExtension;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -345,12 +346,16 @@ public class ChatActivity extends BaseActivity {
                                 }
                             }
 
+
                         } else {
                             String subject = message.getSubject();
                             if (subject != null) {
                                 setTitle(subject);
                             }
                             refreshMessagesAndScrollToEnd();
+                            if(BlockedErrorExtension.isInside(message) && !message.hasExtension(ChatStateExtension.NAMESPACE)){
+                                Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
+                            }
                         }
 
                     }

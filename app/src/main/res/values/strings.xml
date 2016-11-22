@@ -71,6 +71,7 @@
     <string name="want_to_delete_chat">Do you want to delete this chat?</string>
     <string name="want_to_destroy_chat">Do you want to destroy this chat?</string>
     <string name="correct_message">Correct message</string>
+    <string name="message_to_blocked_user">Can\'t send message to a blocked contact</string>
     <string name="enter_new_message">Enter the new body</string>
     <string name="typing">%1$s is typing &#8230;</string>
 
