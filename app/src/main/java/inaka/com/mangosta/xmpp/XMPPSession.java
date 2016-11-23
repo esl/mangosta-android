@@ -95,11 +95,13 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
@@ -275,6 +277,7 @@ public class XMPPSession {
                 } else if (stanza instanceof Presence) {
                     Presence presence = (Presence) stanza;
                     // ...
+                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_RECEIVED));
 
                 } else if (stanza instanceof ErrorIQ) {
                     ErrorIQ errorIq = (ErrorIQ) stanza;

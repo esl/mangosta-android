@@ -271,8 +271,18 @@ public class ChatsListsFragment extends BaseFragment {
             case GO_BACK_FROM_CHAT:
                 loadChats();
                 break;
+
             case FRIENDS_CHANGED:
                 loadChatsBackgroundTask();
+                break;
+
+            case PRESENCE_RECEIVED:
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mOneToOneChatsAdapter.notifyDataSetChanged();
+                    }
+                });
                 break;
         }
     }

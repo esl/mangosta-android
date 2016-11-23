@@ -259,12 +259,7 @@ public class ChatActivity extends BaseActivity {
 
     private void setOneToOneChatConnectionStatus() {
         String userName = XMPPUtils.fromJIDToUserName(mChatJID);
-        Drawable drawable;
-        if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
-            drawable = getDrawable(R.mipmap.ic_connected);
-        } else {
-            drawable = getDrawable(R.mipmap.ic_disconnected);
-        }
+        Drawable drawable = selectConnectionDrawable(userName);
         Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
 
         Bitmap outputimage = Bitmap.createBitmap(bitmap.getWidth() + 15, bitmap.getHeight() + 15, Bitmap.Config.ARGB_8888);
@@ -274,6 +269,16 @@ public class ChatActivity extends BaseActivity {
         Drawable logo = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(outputimage, 40, 40, true));
         getSupportActionBar().setLogo(logo);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
+    }
+
+    private Drawable selectConnectionDrawable(String userName) {
+        Drawable drawable;
+        if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+            drawable = getDrawable(R.mipmap.ic_connected);
+        } else {
+            drawable = getDrawable(R.mipmap.ic_disconnected);
+        }
+        return drawable;
     }
 
     private void schedulePauseTimer() {
@@ -905,6 +910,17 @@ public class ChatActivity extends BaseActivity {
         switch (event.getType()) {
             case STICKER_SENT:
                 stickerSent(event.getImageName());
+                break;
+
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+                            setOneToOneChatConnectionStatus();
+                        }
+                    }
+                });
                 break;
         }
     }

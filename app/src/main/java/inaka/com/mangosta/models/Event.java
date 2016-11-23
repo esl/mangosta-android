@@ -7,7 +7,8 @@ public class Event {
         STICKER_SENT,
         GO_BACK_FROM_CHAT,
         FRIENDS_CHANGED,
-        BLOG_POST_CREATED
+        BLOG_POST_CREATED,
+        PRESENCE_RECEIVED
     }
 
     private Type mType;

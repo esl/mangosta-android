@@ -223,6 +223,21 @@ public class ManageFriendsActivity extends BaseActivity {
         }
     }
 
+    @Override
+    public void onEvent(Event event) {
+        switch (event.getType()) {
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchAdapter.notifyDataSetChanged();
+                        mFriendsAdapter.notifyDataSetChanged();
+                    }
+                });
+                break;
+        }
+    }
+
     private boolean userInList(User user, List<User> list) {
         boolean userFound = false;
         for (User anUser : list) {

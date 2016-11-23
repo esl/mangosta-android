@@ -33,6 +33,7 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.chat.RoomsListManager;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
@@ -222,6 +223,21 @@ public class CreateChatActivity extends BaseActivity {
             case REMOVE_USER:
                 mMemberUsers.remove(user);
                 mMembersAdapter.notifyDataSetChanged();
+                break;
+        }
+    }
+
+    @Override
+    public void onEvent(Event event) {
+        switch (event.getType()) {
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchAdapter.notifyDataSetChanged();
+                        mMembersAdapter.notifyDataSetChanged();
+                    }
+                });
                 break;
         }
     }
