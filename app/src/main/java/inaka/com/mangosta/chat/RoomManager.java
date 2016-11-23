@@ -346,10 +346,14 @@ public class RoomManager {
     }
 
     public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
-        HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
-        for (Map.Entry pair : buddies.entrySet()) {
-            String userJid = pair.getKey().toString();
-            RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
+        try {
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            for (Map.Entry pair : buddies.entrySet()) {
+                String userJid = pair.getKey().toString();
+                RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
+            }
+        } finally {
+            mListener.onRoomsLoaded();
         }
     }
 

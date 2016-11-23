@@ -6,13 +6,21 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
         android:orientation="vertical">
+
+        <ProgressBar
+            android:id="@+id/chatsLoading"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_horizontal"
+            android:visibility="visible" />
 
         <LinearLayout
             android:id="@+id/expandGroupChatsLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
             android:background="@color/complete_white"
             android:orientation="horizontal">
 
