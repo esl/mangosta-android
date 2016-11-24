@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
@@ -61,6 +62,9 @@ public class ChatsListsFragment extends BaseFragment {
 
     @Bind(R.id.expandOneToOneChatsLayout)
     LinearLayout expandOneToOneChatsLayout;
+
+    @Bind(R.id.chatsLoading)
+    ProgressBar chatsLoading;
 
     private RoomManager mRoomManager;
     private List<Chat> mGroupChats;
@@ -204,6 +208,10 @@ public class ChatsListsFragment extends BaseFragment {
 
         mOneToOneChatsAdapter.notifyDataSetChanged();
         mGroupChatsAdapter.notifyDataSetChanged();
+
+        if (chatsLoading != null) {
+            chatsLoading.setVisibility(View.GONE);
+        }
     }
 
     private void loadChatsAfterRoomLeft() {
@@ -263,8 +271,18 @@ public class ChatsListsFragment extends BaseFragment {
             case GO_BACK_FROM_CHAT:
                 loadChats();
                 break;
+
             case FRIENDS_CHANGED:
                 loadChatsBackgroundTask();
+                break;
+
+            case PRESENCE_RECEIVED:
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mOneToOneChatsAdapter.notifyDataSetChanged();
+                    }
+                });
                 break;
         }
     }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -182,7 +183,7 @@ public class BaseInstrumentedTest {
         try {
             doNothing().when(mRosterManagerMock).addToBuddies(any(User.class));
             doNothing().when(mRosterManagerMock).removeFromBuddies(any(User.class));
-            doReturn(new ArrayList<>()).when(mRosterManagerMock).getBuddies();
+            doReturn(new HashMap<>()).when(mRosterManagerMock).getBuddies();
             doNothing().when(mRosterManagerMock).removeAllFriends();
         } catch (Exception e) {
             e.printStackTrace();

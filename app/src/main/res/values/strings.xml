@@ -23,8 +23,8 @@
     <string name="action_remove_from_friends">Remove user from friends</string>
     <string name="action_delete_chat">Delete</string>
 
-    <string name="title_tab_chats">Chats</string>
-    <string name="title_tab_social_media">Social Media</string>
+    <string name="title_tab_chat">Chat</string>
+    <string name="title_tab_social">Social</string>
     <string name="title_rooms">ROOMS</string>
     <string name="title_people">PEOPLE</string>
 
@@ -96,4 +96,6 @@
     <string name="button_unfriend_all">Unfriend all</string>
     <string name="user_removed_from_friends">%1$s removed from friends</string>
     <string name="user_added_to_friends">%1$s added to friends</string>
+    <string name="roster_subscription_request">%1$s added you as a friend. Do you want to add him/her too?</string>
+    <string name="connected">Connected</string>
 </resources>
