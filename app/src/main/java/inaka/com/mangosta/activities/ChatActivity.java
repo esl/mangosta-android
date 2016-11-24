@@ -29,6 +29,8 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.XMPPError;
+import org.jivesoftware.smackx.blocking.element.BlockedErrorExtension;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
@@ -332,6 +334,7 @@ public class ChatActivity extends BaseActivity {
 
                             String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
                             String userSender = "";
+                            String messageType = message.getType().name();
 
                             String[] jidList = message.getFrom().toString().split("/");
 
@@ -348,7 +351,7 @@ public class ChatActivity extends BaseActivity {
                                     break;
                             }
 
-                            if (!userSender.equals(myUser)) {
+                            if (!userSender.equals(myUser) && !messageType.equals("error")) {
                                 if (chatState.equals(ChatState.composing)) { // typing
                                     chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
                                     chatTypingTextView.setVisibility(View.VISIBLE);
@@ -357,12 +360,18 @@ public class ChatActivity extends BaseActivity {
                                 }
                             }
 
+
                         } else {
                             String subject = message.getSubject();
                             if (subject != null) {
                                 setTitle(subject);
                             }
                             refreshMessagesAndScrollToEnd();
+                            if (BlockedErrorExtension.isInside(message) && !message.hasExtension(ChatStateExtension.NAMESPACE)) {
+                                Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
+                            } else if (message.getError().getCondition().equals(XMPPError.Condition.service_unavailable)) {
+                                Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
+                            }
                         }
 
                     }
