@@ -903,7 +903,7 @@ public class XMPPSession {
         }
     }
 
-    public int deleteMessagesToDelete() {
+    public synchronized int deleteMessagesToDelete() {
         int count = 0;
         for (String messageId : messagesToDeleteIds) {
             RealmManager.getInstance().deleteMessage(messageId);
