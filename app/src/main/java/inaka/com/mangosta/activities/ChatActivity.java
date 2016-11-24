@@ -367,10 +367,9 @@ public class ChatActivity extends BaseActivity {
                                 setTitle(subject);
                             }
                             refreshMessagesAndScrollToEnd();
-                            if(BlockedErrorExtension.isInside(message) && !message.hasExtension(ChatStateExtension.NAMESPACE)){
+                            if (BlockedErrorExtension.isInside(message) && !message.hasExtension(ChatStateExtension.NAMESPACE)) {
                                 Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
-                            }
-                            else if(message.getError().getCondition().equals(XMPPError.Condition.service_unavailable)){
+                            } else if (message.getError().getCondition().equals(XMPPError.Condition.service_unavailable)) {
                                 Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
                             }
                         }
