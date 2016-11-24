@@ -3,10 +3,6 @@ package inaka.com.mangosta.activities;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
@@ -259,26 +255,12 @@ public class ChatActivity extends BaseActivity {
 
     private void setOneToOneChatConnectionStatus() {
         String userName = XMPPUtils.fromJIDToUserName(mChatJID);
-        Drawable drawable = selectConnectionDrawable(userName);
-        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
 
-        Bitmap outputimage = Bitmap.createBitmap(bitmap.getWidth() + 15, bitmap.getHeight() + 15, Bitmap.Config.ARGB_8888);
-        Canvas can = new Canvas(outputimage);
-        can.drawBitmap(bitmap, 0, 20, null);
-
-        Drawable logo = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(outputimage, 40, 40, true));
-        getSupportActionBar().setLogo(logo);
-        getSupportActionBar().setDisplayUseLogoEnabled(true);
-    }
-
-    private Drawable selectConnectionDrawable(String userName) {
-        Drawable drawable;
         if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
-            drawable = getDrawable(R.mipmap.ic_connected);
+            getSupportActionBar().setSubtitle(getString(R.string.connected));
         } else {
-            drawable = getDrawable(R.mipmap.ic_disconnected);
+            getSupportActionBar().setSubtitle("");
         }
-        return drawable;
     }
 
     private void schedulePauseTimer() {
@@ -907,6 +889,7 @@ public class ChatActivity extends BaseActivity {
 
     // receives events from EventBus
     public void onEvent(Event event) {
+        super.onEvent(event);
         switch (event.getType()) {
             case STICKER_SENT:
                 stickerSent(event.getImageName());

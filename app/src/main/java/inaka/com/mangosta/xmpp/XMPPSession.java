@@ -198,7 +198,7 @@ public class XMPPSession {
                 super.authenticated(connection, resumed);
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-                sendPresence(Presence.Type.available);
+                sendPresenceAvailable();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -209,7 +209,7 @@ public class XMPPSession {
                 Log.w(XMPP_TAG, "Connection Successful");
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
-                sendPresence(Presence.Type.available);
+                sendPresenceAvailable();
                 activeCSI();
             }
 
@@ -276,7 +276,14 @@ public class XMPPSession {
 
                 } else if (stanza instanceof Presence) {
                     Presence presence = (Presence) stanza;
-                    // ...
+
+                    try {
+                        processSubscribePresence(presence);
+                        processUnsubscribePresence(presence);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                     EventBus.getDefault().post(new Event(Event.Type.PRESENCE_RECEIVED));
 
                 } else if (stanza instanceof ErrorIQ) {
@@ -299,6 +306,26 @@ public class XMPPSession {
 //                    }
                 }
 
+            }
+
+            private void processUnsubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
+                if (presence.getType().equals(Presence.Type.unsubscribe)) {
+                    Jid sender = presence.getFrom();
+                    Presence subscribed = new Presence(Presence.Type.unsubscribed);
+                    subscribed.setTo(sender);
+                    sendStanza(subscribed);
+
+                    if (RosterManager.getInstance().isFriend(sender)) {
+                        RosterManager.getInstance().removeFromBuddies(sender.toString());
+                    }
+                }
+            }
+
+            private void processSubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
+                if (presence.getType().equals(Presence.Type.subscribe)) {
+                    Jid sender = presence.getFrom();
+                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
+                }
             }
         };
 
@@ -583,10 +610,10 @@ public class XMPPSession {
             preferences.setUserXMPPPassword(password);
 
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
+            sendPresenceAvailable();
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
-            sendPresence(Presence.Type.available);
+            sendPresenceAvailable();
         }
 
     }
@@ -600,14 +627,10 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
-                    HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
-                    if (buddies != null) {
-                        for (final Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
-                            Presence presence = new Presence(Presence.Type.unavailable);
-                            presence.setTo(pair.getKey());
-                            sendStanza(presence);
-                        }
-                    }
+                    Presence presence = new Presence(Presence.Type.unavailable);
+                    presence.setMode(Presence.Mode.away);
+                    presence.setTo(JidCreate.from(SERVICE_NAME));
+                    sendStanza(presence);
 
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
@@ -687,32 +710,23 @@ public class XMPPSession {
         return mInstance == null;
     }
 
-    public void sendPresence(final Presence.Type presenceType) {
+    public void sendPresenceAvailable() {
         if (mXMPPConnection.isAuthenticated()) {
-            try {
-                HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
 
-                if (buddies != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Presence presence = new Presence(Presence.Type.available);
+                    presence.setMode(Presence.Mode.available);
 
-                    for (final Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Presence presence = new Presence(presenceType);
-                                presence.setTo(pair.getKey());
-                                try {
-                                    sendStanza(presence);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }).start();
+                    try {
+                        presence.setTo(JidCreate.from(SERVICE_NAME));
+                        sendStanza(presence);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-
-            } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException e) {
-                e.printStackTrace();
-            }
+            }).start();
 
         }
     }

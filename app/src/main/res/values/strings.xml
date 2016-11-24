@@ -96,4 +96,6 @@
     <string name="button_unfriend_all">Unfriend all</string>
     <string name="user_removed_from_friends">%1$s removed from friends</string>
     <string name="user_added_to_friends">%1$s added to friends</string>
+    <string name="roster_subscription_request">%1$s added you as a friend. Do you want to add him/her too?</string>
+    <string name="connected">Connected</string>
 </resources>

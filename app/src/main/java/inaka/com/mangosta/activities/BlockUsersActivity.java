@@ -218,6 +218,7 @@ public class BlockUsersActivity extends BaseActivity {
 
     @Override
     public void onEvent(Event event) {
+        super.onEvent(event);
         switch (event.getType()) {
             case PRESENCE_RECEIVED:
                 runOnUiThread(new Runnable() {

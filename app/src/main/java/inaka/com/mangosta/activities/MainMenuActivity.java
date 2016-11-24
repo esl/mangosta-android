@@ -143,6 +143,7 @@ public class MainMenuActivity extends BaseActivity {
     // receives events from EventBus
     @Override
     public void onEvent(Event event) {
+        super.onEvent(event);
         switch (event.getType()) {
             case ROOMS_LOADED:
                 mRoomsLoaded = true;
