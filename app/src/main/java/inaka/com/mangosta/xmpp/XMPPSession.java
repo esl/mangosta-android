@@ -95,11 +95,13 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
@@ -196,6 +198,7 @@ public class XMPPSession {
                 super.authenticated(connection, resumed);
                 Preferences.getInstance().setLoggedIn(true);
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+                sendPresenceAvailable();
                 getXOAUTHTokens();
                 subscribeToMyBlogPosts();
                 connectionDoneOnce = true;
@@ -206,6 +209,7 @@ public class XMPPSession {
                 Log.w(XMPP_TAG, "Connection Successful");
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
+                sendPresenceAvailable();
                 activeCSI();
             }
 
@@ -272,7 +276,15 @@ public class XMPPSession {
 
                 } else if (stanza instanceof Presence) {
                     Presence presence = (Presence) stanza;
-                    // ...
+
+                    try {
+                        processSubscribePresence(presence);
+                        processUnsubscribePresence(presence);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_RECEIVED));
 
                 } else if (stanza instanceof ErrorIQ) {
                     ErrorIQ errorIq = (ErrorIQ) stanza;
@@ -294,6 +306,26 @@ public class XMPPSession {
 //                    }
                 }
 
+            }
+
+            private void processUnsubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
+                if (presence.getType().equals(Presence.Type.unsubscribe)) {
+                    Jid sender = presence.getFrom();
+                    Presence subscribed = new Presence(Presence.Type.unsubscribed);
+                    subscribed.setTo(sender);
+                    sendStanza(subscribed);
+
+                    if (RosterManager.getInstance().isFriend(sender)) {
+                        RosterManager.getInstance().removeFromBuddies(sender.toString());
+                    }
+                }
+            }
+
+            private void processSubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
+                if (presence.getType().equals(Presence.Type.subscribe)) {
+                    Jid sender = presence.getFrom();
+                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
+                }
             }
         };
 
@@ -578,8 +610,10 @@ public class XMPPSession {
             preferences.setUserXMPPPassword(password);
 
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+            sendPresenceAvailable();
         } catch (SmackException.AlreadyLoggedInException ale) {
             mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
+            sendPresenceAvailable();
         }
 
     }
@@ -593,6 +627,11 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
+                    Presence presence = new Presence(Presence.Type.unavailable);
+                    presence.setMode(Presence.Mode.away);
+                    presence.setTo(JidCreate.from(SERVICE_NAME));
+                    sendStanza(presence);
+
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
                 } catch (Exception e) {
@@ -669,6 +708,27 @@ public class XMPPSession {
 
     public static boolean isInstanceNull() {
         return mInstance == null;
+    }
+
+    public void sendPresenceAvailable() {
+        if (mXMPPConnection.isAuthenticated()) {
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Presence presence = new Presence(Presence.Type.available);
+                    presence.setMode(Presence.Mode.available);
+
+                    try {
+                        presence.setTo(JidCreate.from(SERVICE_NAME));
+                        sendStanza(presence);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
+        }
     }
 
     private void saveMamMessage(Message message, Date delayDate) {

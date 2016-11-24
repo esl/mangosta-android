@@ -49,8 +49,8 @@ public class MainMenuActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         String tabTitles[] = new String[]{
-                getResources().getString(R.string.title_tab_chats),
-                getResources().getString(R.string.title_tab_social_media)};
+                getResources().getString(R.string.title_tab_chat),
+                getResources().getString(R.string.title_tab_social)};
 
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
@@ -143,6 +143,7 @@ public class MainMenuActivity extends BaseActivity {
     // receives events from EventBus
     @Override
     public void onEvent(Event event) {
+        super.onEvent(event);
         switch (event.getType()) {
             case ROOMS_LOADED:
                 mRoomsLoaded = true;

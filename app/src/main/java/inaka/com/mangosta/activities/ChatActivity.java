@@ -31,6 +31,7 @@ import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.XMPPError;
 import org.jivesoftware.smackx.blocking.element.BlockedErrorExtension;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -169,6 +170,8 @@ public class ChatActivity extends BaseActivity {
 
         if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
             manageRoomNameAndSubject();
+        } else {
+            setOneToOneChatConnectionStatus();
         }
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListener(ChatActivity.this));
@@ -250,6 +253,16 @@ public class ChatActivity extends BaseActivity {
         mStickersAdapter = new StickersAdapter(this, Arrays.asList(mStickersNameList));
 
         stickersRecyclerView.setAdapter(mStickersAdapter);
+    }
+
+    private void setOneToOneChatConnectionStatus() {
+        String userName = XMPPUtils.fromJIDToUserName(mChatJID);
+
+        if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+            getSupportActionBar().setSubtitle(getString(R.string.connected));
+        } else {
+            getSupportActionBar().setSubtitle("");
+        }
     }
 
     private void schedulePauseTimer() {
@@ -886,9 +899,21 @@ public class ChatActivity extends BaseActivity {
 
     // receives events from EventBus
     public void onEvent(Event event) {
+        super.onEvent(event);
         switch (event.getType()) {
             case STICKER_SENT:
                 stickerSent(event.getImageName());
+                break;
+
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+                            setOneToOneChatConnectionStatus();
+                        }
+                    }
+                });
                 break;
         }
     }
@@ -924,8 +949,9 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithFriend() {
         try {
-            for (Jid jid : RosterManager.getInstance().getBuddies()) {
-                if (mChat.getJid().equals(jid.toString())) {
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            for (Map.Entry pair : buddies.entrySet()) {
+                if (mChat.getJid().equals(pair.getKey().toString())) {
                     return true;
                 }
             }

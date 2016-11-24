@@ -152,5 +152,5 @@ dependencies {
 
     // NanoTasks
     compile 'com.fabiendevos:nanotasks:1.1.0'
-    
+
 }

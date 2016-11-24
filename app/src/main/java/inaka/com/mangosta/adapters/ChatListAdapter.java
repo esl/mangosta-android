@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.jivesoftware.smack.packet.Presence;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -23,6 +25,7 @@ import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.ui.ViewHolderType;
 import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperAdapter;
 import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperViewHolder;
+import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder>
@@ -70,6 +73,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         @Bind(R.id.chatImageView)
         ImageView chatImageView;
 
+        @Bind(R.id.connectionStatusImageView)
+        ImageView connectionStatusImageView;
+
         private Context mContext;
         private View mView;
         private ChatClickListener mChatClickListener;
@@ -100,13 +106,12 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             }
 
             if (chat.getType() == Chat.TYPE_1_T0_1) { // 1 to 1
-                if (chat.getImageUrl() != null) {
-                    Picasso.with(mContext).load(chat.getImageUrl()).noFade().fit().into(chatImageView);
-                } else {
-                    Picasso.with(mContext).load(R.mipmap.ic_user).noFade().fit().into(chatImageView);
-                }
-            } else { // muc or muclight
+                assignChatImage(chat);
+                connectionStatusImageView.setVisibility(View.VISIBLE);
+                assignConnectionStatusImage(chat);
+            } else { // group chat
                 Picasso.with(mContext).load(R.mipmap.ic_groupchat).noFade().fit().into(chatImageView);
+                connectionStatusImageView.setVisibility(View.GONE);
             }
 
             this.mView.setOnClickListener(new View.OnClickListener() {
@@ -118,6 +123,23 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                 }
             });
 
+        }
+
+        private void assignConnectionStatusImage(Chat chat) {
+            String userName = XMPPUtils.fromJIDToUserName(chat.getJid());
+            if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+                connectionStatusImageView.setImageResource(R.mipmap.ic_connected);
+            } else {
+                connectionStatusImageView.setImageResource(R.mipmap.ic_disconnected);
+            }
+        }
+
+        private void assignChatImage(Chat chat) {
+            if (chat.getImageUrl() != null) {
+                Picasso.with(mContext).load(chat.getImageUrl()).noFade().fit().into(chatImageView);
+            } else {
+                Picasso.with(mContext).load(R.mipmap.ic_user).noFade().fit().into(chatImageView);
+            }
         }
 
         private void manageLastMessage(ChatMessage chatMessage) {
@@ -153,23 +175,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     @Override
     public ChatListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-        ChatListAdapter.ViewHolder viewHolder;
-
         View viewItemChat = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_item_chat, parent, false);
-
-        switch (viewType) {
-            case ViewHolderType.VIEW_TYPE_CHAT_ITEM:
-                viewHolder = new ChatViewHolder(viewItemChat, mContext, mChatClickListener);
-                break;
-
-            default:
-                viewHolder = new ChatViewHolder(viewItemChat, mContext, mChatClickListener);
-                break;
-        }
-
-        return viewHolder;
+        return new ChatViewHolder(viewItemChat, mContext, mChatClickListener);
     }
 
     @Override

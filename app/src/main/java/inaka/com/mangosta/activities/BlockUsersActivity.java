@@ -32,6 +32,7 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.UserEvent;
@@ -211,6 +212,22 @@ public class BlockUsersActivity extends BaseActivity {
 
             case REMOVE_USER:
                 unblockUser(user);
+                break;
+        }
+    }
+
+    @Override
+    public void onEvent(Event event) {
+        super.onEvent(event);
+        switch (event.getType()) {
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchAdapter.notifyDataSetChanged();
+                        mBlockedAdapter.notifyDataSetChanged();
+                    }
+                });
                 break;
         }
     }
