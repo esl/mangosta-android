@@ -30,6 +30,7 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ public class RoomManager {
                             realm.commitTransaction();
 
                             // set last retrieved from MAM
-                            ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(chatRoom.getJid());
+                            ChatMessage chatMessage = RealmManager.getInstance().getFirstMessageForChat(chatRoom.getJid());
                             if (chatMessage != null) {
                                 realm.beginTransaction();
                                 chatRoom.setLastRetrievedFromMAM(chatMessage.getMessageId());
@@ -150,13 +151,13 @@ public class RoomManager {
                 Jid jid = JidCreate.from(chatJid);
                 MamManager.MamQueryResult mamQueryResult;
                 if (chat == null || chat.getLastRetrievedFromMAM() == null) {
-                    mamQueryResult = mamManager.queryArchive(pageSize, null, null, jid, null);
+                    mamQueryResult = mamManager.queryArchive(pageSize, null, new Date(), jid, null);
                 } else {
-                    mamQueryResult = mamManager.pageAfter(jid, chat.getLastRetrievedFromMAM(), pageSize);
+                    mamQueryResult = mamManager.pageBefore(jid, chat.getLastRetrievedFromMAM(), pageSize);
                 }
 
                 while (!mamQueryResult.mamFin.isComplete()) {
-                    mamQueryResult = mamManager.pageNext(mamQueryResult, pageSize);
+                    mamQueryResult = mamManager.pagePrevious(mamQueryResult, pageSize);
                 }
 
                 if (mamQueryResult.forwardedMessages.size() > 0) {
@@ -168,7 +169,7 @@ public class RoomManager {
                             realm.beginTransaction();
                         }
                         chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
-                        chat.setLastRetrievedFromMAM(mamQueryResult.mamFin.getRSMSet().getLast());
+                        chat.setLastRetrievedFromMAM(mamQueryResult.mamFin.getRSMSet().getFirst());
                         realm.copyToRealmOrUpdate(chat);
                         realm.commitTransaction();
                     }
