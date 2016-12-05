@@ -29,9 +29,9 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.XMPPError;
 import org.jivesoftware.smackx.blocking.element.BlockedErrorExtension;
-import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -102,6 +102,9 @@ public class ChatActivity extends BaseActivity {
 
     @Bind(R.id.chatTypingTextView)
     TextView chatTypingTextView;
+
+    @Bind(R.id.scrollDownImageButton)
+    ImageButton scrollDownImageButton;
 
     private RoomManager mRoomManager;
     private String mChatJID;
@@ -253,6 +256,29 @@ public class ChatActivity extends BaseActivity {
         mStickersAdapter = new StickersAdapter(this, Arrays.asList(mStickersNameList));
 
         stickersRecyclerView.setAdapter(mStickersAdapter);
+
+        scrollDownImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                scrollToEnd();
+            }
+        });
+
+        chatMessagesRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                manageScrollButtonVisibility();
+            }
+        });
+    }
+
+    private void manageScrollButtonVisibility() {
+        if (isMessagesListScrolledToBottom()) {
+            scrollDownImageButton.setVisibility(View.GONE);
+        } else {
+            scrollDownImageButton.setVisibility(View.VISIBLE);
+        }
     }
 
     private void setOneToOneChatConnectionStatus() {
@@ -823,11 +849,15 @@ public class ChatActivity extends BaseActivity {
 
     private void scrollToEnd() {
         if (mMessages != null) {
-            int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
-            if (lastPosition <= mMessages.size() - 2 && chatMessagesRecyclerView != null) {
+            if (!isMessagesListScrolledToBottom() && chatMessagesRecyclerView != null) {
                 chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
             }
         }
+    }
+
+    private boolean isMessagesListScrolledToBottom() {
+        int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
+        return !(lastPosition <= mMessages.size() - 2);
     }
 
     private void refreshMessagesAndScrollToEnd() {
