@@ -141,6 +141,14 @@ public class ChatActivity extends BaseActivity {
     private int mMessagesCount;
     private Menu mMenu;
 
+    private int mVisibleItemCount;
+    private int mTotalItemCount;
+    private int mLastVisibleItem;
+
+    final private int VISIBLE_BEFORE_LOAD = 25;
+    final private int ITEMS_PER_PAGE = 15;
+    final private int PAGES_TO_LOAD = 3;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -269,6 +277,16 @@ public class ChatActivity extends BaseActivity {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 manageScrollButtonVisibility();
+
+                mLastVisibleItem = mLayoutManagerMessages.findLastVisibleItemPosition();
+                if (dy > 0) {
+                    mVisibleItemCount = recyclerView.getChildCount();
+                    mTotalItemCount = mLayoutManagerMessages.getItemCount();
+
+                    if ((mTotalItemCount - mVisibleItemCount) <= (mLastVisibleItem + VISIBLE_BEFORE_LOAD)) {
+                        mRoomManager.loadArchivedMessages(mChatJID, PAGES_TO_LOAD, ITEMS_PER_PAGE);
+                    }
+                }
             }
         });
     }
@@ -839,7 +857,7 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-        mRoomManager.loadArchivedMessages(mChat.getJid());
+        mRoomManager.loadArchivedMessages(mChatJID, PAGES_TO_LOAD, ITEMS_PER_PAGE);
     }
 
     private void refreshMessages() {

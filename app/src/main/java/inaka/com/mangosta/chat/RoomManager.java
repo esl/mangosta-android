@@ -139,14 +139,13 @@ public class RoomManager {
         }
     }
 
-    public void loadArchivedMessages(final String chatJid) {
+    public void loadArchivedMessages(final String chatJid, final int pages, final int pageSize) {
         Tasks.executeInBackground(MangostaApplication.getInstance(), new BackgroundWork<Stanza>() {
             @Override
             public Stanza doInBackground() throws Exception {
                 Realm realm = RealmManager.getInstance().getRealm();
                 Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
                 MamManager mamManager = XMPPSession.getInstance().getMamManager();
-                int pageSize = 15;
 
                 Jid jid = JidCreate.from(chatJid);
                 MamManager.MamQueryResult mamQueryResult;
@@ -156,8 +155,10 @@ public class RoomManager {
                     mamQueryResult = mamManager.pageBefore(jid, chat.getLastRetrievedFromMAM(), pageSize);
                 }
 
-                while (!mamQueryResult.mamFin.isComplete()) {
+                int pagesCount = 0;
+                while (!mamQueryResult.mamFin.isComplete() && pagesCount < pages) {
                     mamQueryResult = mamManager.pagePrevious(mamQueryResult, pageSize);
+                    pagesCount++;
                 }
 
                 if (mamQueryResult.forwardedMessages.size() > 0) {
