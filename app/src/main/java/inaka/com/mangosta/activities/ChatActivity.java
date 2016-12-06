@@ -141,10 +141,6 @@ public class ChatActivity extends BaseActivity {
     private int mMessagesCount;
     private Menu mMenu;
 
-    private int mVisibleItemCount;
-    private int mTotalItemCount;
-    private int mLastVisibleItem;
-
     final private int VISIBLE_BEFORE_LOAD = 10;
     final private int ITEMS_PER_PAGE = 15;
     final private int PAGES_TO_LOAD = 3;
@@ -286,11 +282,13 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void loadMoreMessages(RecyclerView recyclerView, int dy) {
-        mLastVisibleItem = mLayoutManagerMessages.findLastVisibleItemPosition();
+        int lastVisibleItem = mLayoutManagerMessages.findLastVisibleItemPosition();
         if (dy < 0) {
-            mVisibleItemCount = recyclerView.getChildCount();
-            mTotalItemCount = mLayoutManagerMessages.getItemCount();
-            boolean countVisibleToLoadMore = (mTotalItemCount - mVisibleItemCount) <= VISIBLE_BEFORE_LOAD;
+            int visibleItemCount = recyclerView.getChildCount();
+            int totalItemCount = mLayoutManagerMessages.getItemCount();
+            boolean countVisibleToLoadMore = (totalItemCount - visibleItemCount
+                    - (totalItemCount - lastVisibleItem))
+                    <= VISIBLE_BEFORE_LOAD;
 
             if (countVisibleToLoadMore && !loadMessagesSwipeRefreshLayout.isRefreshing()) {
                 loadMessagesSwipeRefreshLayout.post(new Runnable() {
