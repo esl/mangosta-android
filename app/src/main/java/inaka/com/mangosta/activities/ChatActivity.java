@@ -145,9 +145,11 @@ public class ChatActivity extends BaseActivity {
     private int mTotalItemCount;
     private int mLastVisibleItem;
 
-    final private int VISIBLE_BEFORE_LOAD = 25;
+    final private int VISIBLE_BEFORE_LOAD = 10;
     final private int ITEMS_PER_PAGE = 15;
     final private int PAGES_TO_LOAD = 3;
+
+    SwipeRefreshLayout.OnRefreshListener mSwipeRefreshListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -216,12 +218,13 @@ public class ChatActivity extends BaseActivity {
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light);
 
-        loadMessagesSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        mSwipeRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 loadArchivedMessages();
             }
-        });
+        };
+        loadMessagesSwipeRefreshLayout.setOnRefreshListener(mSwipeRefreshListener);
 
         chatSendMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -277,18 +280,28 @@ public class ChatActivity extends BaseActivity {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 manageScrollButtonVisibility();
-
-                mLastVisibleItem = mLayoutManagerMessages.findLastVisibleItemPosition();
-                if (dy > 0) {
-                    mVisibleItemCount = recyclerView.getChildCount();
-                    mTotalItemCount = mLayoutManagerMessages.getItemCount();
-
-                    if ((mTotalItemCount - mVisibleItemCount) <= (mLastVisibleItem + VISIBLE_BEFORE_LOAD)) {
-                        mRoomManager.loadArchivedMessages(mChatJID, PAGES_TO_LOAD, ITEMS_PER_PAGE);
-                    }
-                }
+                loadMoreMessages(recyclerView, dy);
             }
         });
+    }
+
+    private void loadMoreMessages(RecyclerView recyclerView, int dy) {
+        mLastVisibleItem = mLayoutManagerMessages.findLastVisibleItemPosition();
+        if (dy < 0) {
+            mVisibleItemCount = recyclerView.getChildCount();
+            mTotalItemCount = mLayoutManagerMessages.getItemCount();
+            boolean countVisibleToLoadMore = (mTotalItemCount - mVisibleItemCount) <= VISIBLE_BEFORE_LOAD;
+
+            if (countVisibleToLoadMore && !loadMessagesSwipeRefreshLayout.isRefreshing()) {
+                loadMessagesSwipeRefreshLayout.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadMessagesSwipeRefreshLayout.setRefreshing(true);
+                        mSwipeRefreshListener.onRefresh();
+                    }
+                });
+            }
+        }
     }
 
     private void manageScrollButtonVisibility() {
