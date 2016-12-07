@@ -28,6 +28,15 @@
 
         </android.support.v4.widget.SwipeRefreshLayout>
 
+        <ImageButton
+            android:id="@+id/scrollDownImageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@mipmap/ic_scroll_down"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="10dp"
+            android:visibility="gone"/>
+
     </FrameLayout>
 
     <TextView

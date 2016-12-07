@@ -30,6 +30,7 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ public class RoomManager {
                             realm.commitTransaction();
 
                             // set last retrieved from MAM
-                            ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(chatRoom.getJid());
+                            ChatMessage chatMessage = RealmManager.getInstance().getFirstMessageForChat(chatRoom.getJid());
                             if (chatMessage != null) {
                                 realm.beginTransaction();
                                 chatRoom.setLastRetrievedFromMAM(chatMessage.getMessageId());
@@ -138,25 +139,26 @@ public class RoomManager {
         }
     }
 
-    public void loadArchivedMessages(final String chatJid) {
+    public void loadArchivedMessages(final String chatJid, final int pages, final int pageSize) {
         Tasks.executeInBackground(MangostaApplication.getInstance(), new BackgroundWork<Stanza>() {
             @Override
             public Stanza doInBackground() throws Exception {
                 Realm realm = RealmManager.getInstance().getRealm();
                 Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
                 MamManager mamManager = XMPPSession.getInstance().getMamManager();
-                int pageSize = 15;
 
                 Jid jid = JidCreate.from(chatJid);
                 MamManager.MamQueryResult mamQueryResult;
                 if (chat == null || chat.getLastRetrievedFromMAM() == null) {
-                    mamQueryResult = mamManager.queryArchive(pageSize, null, null, jid, null);
+                    mamQueryResult = mamManager.queryArchive(pageSize, null, new Date(), jid, null);
                 } else {
-                    mamQueryResult = mamManager.pageAfter(jid, chat.getLastRetrievedFromMAM(), pageSize);
+                    mamQueryResult = mamManager.pageBefore(jid, chat.getLastRetrievedFromMAM(), pageSize);
                 }
 
-                while (!mamQueryResult.mamFin.isComplete()) {
-                    mamQueryResult = mamManager.pageNext(mamQueryResult, pageSize);
+                int pagesCount = 0;
+                while (!mamQueryResult.mamFin.isComplete() && pagesCount < pages) {
+                    mamQueryResult = mamManager.pagePrevious(mamQueryResult, pageSize);
+                    pagesCount++;
                 }
 
                 if (mamQueryResult.forwardedMessages.size() > 0) {
@@ -168,7 +170,7 @@ public class RoomManager {
                             realm.beginTransaction();
                         }
                         chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
-                        chat.setLastRetrievedFromMAM(mamQueryResult.mamFin.getRSMSet().getLast());
+                        chat.setLastRetrievedFromMAM(mamQueryResult.mamFin.getRSMSet().getFirst());
                         realm.copyToRealmOrUpdate(chat);
                         realm.commitTransaction();
                     }
