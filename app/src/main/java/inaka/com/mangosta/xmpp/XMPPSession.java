@@ -55,16 +55,21 @@ import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
 import org.jivesoftware.smackx.muclight.element.MUCLightElements;
 import org.jivesoftware.smackx.pep.PEPListener;
 import org.jivesoftware.smackx.pep.PEPManager;
+import org.jivesoftware.smackx.pubsub.AccessModel;
+import org.jivesoftware.smackx.pubsub.ConfigureForm;
 import org.jivesoftware.smackx.pubsub.EventElement;
 import org.jivesoftware.smackx.pubsub.EventElementType;
 import org.jivesoftware.smackx.pubsub.ItemsExtension;
 import org.jivesoftware.smackx.pubsub.LeafNode;
+import org.jivesoftware.smackx.pubsub.Node;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.pubsub.PublishModel;
 import org.jivesoftware.smackx.search.ReportedData;
 import org.jivesoftware.smackx.search.UserSearch;
 import org.jivesoftware.smackx.search.UserSearchManager;
 import org.jivesoftware.smackx.xdata.Form;
+import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
@@ -107,6 +112,7 @@ import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
+import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
 import io.realm.Realm;
 import rx.Subscription;
@@ -200,7 +206,7 @@ public class XMPPSession {
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
                 sendPresenceAvailable();
                 getXOAUTHTokens();
-                subscribeToMyBlogPosts();
+                subscribeToBlogPosts();
                 connectionDoneOnce = true;
             }
 
@@ -451,24 +457,28 @@ public class XMPPSession {
         mArchiveQueryPublisher.onNext(id);
     }
 
-    public void subscribeToMyBlogPosts() {
+    public void subscribeToBlogPosts() {
         PubSubManager pubSubManager = getPubSubManager();
-        String nodeName = "urn:xmpp:microblog:0";
+        String nodeName = PublishPostExtension.NODE;
+        ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(nodeName + "+notify");
 
-        try { // create node (only 1 time, then it's already created)
-            pubSubManager.createNode(nodeName);
-        } catch (Exception e) {
-            e.printStackTrace();
+        try {
+            ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
+            configureForm.setPublishModel(PublishModel.open);
+            configureForm.setAccessModel(AccessModel.roster);
+            pubSubManager.createNode(nodeName, configureForm);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
-        // subscribe to myself
         String myJIDString = getUser().asEntityBareJid().toString();
         try {
-            org.jivesoftware.smackx.pubsub.Subscription subscription = pubSubManager.getNode(nodeName).subscribe(myJIDString);
-            Log.wtf("Subscription state", subscription.getState().toString());
+            Node node = pubSubManager.getNode(nodeName);
+            node.subscribe(myJIDString);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     public void getXOAUTHTokens() {
@@ -1016,10 +1026,8 @@ public class XMPPSession {
             LeafNode node = pubSubManager.createNode(nodeName);
 
             // subscribe to comments
-            String myJIDString = XMPPSession.getInstance().getUser().toString();
-            org.jivesoftware.smackx.pubsub.Subscription subscription = node.subscribe(myJIDString);
-
-            Log.wtf("Comments subscription state", subscription.getState().toString());
+            String myJIDString = getUser().toString();
+            node.subscribe(myJIDString);
         } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | SmackException.NotConnectedException | InterruptedException e) {
             e.printStackTrace();
         }

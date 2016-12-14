@@ -48,7 +48,7 @@ public class RosterManager {
         }
     }
 
-    public HashMap<Jid, Presence.Type> getBuddies()
+    public HashMap<Jid, Presence.Type> getContacts()
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
         Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
@@ -132,7 +132,7 @@ public class RosterManager {
 
     public Presence.Type getStatusFromContact(String name) {
         try {
-            HashMap<Jid, Presence.Type> buddies = getBuddies();
+            HashMap<Jid, Presence.Type> buddies = getContacts();
 
             for (Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
                 if (XMPPUtils.fromJIDToUserName(pair.getKey().toString()).equals(name)) {
@@ -150,7 +150,7 @@ public class RosterManager {
     public boolean isContact(Jid jid)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
-        HashMap<Jid, Presence.Type> buddies = getBuddies();
+        HashMap<Jid, Presence.Type> buddies = getContacts();
         return buddies.containsKey(jid);
     }
 

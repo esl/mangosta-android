@@ -1007,7 +1007,7 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithContact() {
         try {
-            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getContacts();
             for (Map.Entry pair : buddies.entrySet()) {
                 if (mChat.getJid().equals(pair.getKey().toString())) {
                     return true;

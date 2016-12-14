@@ -66,7 +66,7 @@ public class ManageContactsActivityInstrumentedTest extends BaseInstrumentedTest
             mFriends.put(JidCreate.from("friend1@sarasa.com"), Presence.Type.fromString("available"));
             mFriends.put(JidCreate.from("friend2@sarasa.com"), Presence.Type.fromString("available"));
             mFriends.put(JidCreate.from("friend3@sarasa.com"), Presence.Type.fromString("available"));
-            doReturn(mFriends).when(mRosterManagerMock).getBuddies();
+            doReturn(mFriends).when(mRosterManagerMock).getContacts();
         } catch (Exception e) {
             e.printStackTrace();
         }

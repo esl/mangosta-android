@@ -341,7 +341,7 @@ public class ManageContactsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, Presence.Type>>() {
             @Override
             public HashMap<Jid, Presence.Type> doInBackground() throws Exception {
-                return RosterManager.getInstance().getBuddies();
+                return RosterManager.getInstance().getContacts();
             }
         }, new Completion<HashMap<Jid, Presence.Type>>() {
             @Override
