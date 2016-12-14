@@ -1,16 +1,6 @@
 package inaka.com.mangosta.xmpp;
 
-import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.provider.ProviderManager;
-import org.jivesoftware.smackx.search.ReportedData;
-import org.jivesoftware.smackx.search.UserSearch;
-import org.jivesoftware.smackx.search.UserSearchManager;
-import org.jivesoftware.smackx.xdata.Form;
-import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.Jid;
-
-import java.util.List;
 
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.User;

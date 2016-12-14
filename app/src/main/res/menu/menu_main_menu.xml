@@ -8,8 +8,8 @@
         android:icon="@drawable/ic_action_user_dark"
         app:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/actionManageFriends"
-        android:title="@string/action_manage_friends"
+        android:id="@+id/actionManageContacts"
+        android:title="@string/action_manage_contacts"
         app:showAsAction="never"/>
     <item
         android:id="@+id/actionBlockUsers"

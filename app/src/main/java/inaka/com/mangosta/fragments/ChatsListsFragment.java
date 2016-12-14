@@ -227,7 +227,7 @@ public class ChatsListsFragment extends BaseFragment {
             @Override
             public Object doInBackground() throws Exception {
                 mRoomManager.loadMUCLightRooms(); // load group chats
-                mRoomManager.loadRosterFriendsChats(); // load 1 to 1 chats from friends
+                mRoomManager.loadRosterContactsChats(); // load 1 to 1 chats from contacts
                 return null;
             }
         }, new Completion<Object>() {
@@ -272,7 +272,7 @@ public class ChatsListsFragment extends BaseFragment {
                 loadChats();
                 break;
 
-            case FRIENDS_CHANGED:
+            case CONTACTS_CHANGED:
                 loadChatsBackgroundTask();
                 break;
 

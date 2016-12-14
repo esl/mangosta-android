@@ -6,8 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="inaka.com.mangosta.activities.ManageFriendsActivity"
-    tools:showIn="@layout/activity_manage_friends">
+    tools:context="inaka.com.mangosta.activities.ManageContactsActivity"
+    tools:showIn="@layout/activity_manage_contacts">
 
     <LinearLayout
         android:id="@+id/manageFriendsSearchUserLayout"
@@ -21,7 +21,7 @@
         android:weightSum="1">
 
         <EditText
-            android:id="@+id/manageFriendsSearchUserEditText"
+            android:id="@+id/manageContactsSearchUserEditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -32,13 +32,13 @@
             android:layout_height="wrap_content">
 
             <ImageButton
-                android:id="@+id/manageFriendsSearchUserButton"
+                android:id="@+id/manageContactsSearchUserButton"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:background="@android:drawable/ic_menu_search"/>
 
             <ProgressBar
-                android:id="@+id/manageFriendsSearchUserProgressBar"
+                android:id="@+id/manageContactsSearchUserProgressBar"
                 style="?android:attr/progressBarStyle"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
@@ -49,7 +49,7 @@
     </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/manageFriendsSearchResultRecyclerView"
+        android:id="@+id/manageContactsSearchResultRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/manageFriendsSearchUserLayout"
@@ -59,7 +59,7 @@
         android:id="@+id/manageFriendsUsersTitleLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/manageFriendsSearchResultRecyclerView"
+        android:layout_below="@id/manageContactsSearchResultRecyclerView"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:orientation="vertical">
@@ -67,7 +67,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/title_friends"
+            android:text="@string/title_contacts"
             android:textSize="20sp"/>
 
         <View
@@ -78,7 +78,7 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/manageFriendsUsersUnfriendAllButton"
+        android:id="@+id/manageContactsUsersRemoveAllContactsButton"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_below="@id/manageFriendsUsersTitleLayout"
@@ -86,15 +86,15 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_horizontal_margin"
         android:background="@color/red"
-        android:text="@string/button_unfriend_all"
+        android:text="@string/button_remove_all_contacts"
         android:textColor="@color/complete_white"
         android:visibility="gone"/>
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/manageFriendsUsersRecyclerView"
+        android:id="@+id/manageContactsUsersRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/manageFriendsUsersUnfriendAllButton"
+        android:layout_below="@id/manageContactsUsersRemoveAllContactsButton"
         android:paddingEnd="@dimen/activity_horizontal_margin"
         android:paddingStart="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_horizontal_margin"/>

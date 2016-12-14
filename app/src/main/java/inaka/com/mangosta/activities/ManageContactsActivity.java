@@ -42,39 +42,39 @@ import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
-public class ManageFriendsActivity extends BaseActivity {
+public class ManageContactsActivity extends BaseActivity {
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.manageFriendsSearchUserButton)
-    ImageButton manageFriendsSearchUserButton;
+    @Bind(R.id.manageContactsSearchUserButton)
+    ImageButton manageContactsSearchUserButton;
 
-    @Bind(R.id.manageFriendsSearchUserEditText)
-    EditText manageFriendsSearchUserEditText;
+    @Bind(R.id.manageContactsSearchUserEditText)
+    EditText manageContactsSearchUserEditText;
 
-    @Bind(R.id.manageFriendsSearchUserProgressBar)
-    ProgressBar manageFriendsSearchUserProgressBar;
+    @Bind(R.id.manageContactsSearchUserProgressBar)
+    ProgressBar manageContactsSearchUserProgressBar;
 
-    @Bind(R.id.manageFriendsSearchResultRecyclerView)
-    RecyclerView manageFriendsSearchResultRecyclerView;
+    @Bind(R.id.manageContactsSearchResultRecyclerView)
+    RecyclerView manageContactsSearchResultRecyclerView;
 
-    @Bind(R.id.manageFriendsUsersRecyclerView)
-    RecyclerView manageFriendsUsersRecyclerView;
+    @Bind(R.id.manageContactsUsersRecyclerView)
+    RecyclerView manageContactsUsersRecyclerView;
 
-    @Bind(R.id.manageFriendsUsersUnfriendAllButton)
-    Button manageFriendsUsersUnfriendAllButton;
+    @Bind(R.id.manageContactsUsersRemoveAllContactsButton)
+    Button manageContactsUsersRemoveAllContactsButton;
 
     private List<User> mSearchUsers;
-    private List<User> mFriends;
+    private List<User> mContacts;
 
-    UsersListAdapter mFriendsAdapter;
+    UsersListAdapter mContactsAdapter;
     UsersListAdapter mSearchAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manage_friends);
+        setContentView(R.layout.activity_manage_contacts);
 
         ButterKnife.bind(this);
 
@@ -82,42 +82,42 @@ public class ManageFriendsActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         LinearLayoutManager layoutManagerSearch = new LinearLayoutManager(this);
-        manageFriendsSearchResultRecyclerView.setHasFixedSize(true);
-        manageFriendsSearchResultRecyclerView.setLayoutManager(layoutManagerSearch);
+        manageContactsSearchResultRecyclerView.setHasFixedSize(true);
+        manageContactsSearchResultRecyclerView.setLayoutManager(layoutManagerSearch);
 
-        LinearLayoutManager layoutManagerFriends = new LinearLayoutManager(this);
-        manageFriendsUsersRecyclerView.setHasFixedSize(true);
-        manageFriendsUsersRecyclerView.setLayoutManager(layoutManagerFriends);
+        LinearLayoutManager layoutManagerContacts = new LinearLayoutManager(this);
+        manageContactsUsersRecyclerView.setHasFixedSize(true);
+        manageContactsUsersRecyclerView.setLayoutManager(layoutManagerContacts);
 
-        mFriends = new ArrayList<>();
+        mContacts = new ArrayList<>();
         mSearchUsers = new ArrayList<>();
 
         mSearchAdapter = new UsersListAdapter(this, mSearchUsers, true, false);
-        mFriendsAdapter = new UsersListAdapter(this, mFriends, false, true);
+        mContactsAdapter = new UsersListAdapter(this, mContacts, false, true);
 
-        manageFriendsUsersRecyclerView.setAdapter(mFriendsAdapter);
-        manageFriendsSearchResultRecyclerView.setAdapter(mSearchAdapter);
+        manageContactsUsersRecyclerView.setAdapter(mContactsAdapter);
+        manageContactsSearchResultRecyclerView.setAdapter(mSearchAdapter);
 
-        manageFriendsSearchUserButton.setOnClickListener(new View.OnClickListener() {
+        manageContactsSearchUserButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                manageFriendsSearchUserButton.setVisibility(View.GONE);
-                manageFriendsSearchUserProgressBar.setVisibility(View.VISIBLE);
-                String user = manageFriendsSearchUserEditText.getText().toString();
+                manageContactsSearchUserButton.setVisibility(View.GONE);
+                manageContactsSearchUserProgressBar.setVisibility(View.VISIBLE);
+                String user = manageContactsSearchUserEditText.getText().toString();
                 searchUserBackgroundTask(user);
             }
         });
 
-        manageFriendsUsersUnfriendAllButton.setOnClickListener(new View.OnClickListener() {
+        manageContactsUsersRemoveAllContactsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                unfriendAll();
+                removeAllContacts();
             }
         });
     }
 
     private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(ManageFriendsActivity.this, new BackgroundWork<Boolean>() {
+        Tasks.executeInBackground(ManageContactsActivity.this, new BackgroundWork<Boolean>() {
             @Override
             public Boolean doInBackground() throws Exception {
                 return XMPPSession.getInstance().userExists(user);
@@ -130,9 +130,9 @@ public class ManageFriendsActivity extends BaseActivity {
                 } else {
                     showNotFoundDialog(user);
                 }
-                if (manageFriendsSearchUserButton != null && manageFriendsSearchUserProgressBar != null) {
-                    manageFriendsSearchUserProgressBar.setVisibility(View.GONE);
-                    manageFriendsSearchUserButton.setVisibility(View.VISIBLE);
+                if (manageContactsSearchUserButton != null && manageContactsSearchUserProgressBar != null) {
+                    manageContactsSearchUserProgressBar.setVisibility(View.GONE);
+                    manageContactsSearchUserButton.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -142,9 +142,9 @@ public class ManageFriendsActivity extends BaseActivity {
                     Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
                 }
 
-                if (manageFriendsSearchUserButton != null && manageFriendsSearchUserProgressBar != null) {
-                    manageFriendsSearchUserProgressBar.setVisibility(View.GONE);
-                    manageFriendsSearchUserButton.setVisibility(View.VISIBLE);
+                if (manageContactsSearchUserButton != null && manageContactsSearchUserProgressBar != null) {
+                    manageContactsSearchUserProgressBar.setVisibility(View.GONE);
+                    manageContactsSearchUserButton.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -152,7 +152,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
     private void showNotFoundDialog(String user) {
         String message = String.format(Locale.getDefault(), getString(R.string.user_doesnt_exist), user);
-        AlertDialog dialog = new AlertDialog.Builder(ManageFriendsActivity.this)
+        AlertDialog dialog = new AlertDialog.Builder(ManageContactsActivity.this)
                 .setTitle(getString(R.string.user_not_found))
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -175,8 +175,8 @@ public class ManageFriendsActivity extends BaseActivity {
                 mSearchUsers.add(user);
                 mSearchAdapter.notifyDataSetChanged();
             } else {
-                mFriends.add(user);
-                mFriendsAdapter.notifyDataSetChanged();
+                mContacts.add(user);
+                mContactsAdapter.notifyDataSetChanged();
             }
         }
     }
@@ -187,8 +187,8 @@ public class ManageFriendsActivity extends BaseActivity {
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
-        mFriends.clear();
-        getFriends();
+        mContacts.clear();
+        getContacts();
     }
 
     @Override
@@ -197,7 +197,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
-                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
+                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
                 finish();
                 break;
         }
@@ -212,13 +212,13 @@ public class ManageFriendsActivity extends BaseActivity {
         switch (userEvent.getType()) {
 
             case ADD_USER:
-                if (!userInList(user, mFriends)) {
-                    addFriend(user);
+                if (!userInList(user, mContacts)) {
+                    addContact(user);
                 }
                 break;
 
             case REMOVE_USER:
-                unfriend(user);
+                removeContact(user);
                 break;
         }
     }
@@ -232,7 +232,7 @@ public class ManageFriendsActivity extends BaseActivity {
                     @Override
                     public void run() {
                         mSearchAdapter.notifyDataSetChanged();
-                        mFriendsAdapter.notifyDataSetChanged();
+                        mContactsAdapter.notifyDataSetChanged();
                     }
                 });
                 break;
@@ -249,7 +249,7 @@ public class ManageFriendsActivity extends BaseActivity {
         return userFound;
     }
 
-    private void addFriend(final User user) {
+    private void addContact(final User user) {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
@@ -265,15 +265,15 @@ public class ManageFriendsActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (manageFriendsUsersUnfriendAllButton != null) {
-                    mFriends.add(user);
-                    mFriendsAdapter.notifyDataSetChanged();
-                    manageFriendsUsersUnfriendAllButton.setVisibility(View.VISIBLE);
+                if (manageContactsUsersRemoveAllContactsButton != null) {
+                    mContacts.add(user);
+                    mContactsAdapter.notifyDataSetChanged();
+                    manageContactsUsersRemoveAllContactsButton.setVisibility(View.VISIBLE);
                     mSearchUsers.clear();
                     mSearchAdapter.notifyDataSetChanged();
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
+                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
             }
 
             @Override
@@ -283,7 +283,7 @@ public class ManageFriendsActivity extends BaseActivity {
                 }
 
                 if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
                 e.printStackTrace();
@@ -292,7 +292,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
     }
 
-    private void unfriend(final User user) {
+    private void removeContact(final User user) {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
@@ -308,15 +308,15 @@ public class ManageFriendsActivity extends BaseActivity {
                     progress.dismiss();
                 }
 
-                if (mFriends != null && mFriendsAdapter != null && manageFriendsUsersUnfriendAllButton != null) {
-                    mFriends.remove(user);
-                    mFriendsAdapter.notifyDataSetChanged();
-                    if (mFriends.size() == 0) {
-                        manageFriendsUsersUnfriendAllButton.setVisibility(View.INVISIBLE);
+                if (mContacts != null && mContactsAdapter != null && manageContactsUsersRemoveAllContactsButton != null) {
+                    mContacts.remove(user);
+                    mContactsAdapter.notifyDataSetChanged();
+                    if (mContacts.size() == 0) {
+                        manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
                     }
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
+                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
             }
 
             @Override
@@ -326,7 +326,7 @@ public class ManageFriendsActivity extends BaseActivity {
                 }
 
                 if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageFriendsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManageContactsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
 
                 e.printStackTrace();
@@ -335,7 +335,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
     }
 
-    private void getFriends() {
+    private void getContacts() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
         Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, Presence.Type>>() {
@@ -353,8 +353,8 @@ public class ManageFriendsActivity extends BaseActivity {
                     if (progress != null) {
                         progress.dismiss();
                     }
-                    if (buddies.size() > 0 && manageFriendsUsersUnfriendAllButton != null) {
-                        manageFriendsUsersUnfriendAllButton.setVisibility(View.VISIBLE);
+                    if (buddies.size() > 0 && manageContactsUsersRemoveAllContactsButton != null) {
+                        manageContactsUsersRemoveAllContactsButton.setVisibility(View.VISIBLE);
                     }
                 }
             }
@@ -366,7 +366,7 @@ public class ManageFriendsActivity extends BaseActivity {
                 }
 
                 if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
                 e.printStackTrace();
@@ -375,13 +375,13 @@ public class ManageFriendsActivity extends BaseActivity {
 
     }
 
-    private void unfriendAll() {
+    private void removeAllContacts() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                RosterManager.getInstance().removeAllFriends();
+                RosterManager.getInstance().removeAllContacts();
                 return null;
             }
         }, new Completion<Object>() {
@@ -390,13 +390,13 @@ public class ManageFriendsActivity extends BaseActivity {
                 if (progress != null) {
                     progress.dismiss();
                 }
-                if (mFriends != null && mFriendsAdapter != null && manageFriendsUsersUnfriendAllButton != null) {
-                    mFriends.clear();
-                    mFriendsAdapter.notifyDataSetChanged();
-                    manageFriendsUsersUnfriendAllButton.setVisibility(View.INVISIBLE);
+                if (mContacts != null && mContactsAdapter != null && manageContactsUsersRemoveAllContactsButton != null) {
+                    mContacts.clear();
+                    mContactsAdapter.notifyDataSetChanged();
+                    manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
+                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
             }
 
             @Override
@@ -406,7 +406,7 @@ public class ManageFriendsActivity extends BaseActivity {
                 }
 
                 if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageFriendsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
                 }
 
                 e.printStackTrace();
@@ -417,7 +417,7 @@ public class ManageFriendsActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        EventBus.getDefault().post(new Event(Event.Type.FRIENDS_CHANGED));
+        EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
         super.onBackPressed();
     }
 

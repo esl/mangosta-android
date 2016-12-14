@@ -315,7 +315,7 @@ public class XMPPSession {
                     subscribed.setTo(sender);
                     sendStanza(subscribed);
 
-                    if (RosterManager.getInstance().isFriend(sender)) {
+                    if (RosterManager.getInstance().isContact(sender)) {
                         RosterManager.getInstance().removeFromBuddies(sender.toString());
                     }
                 }

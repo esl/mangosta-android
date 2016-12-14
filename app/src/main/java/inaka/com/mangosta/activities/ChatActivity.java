@@ -313,7 +313,7 @@ public class ChatActivity extends BaseActivity {
     private void setOneToOneChatConnectionStatus() {
         String userName = XMPPUtils.fromJIDToUserName(mChatJID);
 
-        if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+        if (RosterManager.getInstance().getStatusFromContact(userName).equals(Presence.Type.available)) {
             getSupportActionBar().setSubtitle(getString(R.string.connected));
         } else {
             getSupportActionBar().setSubtitle("");
@@ -475,11 +475,11 @@ public class ChatActivity extends BaseActivity {
         menu.findItem(R.id.actionDestroyChat).setVisible(false);
         setDestroyButtonVisibility(menu);
 
-        menu.findItem(R.id.actionAddToFriends).setVisible(false);
-        menu.findItem(R.id.actionRemoveFromFriends).setVisible(false);
+        menu.findItem(R.id.actionAddToContacts).setVisible(false);
+        menu.findItem(R.id.actionRemoveFromContacts).setVisible(false);
         if (mChat.getType() == Chat.TYPE_1_T0_1) {
             menu.findItem(R.id.actionLeaveChat).setTitle(getString(R.string.action_delete_chat));
-            manageLeaveAndFriendMenuItems();
+            manageLeaveAndContactMenuItems();
         }
 
         return true;
@@ -523,26 +523,26 @@ public class ChatActivity extends BaseActivity {
                 destroyChat();
                 break;
 
-            case R.id.actionAddToFriends:
-                addChatGuyToFriends();
+            case R.id.actionAddToContacts:
+                addChatGuyToContacts();
                 break;
 
-            case R.id.actionRemoveFromFriends:
-                removeChatGuyFromFriends();
+            case R.id.actionRemoveFromContacts:
+                removeChatGuyFromContacts();
                 break;
         }
 
         return true;
     }
 
-    private void removeChatGuyFromFriends() {
-        User userNotFriend = new User();
-        userNotFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
+    private void removeChatGuyFromContacts() {
+        User userNotContact = new User();
+        userNotContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.getInstance().removeFromBuddies(userNotFriend);
-            setMenuChatNotFriend();
-            Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_friends),
-                    userNotFriend.getLogin()), Toast.LENGTH_SHORT).show();
+            RosterManager.getInstance().removeFromBuddies(userNotContact);
+            setMenuChatNotContact();
+            Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_contacts),
+                    userNotContact.getLogin()), Toast.LENGTH_SHORT).show();
         } catch (SmackException.NotLoggedInException | InterruptedException |
                 SmackException.NotConnectedException | XMPPException.XMPPErrorException |
                 XmppStringprepException | SmackException.NoResponseException e) {
@@ -550,14 +550,14 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
-    private void addChatGuyToFriends() {
-        User userFriend = new User();
-        userFriend.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
+    private void addChatGuyToContacts() {
+        User userContact = new User();
+        userContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.getInstance().addToBuddies(userFriend);
-            setMenuChatWithFriend();
-            Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_friends),
-                    userFriend.getLogin()), Toast.LENGTH_SHORT).show();
+            RosterManager.getInstance().addToBuddies(userContact);
+            setMenuChatWithContact();
+            Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_contacts),
+                    userContact.getLogin()), Toast.LENGTH_SHORT).show();
         } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | XmppStringprepException | SmackException.NoResponseException e) {
             e.printStackTrace();
         }
@@ -985,27 +985,27 @@ public class ChatActivity extends BaseActivity {
         refreshMessagesAndScrollToEnd();
     }
 
-    private void manageLeaveAndFriendMenuItems() {
-        if (isChatWithFriend()) {
-            setMenuChatWithFriend();
+    private void manageLeaveAndContactMenuItems() {
+        if (isChatWithContact()) {
+            setMenuChatWithContact();
         } else {
-            setMenuChatNotFriend();
+            setMenuChatNotContact();
         }
     }
 
-    private void setMenuChatNotFriend() {
+    private void setMenuChatNotContact() {
         mMenu.findItem(R.id.actionLeaveChat).setVisible(true);
-        mMenu.findItem(R.id.actionAddToFriends).setVisible(true);
-        mMenu.findItem(R.id.actionRemoveFromFriends).setVisible(false);
+        mMenu.findItem(R.id.actionAddToContacts).setVisible(true);
+        mMenu.findItem(R.id.actionRemoveFromContacts).setVisible(false);
     }
 
-    private void setMenuChatWithFriend() {
+    private void setMenuChatWithContact() {
         mMenu.findItem(R.id.actionLeaveChat).setVisible(false);
-        mMenu.findItem(R.id.actionAddToFriends).setVisible(false);
-        mMenu.findItem(R.id.actionRemoveFromFriends).setVisible(true);
+        mMenu.findItem(R.id.actionAddToContacts).setVisible(false);
+        mMenu.findItem(R.id.actionRemoveFromContacts).setVisible(true);
     }
 
-    private boolean isChatWithFriend() {
+    private boolean isChatWithContact() {
         try {
             HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
             for (Map.Entry pair : buddies.entrySet()) {

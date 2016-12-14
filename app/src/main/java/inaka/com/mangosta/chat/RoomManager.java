@@ -347,7 +347,7 @@ public class RoomManager {
         }
     }
 
-    public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
+    public void loadRosterContactsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
         try {
             HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
             for (Map.Entry pair : buddies.entrySet()) {
