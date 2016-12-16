@@ -60,7 +60,6 @@ import org.jivesoftware.smackx.pubsub.ConfigureForm;
 import org.jivesoftware.smackx.pubsub.EventElement;
 import org.jivesoftware.smackx.pubsub.EventElementType;
 import org.jivesoftware.smackx.pubsub.ItemsExtension;
-import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.Node;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
@@ -112,6 +111,7 @@ import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
+import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
 import io.realm.Realm;
@@ -447,6 +447,17 @@ public class XMPPSession {
 
                     BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
                     RealmManager.getInstance().saveBlogPost(blogPost);
+
+                    String commentsNode = PublishCommentExtension.NODE + id;
+                    ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
+
+                    MangostaApplication.getInstance().getCurrentActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            EventBus.getDefault().post(new Event(Event.Type.BLOG_POST_CREATED));
+                        }
+                    });
+
                 }
             }
         });
@@ -459,21 +470,27 @@ public class XMPPSession {
 
     public void subscribeToBlogPosts() {
         PubSubManager pubSubManager = getPubSubManager();
-        String nodeName = PublishPostExtension.NODE;
-        ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(nodeName + "+notify");
+
+        String postsNode = PublishPostExtension.NODE;
+        String commentsNode = PublishCommentExtension.NODE;
+
+        ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(postsNode + "+notify");
+        ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
 
         try {
             ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
             configureForm.setPublishModel(PublishModel.open);
             configureForm.setAccessModel(AccessModel.roster);
-            pubSubManager.createNode(nodeName, configureForm);
+
+            pubSubManager.createNode(postsNode, configureForm);
+            pubSubManager.createNode(commentsNode, configureForm);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         String myJIDString = getUser().asEntityBareJid().toString();
         try {
-            Node node = pubSubManager.getNode(nodeName);
+            Node node = pubSubManager.getNode(postsNode);
             node.subscribe(myJIDString);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1019,11 +1036,14 @@ public class XMPPSession {
     }
 
     public void createNodeToAllowComments(String blogPostId) {
-        String nodeName = "urn:xmpp:microblog:0:comments/" + blogPostId;
+        String nodeName = PublishPostExtension.NODE + ":comments/" + blogPostId;
         PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
         try {
             // create node
-            LeafNode node = pubSubManager.createNode(nodeName);
+            ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
+            configureForm.setPublishModel(PublishModel.open);
+            configureForm.setAccessModel(AccessModel.roster);
+            Node node = pubSubManager.createNode(nodeName, configureForm);
 
             // subscribe to comments
             String myJIDString = getUser().toString();

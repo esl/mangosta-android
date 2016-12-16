@@ -147,7 +147,6 @@ public class BlogPostDetailsActivity extends BaseActivity {
                 content,
                 userName,
                 jid.toString(),
-                blogPost.getOwnerAvatarUrl(),
                 publishCommentExtension.getPublished());
     }
 

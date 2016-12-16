@@ -11,7 +11,6 @@ public class BlogPostComment extends RealmObject {
     private String id;
     private String content;
     private String authorName;
-    private String authorAvatarUrl;
     private String authorJid;
     private Date published;
     private String blogPostId;
@@ -20,13 +19,12 @@ public class BlogPostComment extends RealmObject {
 
     }
 
-    public BlogPostComment(String id, String blogPostId, String content, String authorName, String authorJid, String authorAvatarUrl, Date published) {
+    public BlogPostComment(String id, String blogPostId, String content, String authorName, String authorJid, Date published) {
         this.id = id;
         this.blogPostId = blogPostId;
         this.content = content;
         this.authorJid = authorJid;
         this.authorName = authorName;
-        this.authorAvatarUrl = authorAvatarUrl;
         this.published = published;
     }
 
@@ -76,14 +74,6 @@ public class BlogPostComment extends RealmObject {
 
     public void setBlogPostId(String blogPostId) {
         this.blogPostId = blogPostId;
-    }
-
-    public String getAuthorAvatarUrl() {
-        return authorAvatarUrl;
-    }
-
-    public void setAuthorAvatarUrl(String authorAvatarUrl) {
-        this.authorAvatarUrl = authorAvatarUrl;
     }
 
 }
