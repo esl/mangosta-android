@@ -20,11 +20,14 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
+import org.jivesoftware.smack.packet.Presence;
 import org.jxmpp.jid.Jid;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -220,6 +223,22 @@ public class ManageFriendsActivity extends BaseActivity {
         }
     }
 
+    @Override
+    public void onEvent(Event event) {
+        super.onEvent(event);
+        switch (event.getType()) {
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchAdapter.notifyDataSetChanged();
+                        mFriendsAdapter.notifyDataSetChanged();
+                    }
+                });
+                break;
+        }
+    }
+
     private boolean userInList(User user, List<User> list) {
         boolean userFound = false;
         for (User anUser : list) {
@@ -319,22 +338,22 @@ public class ManageFriendsActivity extends BaseActivity {
     private void getFriends() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<List<Jid>>() {
+        Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, Presence.Type>>() {
             @Override
-            public List<Jid> doInBackground() throws Exception {
+            public HashMap<Jid, Presence.Type> doInBackground() throws Exception {
                 return RosterManager.getInstance().getBuddies();
             }
-        }, new Completion<List<Jid>>() {
+        }, new Completion<HashMap<Jid, Presence.Type>>() {
             @Override
-            public void onSuccess(Context context, List<Jid> jids) {
-                if (jids != null) {
-                    for (Jid jid : jids) {
-                        obtainUser(XMPPUtils.fromJIDToUserName(jid.toString()), false);
+            public void onSuccess(Context context, HashMap<Jid, Presence.Type> buddies) {
+                if (buddies != null) {
+                    for (Map.Entry pair : buddies.entrySet()) {
+                        obtainUser(XMPPUtils.fromJIDToUserName(pair.getKey().toString()), false);
                     }
                     if (progress != null) {
                         progress.dismiss();
                     }
-                    if (jids.size() > 0 && manageFriendsUsersUnfriendAllButton != null) {
+                    if (buddies.size() > 0 && manageFriendsUsersUnfriendAllButton != null) {
                         manageFriendsUsersUnfriendAllButton.setVisibility(View.VISIBLE);
                     }
                 }

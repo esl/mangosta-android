@@ -12,6 +12,7 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smackx.bob.BoBHash;
@@ -19,11 +20,9 @@ import org.jivesoftware.smackx.bob.element.BoBExtension;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
-import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
 import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
-import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
@@ -260,17 +259,6 @@ public class RoomManager {
         }
     }
 
-    public static void sendInvitations(MultiUserChat multiUserChat, String roomName, List<User> users) {
-        for (User user : users) {
-            try {
-                EntityBareJid userJID = JidCreate.entityBareFrom(XMPPUtils.fromUserNameToJID(user.getLogin()));
-                multiUserChat.invite(new Message(), userJID, "I invite you to the room " + roomName);
-            } catch (SmackException.NotConnectedException | InterruptedException | XmppStringprepException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public static void createChatIfNotExists(String chatJid, final boolean save) {
         if (!RealmManager.getInstance().chatExists(chatJid)) {
             // save chat
@@ -315,7 +303,7 @@ public class RoomManager {
         }
     }
 
-    public void loadArchivedMessages(final String chatJid) {
+    public void loadArchivedMessages(final String chatJid, int pages, int count) {
         Realm realm = RealmManager.getInstance().getRealm();
         Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
 
@@ -326,28 +314,26 @@ public class RoomManager {
 
         switch (chatType) {
             case Chat.TYPE_MUC_LIGHT:
-                getMUCLightMessages(chatJid);
+                getMUCLightMessages(chatJid, pages, count);
                 break;
 
             case Chat.TYPE_1_T0_1:
-                getMessages(chatJid, timestamp);
+                getMessages(chatJid, timestamp, pages, count);
                 break;
         }
 
     }
 
-    private void getMessages(final String jid, long timestamp) {
-        final int pageSize = 15;
-
+    private void getMessages(final String jid, long timestamp, final int pages, final int count) {
         MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (mongooseService != null) {
 
             Call<List<MongooseMessage>> call;
             if (timestamp == 0) {
-                call = mongooseService.getMessages(jid, pageSize);
+                call = mongooseService.getMessages(jid, count);
             } else {
-                call = mongooseService.getMessages(jid, pageSize, timestamp);
+                call = mongooseService.getMessages(jid, count, timestamp);
             }
 
             call.enqueue(new Callback<List<MongooseMessage>>() {
@@ -367,8 +353,8 @@ public class RoomManager {
 
                         saveMessages(messages, jid);
 
-                        if (messages.size() == pageSize) { // get more pages
-                            getMessages(jid, lastTimestamp);
+                        if (messages.size() == count) { // get more pages
+                            getMessages(jid, lastTimestamp, pages, count);
                         } else { // show list
                             XMPPSession.getInstance().publishQueryArchive(null);
                         }
@@ -396,7 +382,7 @@ public class RoomManager {
 
     }
 
-    private void getMUCLightMessages(final String jid) {
+    private void getMUCLightMessages(final String jid, final int pages, final int count) {
         MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
         if (mongooseService != null) {
@@ -716,11 +702,16 @@ public class RoomManager {
         return messageId;
     }
 
-    public void loadRosterFriendsChats() throws
-            SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
-        for (Jid jid : RosterManager.getInstance().getBuddies()) {
-            String userJid = jid.toString();
-            RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
+
+    public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
+        try {
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            for (Map.Entry pair : buddies.entrySet()) {
+                String userJid = pair.getKey().toString();
+                RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
+            }
+        } finally {
+            mListener.onRoomsLoaded();
         }
     }
 

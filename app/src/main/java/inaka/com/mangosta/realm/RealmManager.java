@@ -173,6 +173,18 @@ public class RealmManager {
         }
     }
 
+    public ChatMessage getFirstMessageForChat(String jid) {
+        List<ChatMessage> chatMessages = new ArrayList<>();
+        for (ChatMessage chatMessage : getMessagesForChat(getRealm(), jid)) {
+            chatMessages.add(chatMessage);
+        }
+        if (chatMessages.size() == 0) {
+            return null;
+        } else {
+            return chatMessages.get(0);
+        }
+    }
+
     public void saveBlogPost(BlogPost blogPost) {
         Realm realm = getRealm();
 

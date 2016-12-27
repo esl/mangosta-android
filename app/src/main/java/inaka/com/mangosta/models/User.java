@@ -3,6 +3,8 @@ package inaka.com.mangosta.models;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.jivesoftware.smack.packet.Presence;
+
 public class User implements Parcelable {
 
     public User() {
@@ -10,6 +12,7 @@ public class User implements Parcelable {
 
     private String login;
     private String name;
+    private Presence.Type connectionStatus;
 
     public String getLogin() {
         return login;
@@ -27,6 +30,14 @@ public class User implements Parcelable {
         this.name = name;
     }
 
+    public Presence.Type getConnectionStatus() {
+        return connectionStatus;
+    }
+
+    public void setConnectionStatus(Presence.Type connectionStatus) {
+        this.connectionStatus = connectionStatus;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -36,11 +47,14 @@ public class User implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.login);
         dest.writeString(this.name);
+        dest.writeInt(this.connectionStatus == null ? -1 : this.connectionStatus.ordinal());
     }
 
     protected User(Parcel in) {
         this.login = in.readString();
         this.name = in.readString();
+        int tmpConnectionStatus = in.readInt();
+        this.connectionStatus = tmpConnectionStatus == -1 ? null : Presence.Type.values()[tmpConnectionStatus];
     }
 
     public static final Parcelable.Creator<User> CREATOR = new Parcelable.Creator<User>() {
@@ -54,4 +68,5 @@ public class User implements Parcelable {
             return new User[size];
         }
     };
+
 }

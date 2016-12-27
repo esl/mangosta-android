@@ -34,6 +34,7 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.UserEvent;
@@ -235,6 +236,22 @@ public class EditChatMemberActivity extends BaseActivity {
                 mMemberUsers.remove(user);
                 mMembersAdapter.notifyDataSetChanged();
                 removeUserFromChat(user);
+                break;
+        }
+    }
+
+    @Override
+    public void onEvent(Event event) {
+        super.onEvent(event);
+        switch (event.getType()) {
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchAdapter.notifyDataSetChanged();
+                        mMembersAdapter.notifyDataSetChanged();
+                    }
+                });
                 break;
         }
     }

@@ -18,17 +18,16 @@
             android:layout_height="40dp"
             android:src="@android:drawable/ic_dialog_dialer"/>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.8"
             android:gravity="center_vertical"
-            android:orientation="vertical"
             android:padding="5dp">
 
             <TextView
                 android:id="@+id/textUserLogin"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:lines="1"
                 android:textColor="@color/colorAccent"
@@ -39,11 +38,20 @@
                 android:id="@+id/textUserName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/textUserLogin"
                 android:lines="1"
                 android:textColor="@color/colorAccent"/>
 
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/imageConnectionStatus"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="2dp"
+                android:layout_toEndOf="@id/textUserLogin"
+                android:src="@mipmap/ic_disconnected"/>
 
+        </RelativeLayout>
 
         <FrameLayout
             android:layout_width="0dp"

@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.jivesoftware.smack.packet.Presence;
 import org.jxmpp.jid.EntityBareJid;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToUserProfile;
 import inaka.com.mangosta.utils.UserEvent;
+import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
@@ -71,6 +73,9 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
 
         @Bind(R.id.removeUserButton)
         Button removeUserButton;
+
+        @Bind(R.id.imageConnectionStatus)
+        ImageView imageConnectionStatus;
 
         private Context mContext;
 
@@ -127,6 +132,12 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
                     NavigateToUserProfile.go(user, mContext);
                 }
             });
+
+            if (RosterManager.getInstance().getStatusFromFriend(user).equals(Presence.Type.available)) {
+                imageConnectionStatus.setImageResource(R.mipmap.ic_connected);
+            } else {
+                imageConnectionStatus.setImageResource(R.mipmap.ic_disconnected);
+            }
 
         }
 

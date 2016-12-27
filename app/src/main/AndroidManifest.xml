@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".activities.BaseActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+        <activity
             android:name=".activities.MainMenuActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
@@ -42,8 +47,6 @@
             android:name=".activities.ChatMembersActivity"
             android:label="@string/title_activity_chat_members"
             android:theme="@style/AppTheme.NoActionBar">
-        </activity>
-        <activity android:name=".activities.BaseActivity">
         </activity>
         <activity
             android:name=".activities.BlockUsersActivity"

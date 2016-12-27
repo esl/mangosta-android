@@ -29,6 +29,9 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.XMPPError;
+import org.jivesoftware.smackx.blocking.element.BlockedErrorExtension;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.Affiliate;
@@ -108,6 +111,9 @@ public class ChatActivity extends BaseActivity {
     @Bind(R.id.chatTypingTextView)
     TextView chatTypingTextView;
 
+    @Bind(R.id.scrollDownImageButton)
+    ImageButton scrollDownImageButton;
+
     private RoomManager mRoomManager;
     private String mChatJID;
 
@@ -145,6 +151,12 @@ public class ChatActivity extends BaseActivity {
     private int mMessagesCount;
     private Menu mMenu;
 
+    final private int VISIBLE_BEFORE_LOAD = 10;
+    final private int ITEMS_PER_PAGE = 15;
+    final private int PAGES_TO_LOAD = 3;
+
+    SwipeRefreshLayout.OnRefreshListener mSwipeRefreshListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -177,6 +189,8 @@ public class ChatActivity extends BaseActivity {
 
         if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
             manageRoomNameAndSubject();
+        } else {
+            setOneToOneChatConnectionStatus();
         }
 
         mRoomManager = RoomManager.getInstance(new RoomManagerChatListener(ChatActivity.this));
@@ -210,12 +224,13 @@ public class ChatActivity extends BaseActivity {
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light);
 
-        loadMessagesSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        mSwipeRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 loadArchivedMessages();
             }
-        });
+        };
+        loadMessagesSwipeRefreshLayout.setOnRefreshListener(mSwipeRefreshListener);
 
         chatSendMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -258,6 +273,61 @@ public class ChatActivity extends BaseActivity {
         mStickersAdapter = new StickersAdapter(this, Arrays.asList(mStickersNameList));
 
         stickersRecyclerView.setAdapter(mStickersAdapter);
+
+        scrollDownImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                scrollToEnd();
+            }
+        });
+
+        chatMessagesRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                manageScrollButtonVisibility();
+                loadMoreMessages(recyclerView, dy);
+            }
+        });
+    }
+
+    private void loadMoreMessages(RecyclerView recyclerView, int dy) {
+        int lastVisibleItem = mLayoutManagerMessages.findLastVisibleItemPosition();
+        if (dy < 0) {
+            int visibleItemCount = recyclerView.getChildCount();
+            int totalItemCount = mLayoutManagerMessages.getItemCount();
+            boolean countVisibleToLoadMore = (totalItemCount - visibleItemCount
+                    - (totalItemCount - lastVisibleItem))
+                    <= VISIBLE_BEFORE_LOAD;
+
+            if (countVisibleToLoadMore && !loadMessagesSwipeRefreshLayout.isRefreshing()) {
+                loadMessagesSwipeRefreshLayout.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadMessagesSwipeRefreshLayout.setRefreshing(true);
+                        mSwipeRefreshListener.onRefresh();
+                    }
+                });
+            }
+        }
+    }
+
+    private void manageScrollButtonVisibility() {
+        if (isMessagesListScrolledToBottom()) {
+            scrollDownImageButton.setVisibility(View.GONE);
+        } else {
+            scrollDownImageButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setOneToOneChatConnectionStatus() {
+        String userName = XMPPUtils.fromJIDToUserName(mChatJID);
+
+        if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+            getSupportActionBar().setSubtitle(getString(R.string.connected));
+        } else {
+            getSupportActionBar().setSubtitle("");
+        }
     }
 
     private void schedulePauseTimer() {
@@ -330,6 +400,7 @@ public class ChatActivity extends BaseActivity {
 
                             String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
                             String userSender = "";
+                            String messageType = message.getType().name();
 
                             String[] jidList = message.getFrom().toString().split("/");
 
@@ -346,7 +417,7 @@ public class ChatActivity extends BaseActivity {
                                     break;
                             }
 
-                            if (!userSender.equals(myUser)) {
+                            if (!userSender.equals(myUser) && !messageType.equals("error")) {
                                 if (chatState.equals(ChatState.composing)) { // typing
                                     chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
                                     chatTypingTextView.setVisibility(View.VISIBLE);
@@ -355,12 +426,18 @@ public class ChatActivity extends BaseActivity {
                                 }
                             }
 
+
                         } else {
                             String subject = message.getSubject();
                             if (subject != null) {
                                 setTitle(subject);
                             }
                             refreshMessagesAndScrollToEnd();
+                            if (BlockedErrorExtension.isInside(message) && !message.hasExtension(ChatStateExtension.NAMESPACE)) {
+                                Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
+                            } else if (message.getError().getCondition().equals(XMPPError.Condition.service_unavailable)) {
+                                Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
+                            }
                         }
 
                     }
@@ -828,7 +905,7 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-        mRoomManager.loadArchivedMessages(mChat.getJid());
+        mRoomManager.loadArchivedMessages(mChatJID, PAGES_TO_LOAD, ITEMS_PER_PAGE);
     }
 
     private void refreshMessages() {
@@ -838,11 +915,15 @@ public class ChatActivity extends BaseActivity {
 
     private void scrollToEnd() {
         if (mMessages != null) {
-            int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
-            if (lastPosition <= mMessages.size() - 2 && chatMessagesRecyclerView != null) {
+            if (!isMessagesListScrolledToBottom() && chatMessagesRecyclerView != null) {
                 chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
             }
         }
+    }
+
+    private boolean isMessagesListScrolledToBottom() {
+        int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
+        return !(lastPosition <= mMessages.size() - 2);
     }
 
     private void refreshMessagesAndScrollToEnd() {
@@ -913,9 +994,21 @@ public class ChatActivity extends BaseActivity {
 
     // receives events from EventBus
     public void onEvent(Event event) {
+        super.onEvent(event);
         switch (event.getType()) {
             case STICKER_SENT:
                 stickerSent(event.getImageName());
+                break;
+
+            case PRESENCE_RECEIVED:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+                            setOneToOneChatConnectionStatus();
+                        }
+                    }
+                });
                 break;
         }
     }
@@ -951,8 +1044,9 @@ public class ChatActivity extends BaseActivity {
 
     private boolean isChatWithFriend() {
         try {
-            for (Jid jid : RosterManager.getInstance().getBuddies()) {
-                if (mChat.getJid().equals(jid.toString())) {
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            for (Map.Entry pair : buddies.entrySet()) {
+                if (mChat.getJid().equals(pair.getKey().toString())) {
                     return true;
                 }
             }

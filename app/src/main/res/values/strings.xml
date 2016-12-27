@@ -23,8 +23,8 @@
     <string name="action_remove_from_friends">Remove user from friends</string>
     <string name="action_delete_chat">Delete</string>
 
-    <string name="title_tab_chats">Chats</string>
-    <string name="title_tab_social_media">Social Media</string>
+    <string name="title_tab_chat">Chat</string>
+    <string name="title_tab_social">Social</string>
     <string name="title_rooms">ROOMS</string>
     <string name="title_people">PEOPLE</string>
 
@@ -73,6 +73,8 @@
     <string name="want_to_delete_chat">Do you want to delete this chat?</string>
     <string name="want_to_destroy_chat">Do you want to destroy this chat?</string>
     <string name="correct_message">Correct message</string>
+    <string name="message_to_blocked_user">Can\'t send message to a blocked contact</string>
+    <string name="cant_send_message">Couldn\'t send message</string>
     <string name="enter_new_message">Enter the new body</string>
     <string name="typing">%1$s is typing &#8230;</string>
 
@@ -98,4 +100,6 @@
     <string name="button_unfriend_all">Unfriend all</string>
     <string name="user_removed_from_friends">%1$s removed from friends</string>
     <string name="user_added_to_friends">%1$s added to friends</string>
+    <string name="roster_subscription_request">%1$s added you as a friend. Do you want to add him/her too?</string>
+    <string name="connected">Connected</string>
 </resources>
