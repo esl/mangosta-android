@@ -448,7 +448,7 @@ public class XMPPSession {
                     BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
                     RealmManager.getInstance().saveBlogPost(blogPost);
 
-                    String commentsNode = PublishCommentExtension.NODE + id;
+                    String commentsNode = PublishCommentExtension.NODE + "/" + id;
                     ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
 
                     MangostaApplication.getInstance().getCurrentActivity().runOnUiThread(new Runnable() {
@@ -477,24 +477,35 @@ public class XMPPSession {
         ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(postsNode + "+notify");
         ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
 
-        try {
-            ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
-            configureForm.setPublishModel(PublishModel.open);
-            configureForm.setAccessModel(AccessModel.roster);
+        ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
+        configureForm.setPublishModel(PublishModel.open);
+        configureForm.setAccessModel(AccessModel.roster);
 
+        try {
             pubSubManager.createNode(postsNode, configureForm);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        try {
             pubSubManager.createNode(commentsNode, configureForm);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         String myJIDString = getUser().asEntityBareJid().toString();
+
         try {
-            Node node = pubSubManager.getNode(postsNode);
-            node.subscribe(myJIDString);
+            pubSubManager.getNode(postsNode).subscribe(myJIDString);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+//        try {
+//            pubSubManager.getNode(commentsNode).subscribe(myJIDString);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -1036,13 +1047,14 @@ public class XMPPSession {
     }
 
     public void createNodeToAllowComments(String blogPostId) {
-        String nodeName = PublishPostExtension.NODE + ":comments/" + blogPostId;
+        String nodeName = PublishCommentExtension.NODE + "/" + blogPostId;
+
         PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
         try {
             // create node
             ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
             configureForm.setPublishModel(PublishModel.open);
-            configureForm.setAccessModel(AccessModel.roster);
+            configureForm.setAccessModel(AccessModel.open);
             Node node = pubSubManager.createNode(nodeName, configureForm);
 
             // subscribe to comments
