@@ -46,15 +46,6 @@ public class LoginDialogFragment extends DialogFragment {
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
-    // TODO change this
-    private String mPassword = "6fsp2u9y";
-    private String mUserName = "ramabit";
-//    private String mUserName = "gardano";
-//    private String mUserName = "griveroa-inaka";
-
-//    private String mUserName = "test.user";
-//    private String mPassword = "9xpW9mmUenFgMjay";
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login_dialog, container, false);
@@ -62,10 +53,14 @@ public class LoginDialogFragment extends DialogFragment {
 
         toolbar.setTitle(getString(R.string.title_login));
 
-        loginUserNameEditText.setText(mUserName);
-        loginUserNameEditText.setSelection(mUserName.length());
+        String userName = "test.user";
+        String password = "9xpW9mmUenFgMjay";
+
+        loginUserNameEditText.setText(userName);
+        loginUserNameEditText.setSelection(userName.length());
         loginJidCompletionEditText.setText("@" + XMPPSession.SERVICE_NAME);
-        loginPasswordEditText.setText(mPassword);
+
+        loginPasswordEditText.setText(password);
         loginServerEditText.setText(XMPPSession.SERVER_NAME);
 
         loginButton.setOnClickListener(new View.OnClickListener() {

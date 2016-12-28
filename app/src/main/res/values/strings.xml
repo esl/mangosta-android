@@ -57,7 +57,6 @@
     <string name="user_doesnt_exist">User \'%1$s\' doesn\'t exist in Mangosta. Send invitation?</string>
     <string name="invite_to_mangosta">Invite to Mangosta</string>
     <string name="add_people_to_create_chat">You have to add people to create a chat.</string>
-    <string name="chat_with">Chat with %1$s</string>
     <string name="room_name">Room name</string>
     <string name="enter_room_name">Enter a name for the room</string>
     <string name="enter_room_name_hint">Enter room name here</string>
