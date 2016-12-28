@@ -39,6 +39,7 @@
     <string name="comment_created">Comment sent successfully</string>
 
     <string name="hint_edit_text">Enter text here</string>
+    <string name="hint_enter_comment">Enter comment here</string>
 
     <string name="error">ERROR</string>
     <string name="loading">Loading &#8230;</string>
