@@ -204,14 +204,14 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
             boolean messageByUser = chatMessage.getUserSender().equals(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()));
 
             if (messageByUser) {
-                paramsMargins.setMargins(0, 5, 15, 5);
+                paramsMargins.setMargins(5, 5, 25, 5);
                 messageLayout.setBackground(mContext.getResources().getDrawable(R.drawable.balloon_outgoing_normal));
                 paramsGravity.gravity = Gravity.END;
                 if (messageIsLastOneSentByMe(chatMessage) && isLastOne && TimeCalculation.wasMinutesAgoMax(chatMessage.getDate(), 20)) {
                     imageEditMessage.setVisibility(View.VISIBLE);
                 }
             } else {
-                paramsMargins.setMargins(15, 5, 0, 5);
+                paramsMargins.setMargins(25, 5, 5, 5);
                 messageLayout.setBackground(mContext.getResources().getDrawable(R.drawable.balloon_incoming_normal));
                 paramsGravity.gravity = Gravity.START;
             }
