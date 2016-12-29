@@ -118,6 +118,7 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
             chatsListsFragment.loadChats();
         }
     }
+
     public void reloadBlogPosts() {
         BlogsListFragment blogsListFragment = ((BlogsListFragment) mFragmentList[SOCIAL_MEDIA_FRAGMENT_POSITION]);
         if (blogsListFragment != null) {

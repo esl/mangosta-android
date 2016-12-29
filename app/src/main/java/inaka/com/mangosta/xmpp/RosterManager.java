@@ -1,20 +1,16 @@
 package inaka.com.mangosta.xmpp;
 
-import android.util.Log;
-
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
-import org.jivesoftware.smack.roster.RosterListener;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,26 +24,7 @@ public class RosterManager {
     public static RosterManager getInstance() {
         if (mInstance == null) {
             mInstance = new RosterManager();
-
-            Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-            roster.addRosterListener(new RosterListener() {
-                public void entriesDeleted(Collection<Jid> jids) {
-                }
-
-                public void entriesUpdated(Collection<Jid> jids) {
-                }
-
-                public void presenceChanged(Presence presence) {
-                    Log.e("presence from", presence.getFrom().toString());
-                    Log.e("presence mode", presence.getMode().toString());
-                    Log.e("presence type", presence.getType().toString());
-                }
-
-                public void entriesAdded(Collection<Jid> jids) {
-                }
-            });
         }
-
         return mInstance;
     }
 
@@ -55,7 +32,7 @@ public class RosterManager {
         mInstance = rosterManager;
     }
 
-    public void removeAllFriends()
+    public void removeAllContacts()
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException {
@@ -71,7 +48,7 @@ public class RosterManager {
         }
     }
 
-    public HashMap<Jid, Presence.Type> getBuddies()
+    public HashMap<Jid, Presence.Type> getContacts()
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
         Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
@@ -149,13 +126,13 @@ public class RosterManager {
         addToBuddies(XMPPUtils.fromUserNameToJID(user.getLogin()));
     }
 
-    public Presence.Type getStatusFromFriend(User user) {
-        return getStatusFromFriend(user.getLogin());
+    public Presence.Type getStatusFromContact(User user) {
+        return getStatusFromContact(user.getLogin());
     }
 
-    public Presence.Type getStatusFromFriend(String name) {
+    public Presence.Type getStatusFromContact(String name) {
         try {
-            HashMap<Jid, Presence.Type> buddies = getBuddies();
+            HashMap<Jid, Presence.Type> buddies = getContacts();
 
             for (Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
                 if (XMPPUtils.fromJIDToUserName(pair.getKey().toString()).equals(name)) {
@@ -170,10 +147,10 @@ public class RosterManager {
         return Presence.Type.unavailable;
     }
 
-    public boolean isFriend(Jid jid)
+    public boolean isContact(Jid jid)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
-        HashMap<Jid, Presence.Type> buddies = getBuddies();
+        HashMap<Jid, Presence.Type> buddies = getContacts();
         return buddies.containsKey(jid);
     }
 

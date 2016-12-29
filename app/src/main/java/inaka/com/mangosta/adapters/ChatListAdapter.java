@@ -127,7 +127,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
         private void assignConnectionStatusImage(Chat chat) {
             String userName = XMPPUtils.fromJIDToUserName(chat.getJid());
-            if (RosterManager.getInstance().getStatusFromFriend(userName).equals(Presence.Type.available)) {
+            if (RosterManager.getInstance().getStatusFromContact(userName).equals(Presence.Type.available)) {
                 connectionStatusImageView.setImageResource(R.mipmap.ic_connected);
             } else {
                 connectionStatusImageView.setImageResource(R.mipmap.ic_disconnected);

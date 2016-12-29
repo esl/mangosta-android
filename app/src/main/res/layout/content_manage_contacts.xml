@@ -6,14 +6,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:showIn="@layout/activity_block_users">
+    tools:context="inaka.com.mangosta.activities.ManageContactsActivity"
+    tools:showIn="@layout/activity_manage_contacts">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/colorAccent"
+        android:orientation="horizontal"
+        android:weightSum="1">
 
         <LinearLayout
-            android:id="@+id/blockSearchUserLayout"
+            android:id="@+id/manageContactsSearchUserLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/colorAccent"
@@ -24,7 +28,7 @@
             android:weightSum="1">
 
             <EditText
-                android:id="@+id/blockSearchUserEditText"
+                android:id="@+id/manageContactsSearchUserEditText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -35,13 +39,13 @@
                 android:layout_height="wrap_content">
 
                 <ImageButton
-                    android:id="@+id/blockSearchUserButton"
+                    android:id="@+id/manageContactsSearchUserButton"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:background="@android:drawable/ic_menu_search"/>
 
                 <ProgressBar
-                    android:id="@+id/blockSearchUserProgressBar"
+                    android:id="@+id/manageContactsSearchUserProgressBar"
                     style="?android:attr/progressBarStyle"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
@@ -52,17 +56,17 @@
         </LinearLayout>
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/blockSearchResultRecyclerView"
+            android:id="@+id/manageContactsSearchResultRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/blockSearchUserLayout"
+            android:layout_below="@id/manageContactsSearchUserLayout"
             android:padding="@dimen/activity_horizontal_margin"/>
 
         <LinearLayout
-            android:id="@+id/blockedUsersTitleLayout"
+            android:id="@+id/manageContactsUsersTitleLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/blockSearchResultRecyclerView"
+            android:layout_below="@id/manageContactsSearchResultRecyclerView"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:orientation="vertical">
@@ -70,7 +74,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/title_blocked_users"
+                android:text="@string/title_contacts"
                 android:textSize="20sp"/>
 
             <View
@@ -81,23 +85,23 @@
         </LinearLayout>
 
         <Button
-            android:id="@+id/blockedUsersUnblockAllButton"
+            android:id="@+id/manageContactsUsersRemoveAllContactsButton"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_below="@id/blockedUsersTitleLayout"
+            android:layout_below="@id/manageContactsUsersTitleLayout"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginTop="@dimen/activity_horizontal_margin"
             android:background="@color/red"
-            android:text="@string/button_unblock_all"
+            android:text="@string/button_remove_all_contacts"
             android:textColor="@color/complete_white"
             android:visibility="gone"/>
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/blockedUsersRecyclerView"
+            android:id="@+id/manageContactsUsersRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/blockedUsersUnblockAllButton"
+            android:layout_below="@id/manageContactsUsersRemoveAllContactsButton"
             android:paddingEnd="@dimen/activity_horizontal_margin"
             android:paddingStart="@dimen/activity_horizontal_margin"
             android:paddingTop="@dimen/activity_horizontal_margin"/>

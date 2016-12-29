@@ -51,7 +51,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
         // click to see hided menu items
         openActionBarOverflowOrOptionsMenu(getContext());
 
-        onView(withText(R.string.action_manage_friends))
+        onView(withText(R.string.action_manage_contacts))
                 .check(matches(isDisplayed()))
                 .check(matches(isEnabled()));
 
@@ -88,7 +88,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        onView(withText(R.string.action_manage_friends))
+        onView(withText(R.string.action_manage_contacts))
                 .check(matches(isDisplayed()))
                 .check(matches(isEnabled()))
                 .perform(click());
@@ -100,7 +100,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        onView(withText(R.string.action_manage_friends))
+        onView(withText(R.string.action_manage_contacts))
                 .check(matches(isDisplayed()));
     }
 

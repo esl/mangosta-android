@@ -193,8 +193,8 @@ public class BaseInstrumentedTest {
         try {
             doNothing().when(mRosterManagerMock).addToBuddies(any(User.class));
             doNothing().when(mRosterManagerMock).removeFromBuddies(any(User.class));
-            doReturn(new HashMap<>()).when(mRosterManagerMock).getBuddies();
-            doNothing().when(mRosterManagerMock).removeAllFriends();
+            doReturn(new HashMap<>()).when(mRosterManagerMock).getContacts();
+            doNothing().when(mRosterManagerMock).removeAllContacts();
         } catch (Exception e) {
             e.printStackTrace();
         }

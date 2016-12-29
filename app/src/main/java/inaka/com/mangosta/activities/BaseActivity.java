@@ -156,7 +156,7 @@ public class BaseActivity extends AppCompatActivity {
                     subscribed.setTo(jid);
                     XMPPSession.getInstance().sendStanza(subscribed);
 
-                    if (!RosterManager.getInstance().isFriend(jid)) {
+                    if (!RosterManager.getInstance().isContact(jid)) {
                         RosterManager.getInstance().addToBuddies(jid.toString());
                     }
                 } catch (Exception e) {
@@ -174,7 +174,7 @@ public class BaseActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    if (!RosterManager.getInstance().isFriend(jid)) {
+                    if (!RosterManager.getInstance().isContact(jid)) {
                         AlertDialog dialog = builder.show();
                         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
                         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));

@@ -11,58 +11,75 @@
     tools:context="inaka.com.mangosta.activities.BlogPostDetailsActivity"
     tools:showIn="@layout/activity_view_blog_post_details">
 
-    <RelativeLayout
+    <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryLight"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:weightSum="1">
 
         <LinearLayout
-            android:id="@+id/blogPostOwnerLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="5dp">
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:weightSum="1">
 
-            <TextView
-                android:id="@+id/textBlogPostOwnerName"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:background="@color/colorPrimaryLight"
+                android:orientation="vertical"
+                android:padding="10dp">
 
-            <TextView
-                android:id="@+id/textBlogPostDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:textColor="@color/white"
-                android:textSize="12sp"/>
+                <LinearLayout
+                    android:id="@+id/blogPostOwnerLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="5dp">
+
+                    <TextView
+                        android:id="@+id/textBlogPostOwnerName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/textBlogPostDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/textBlogPostTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/blogPostOwnerLayout"
+                    android:paddingEnd="5dp"
+                    android:paddingStart="5dp"
+                    android:textColor="@color/white"/>
+
+            </RelativeLayout>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerviewComments"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:paddingEnd="10dp"
+                android:paddingStart="10dp"
+                android:scrollbars="vertical"/>
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/textBlogPostTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/blogPostOwnerLayout"
-            android:paddingEnd="5dp"
-            android:paddingStart="5dp"
-            android:textColor="@color/white"/>
-
-    </RelativeLayout>
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recyclerviewComments"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="10dp"
-        android:layout_weight="1"
-        android:paddingEnd="10dp"
-        android:paddingStart="10dp"
-        android:scrollbars="vertical"/>
+    </android.support.v4.widget.NestedScrollView>
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -79,7 +96,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.9"
-            android:hint="@string/hint_edit_text"/>
+            android:hint="@string/hint_enter_comment"/>
 
         <ImageButton
             android:id="@+id/buttonSendComment"

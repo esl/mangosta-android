@@ -577,7 +577,7 @@ public class RoomManager {
         }).start();
     }
 
-    public void sendTextMessage(String messageId, String jid, String content, int chatType) {
+    public void sendTextMessage(String jid, String content, int chatType) {
         sendRestMessageDependingOnType(content, jid, chatType);
     }
 
@@ -702,10 +702,9 @@ public class RoomManager {
         return messageId;
     }
 
-
-    public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
+    public void loadRosterContactsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
         try {
-            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getContacts();
             for (Map.Entry pair : buddies.entrySet()) {
                 String userJid = pair.getKey().toString();
                 RoomsListManager.getInstance().createChatIfNotExists(userJid, true);

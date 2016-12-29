@@ -11,7 +11,7 @@ public class PublishCommentExtension implements ExtensionElement {
 
     public static final String ELEMENT = "publish";
 
-    public static final String NODE = "urn:xmpp:microblog:0:comments/";
+    public static final String NODE = "urn:xmpp:microblog:0:comments";
 
     private String blogPostId;
     private String id;
@@ -90,7 +90,7 @@ public class PublishCommentExtension implements ExtensionElement {
     @Override
     public CharSequence toXML() {
         XmlStringBuilder xml = new XmlStringBuilder(this);
-        xml.attribute("node", NODE + blogPostId);
+        xml.attribute("node", NODE + "/" + blogPostId);
         xml.rightAngleBracket();
 
         xml.halfOpenElement("item");

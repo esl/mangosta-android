@@ -115,8 +115,8 @@ public class MainMenuActivity extends BaseActivity {
                 return true;
             }
 
-            case R.id.actionManageFriends: {
-                Intent intent = new Intent(MainMenuActivity.this, ManageFriendsActivity.class);
+            case R.id.actionManageContacts: {
+                Intent intent = new Intent(MainMenuActivity.this, ManageContactsActivity.class);
                 MainMenuActivity.this.startActivity(intent);
                 return true;
             }
@@ -151,7 +151,7 @@ public class MainMenuActivity extends BaseActivity {
             case GO_BACK_FROM_CHAT:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
                 break;
-            case FRIENDS_CHANGED:
+            case CONTACTS_CHANGED:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:

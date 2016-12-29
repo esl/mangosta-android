@@ -18,12 +18,12 @@
         android:title="@string/action_change_room_subject"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/actionAddToFriends"
-        android:title="@string/action_add_to_friends"
+        android:id="@+id/actionAddToContacts"
+        android:title="@string/action_add_to_contacts"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/actionRemoveFromFriends"
-        android:title="@string/action_remove_from_friends"
+        android:id="@+id/actionRemoveFromContacts"
+        android:title="@string/action_remove_from_contacts"
         app:showAsAction="never"/>
     <item
         android:id="@+id/actionLeaveChat"
