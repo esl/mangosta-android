@@ -31,11 +31,11 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
 
-public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest {
+public class ManageContactsActivityInstrumentedTest extends BaseInstrumentedTest {
 
     @Rule
     public ActivityTestRule mActivityTestRule =
-            new ActivityTestRule<>(ManageFriendsActivity.class, true, false);
+            new ActivityTestRule<>(ManageContactsActivity.class, true, false);
 
     private HashMap<Jid, Presence.Type> mFriends;
 
@@ -56,7 +56,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
     }
 
     private void launchActivity() {
-        Intent intent = new Intent(getContext(), ManageFriendsActivity.class);
+        Intent intent = new Intent(getContext(), ManageContactsActivity.class);
         mActivityTestRule.launchActivity(intent);
     }
 
@@ -66,7 +66,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
             mFriends.put(JidCreate.from("friend1@sarasa.com"), Presence.Type.fromString("available"));
             mFriends.put(JidCreate.from("friend2@sarasa.com"), Presence.Type.fromString("available"));
             mFriends.put(JidCreate.from("friend3@sarasa.com"), Presence.Type.fromString("available"));
-            doReturn(mFriends).when(mRosterManagerMock).getBuddies();
+            doReturn(mFriends).when(mRosterManagerMock).getContacts();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -74,24 +74,24 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
 
     private int getSearchedUsersCount() {
         RecyclerView searchResultsRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.manageFriendsSearchResultRecyclerView);
+                (RecyclerView) getCurrentActivity().findViewById(R.id.manageContactsSearchResultRecyclerView);
         return searchResultsRecyclerView.getAdapter().getItemCount();
     }
 
     private int getFriendsCount() {
         RecyclerView friendsRecyclerView =
-                (RecyclerView) getCurrentActivity().findViewById(R.id.manageFriendsUsersRecyclerView);
+                (RecyclerView) getCurrentActivity().findViewById(R.id.manageContactsUsersRecyclerView);
         return friendsRecyclerView.getAdapter().getItemCount();
     }
 
     @Test
     public void searchUserNotFound() throws Exception {
-        onView(withId(R.id.manageFriendsSearchUserEditText))
+        onView(withId(R.id.manageContactsSearchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(typeText("sarasaFalse"));
 
-        onView(withId(R.id.manageFriendsSearchUserButton))
+        onView(withId(R.id.manageContactsSearchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -106,12 +106,12 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
 
     @Test
     public void searchUserFound() throws Exception {
-        onView(withId(R.id.manageFriendsSearchUserEditText))
+        onView(withId(R.id.manageContactsSearchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(typeText("sarasaTrue"));
 
-        onView(withId(R.id.manageFriendsSearchUserButton))
+        onView(withId(R.id.manageContactsSearchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -121,12 +121,12 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
 
     @Test
     public void searchUserAndMakeItAFriend() throws Exception {
-        onView(withId(R.id.manageFriendsSearchUserEditText))
+        onView(withId(R.id.manageContactsSearchUserEditText))
                 .check(matches(isDisplayed()))
                 .check(matches(isFocusable()))
                 .perform(typeText("sarasaTrue"));
 
-        onView(withId(R.id.manageFriendsSearchUserButton))
+        onView(withId(R.id.manageContactsSearchUserButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
@@ -142,7 +142,7 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
 
     @Test
     public void unfriendUser() throws Exception {
-        onView(atPositionOnRecyclerView(R.id.manageFriendsUsersRecyclerView, 0, R.id.removeUserButton))
+        onView(atPositionOnRecyclerView(R.id.manageContactsUsersRecyclerView, 0, R.id.removeUserButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
         assertEquals(mFriends.size() - 1, getFriendsCount());
@@ -150,14 +150,14 @@ public class ManageFriendsActivityInstrumentedTest extends BaseInstrumentedTest 
 
     @Test
     public void unfriendAll() throws Exception {
-        onView(withId(R.id.manageFriendsUsersUnfriendAllButton))
+        onView(withId(R.id.manageContactsUsersRemoveAllContactsButton))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .perform(click());
 
         assertEquals(0, getFriendsCount());
 
-        onView(withId(R.id.manageFriendsUsersUnfriendAllButton))
+        onView(withId(R.id.manageContactsUsersRemoveAllContactsButton))
                 .check(matches(not(isDisplayed())));
     }
 

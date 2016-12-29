@@ -133,7 +133,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
                 }
             });
 
-            if (RosterManager.getInstance().getStatusFromFriend(user).equals(Presence.Type.available)) {
+            if (RosterManager.getInstance().getStatusFromContact(user).equals(Presence.Type.available)) {
                 imageConnectionStatus.setImageResource(R.mipmap.ic_connected);
             } else {
                 imageConnectionStatus.setImageResource(R.mipmap.ic_disconnected);

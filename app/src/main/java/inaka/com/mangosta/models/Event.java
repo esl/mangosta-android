@@ -8,7 +8,7 @@ public class Event {
         ROOMS_LOADED,
         STICKER_SENT,
         GO_BACK_FROM_CHAT,
-        FRIENDS_CHANGED,
+        CONTACTS_CHANGED,
         BLOG_POST_CREATED,
         PRESENCE_RECEIVED,
         PRESENCE_SUBSCRIPTION_REQUEST

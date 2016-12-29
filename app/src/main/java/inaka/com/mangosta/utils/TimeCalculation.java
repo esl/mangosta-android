@@ -19,7 +19,7 @@ public class TimeCalculation {
         DateTime postDate = new DateTime(date, DateTimeZone.getDefault());
         return getTimeStringAgoSinceDateTime(context, postDate);
     }
-    
+
     private static String getTimeStringAgoSinceDateTime(Context context, DateTime dateTime) {
         DateTime now = new DateTime(DateTimeZone.getDefault());
         Period period = new Period(dateTime, now);

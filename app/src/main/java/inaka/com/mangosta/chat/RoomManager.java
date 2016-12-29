@@ -30,7 +30,6 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,7 +149,7 @@ public class RoomManager {
                 Jid jid = JidCreate.from(chatJid);
                 MamManager.MamQueryResult mamQueryResult;
                 if (chat == null || chat.getLastRetrievedFromMAM() == null) {
-                    mamQueryResult = mamManager.queryArchive(pageSize, null, new Date(), jid, null);
+                    mamQueryResult = mamManager.mostRecentPage(jid, pageSize);
                 } else {
                     mamQueryResult = mamManager.pageBefore(jid, chat.getLastRetrievedFromMAM(), pageSize);
                 }
@@ -347,9 +346,9 @@ public class RoomManager {
         }
     }
 
-    public void loadRosterFriendsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
+    public void loadRosterContactsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
         try {
-            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getBuddies();
+            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getContacts();
             for (Map.Entry pair : buddies.entrySet()) {
                 String userJid = pair.getKey().toString();
                 RoomsListManager.getInstance().createChatIfNotExists(userJid, true);

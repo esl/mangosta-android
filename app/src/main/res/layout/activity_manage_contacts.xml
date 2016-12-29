@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="inaka.com.mangosta.activities.ManageFriendsActivity">
+    tools:context="inaka.com.mangosta.activities.ManageContactsActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -22,6 +22,6 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_manage_friends"/>
+    <include layout="@layout/content_manage_contacts"/>
 
 </android.support.design.widget.CoordinatorLayout>
