@@ -261,7 +261,7 @@ public class CreateChatActivity extends BaseActivity {
         } else if (memberUsers.size() == 1) {   // 1 to 1 chat
             String chatJid = XMPPUtils.fromUserNameToJID(memberUsers.get(0).getLogin());
             RoomsListManager.getInstance().createCommonChat(chatJid);
-            NavigateToChat.go(chatJid, String.format(Locale.getDefault(), getString(R.string.chat_with), XMPPUtils.fromJIDToUserName(chatJid)), this);
+            NavigateToChat.go(chatJid, XMPPUtils.fromJIDToUserName(chatJid), this);
 
         } else {    // muc or muc light
             showRoomNameDialog(memberUsers);

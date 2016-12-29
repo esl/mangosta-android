@@ -145,6 +145,9 @@ public class XMPPSession {
     private ReconnectionManager mReconnectionManager;
 
     private HashMap<Message, Date> lastCorrectionMessages = new HashMap<>();
+
+    private static final Object LOCK_MESSAGES_TO_DELETE_IDS_LIST = new Object() {
+    };
     private List<String> messagesToDeleteIds = new ArrayList<>();
 
     private boolean connectionDoneOnce = false;
@@ -257,7 +260,9 @@ public class XMPPSession {
 
                     // error
                     if (message.getType() == Message.Type.error) {
-                        messagesToDeleteIds.add(message.getStanzaId());
+                        synchronized (LOCK_MESSAGES_TO_DELETE_IDS_LIST) {
+                            messagesToDeleteIds.add(message.getStanzaId());
+                        }
 
                         // if not a chat state
                     } else if (!message.hasExtension(ChatStateExtension.NAMESPACE) || message.getBody() != null) {
@@ -1001,14 +1006,13 @@ public class XMPPSession {
         }
     }
 
-    public synchronized int deleteMessagesToDelete() {
-        int count = 0;
-        for (String messageId : messagesToDeleteIds) {
-            RealmManager.getInstance().deleteMessage(messageId);
-            count++;
+    public void deleteMessagesToDelete() {
+        synchronized (LOCK_MESSAGES_TO_DELETE_IDS_LIST) {
+            for (String messageId : messagesToDeleteIds) {
+                RealmManager.getInstance().deleteMessage(messageId);
+            }
+            messagesToDeleteIds.clear();
         }
-        messagesToDeleteIds.clear();
-        return count;
     }
 
     private boolean hasConfigurationChangeExtension(Message message) {

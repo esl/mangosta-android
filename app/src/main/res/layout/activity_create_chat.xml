@@ -23,89 +23,95 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <RelativeLayout
-        android:layout_width="wrap_content"
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
-            android:id="@+id/createChatSearchUserLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorAccent"
-            android:orientation="horizontal"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
-            android:paddingStart="@dimen/activity_horizontal_margin"
-            android:paddingTop="@dimen/activity_horizontal_margin"
-            android:weightSum="1">
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/searchUserEditText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="@string/search_user_hint"/>
-
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <ImageButton
-                    android:id="@+id/searchUserButton"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="@android:drawable/ic_menu_search"/>
-
-                <ProgressBar
-                    android:id="@+id/searchUserProgressBar"
-                    style="?android:attr/progressBarStyle"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:visibility="gone"/>
-
-            </FrameLayout>
-
-        </LinearLayout>
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/searchResultRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/createChatSearchUserLayout"
-            android:padding="@dimen/activity_horizontal_margin"/>
-
-        <LinearLayout
-            android:id="@+id/createChatMembersTitleLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/searchResultRecyclerView"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/title_chat_members"
-                android:textSize="20sp"/>
-
-            <View
+            <LinearLayout
+                android:id="@+id/createChatSearchUserLayout"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/half_black"/>
+                android:layout_height="wrap_content"
+                android:background="@color/colorAccent"
+                android:orientation="horizontal"
+                android:paddingEnd="@dimen/activity_horizontal_margin"
+                android:paddingStart="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_horizontal_margin"
+                android:weightSum="1">
 
-        </LinearLayout>
+                <EditText
+                    android:id="@+id/searchUserEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/search_user_hint"/>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/membersRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/createChatMembersTitleLayout"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
-            android:paddingStart="@dimen/activity_horizontal_margin"
-            android:paddingTop="@dimen/activity_horizontal_margin"/>
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
 
-    </RelativeLayout>
+                    <ImageButton
+                        android:id="@+id/searchUserButton"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@android:drawable/ic_menu_search"/>
+
+                    <ProgressBar
+                        android:id="@+id/searchUserProgressBar"
+                        style="?android:attr/progressBarStyle"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:visibility="gone"/>
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/searchResultRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/createChatSearchUserLayout"
+                android:padding="@dimen/activity_horizontal_margin"/>
+
+            <LinearLayout
+                android:id="@+id/createChatMembersTitleLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/searchResultRecyclerView"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_chat_members"
+                    android:textSize="20sp"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/half_black"/>
+
+            </LinearLayout>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/membersRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/createChatMembersTitleLayout"
+                android:paddingEnd="@dimen/activity_horizontal_margin"
+                android:paddingStart="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_horizontal_margin"/>
+
+        </RelativeLayout>
+
+    </android.support.v4.widget.NestedScrollView>
 
     <com.getbase.floatingactionbutton.FloatingActionButton
         android:id="@+id/continueFloatingButton"

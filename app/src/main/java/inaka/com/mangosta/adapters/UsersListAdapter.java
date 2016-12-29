@@ -145,7 +145,8 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
 
     private static boolean isAuthorizedXMPPUser(User user) {
         EntityBareJid userJid = XMPPSession.getInstance().getUser();
-        return userJid != null && user.getLogin().equals(XMPPUtils.fromJIDToUserName(userJid.toString()));
+        String userName = user.getLogin();
+        return userJid != null && userName != null && userName.equals(XMPPUtils.fromJIDToUserName(userJid.toString()));
     }
 
     public static class ProgressViewHolder extends UsersListAdapter.ViewHolder {
