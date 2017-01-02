@@ -652,11 +652,11 @@ public class XMPPSession {
             preferences.setUserXMPPJid(XMPPUtils.fromUserNameToJID(userName));
             preferences.setUserXMPPPassword(password);
 
-            mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
             sendPresenceAvailable();
+            mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
         } catch (SmackException.AlreadyLoggedInException ale) {
-            mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
             sendPresenceAvailable();
+            mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Authenticated));
         }
 
     }
@@ -759,11 +759,9 @@ public class XMPPSession {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Presence presence = new Presence(Presence.Type.available);
-                    presence.setMode(Presence.Mode.available);
-
                     try {
-                        presence.setTo(JidCreate.from(SERVICE_NAME));
+                        Presence presence = new Presence(JidCreate.from(SERVICE_NAME), Presence.Type.available);
+                        presence.setMode(Presence.Mode.available);
                         sendStanza(presence);
                     } catch (Exception e) {
                         e.printStackTrace();

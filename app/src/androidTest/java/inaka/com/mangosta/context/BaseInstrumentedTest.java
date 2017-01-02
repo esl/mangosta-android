@@ -8,6 +8,7 @@ import android.support.test.espresso.IdlingResource;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jxmpp.jid.EntityBareJid;
@@ -136,6 +137,7 @@ public class BaseInstrumentedTest {
                 .when(mRealmManagerMock)
                 .getMessagesForChat(any(Realm.class), any(String.class));
         doNothing().when(mRealmManagerMock).deleteAll();
+        doNothing().when(mRealmManagerMock).deleteMessage(any(String.class));
 
         RealmManager.setSpecialInstanceForTesting(mRealmManagerMock);
     }
@@ -185,6 +187,8 @@ public class BaseInstrumentedTest {
             doNothing().when(mRosterManagerMock).removeFromBuddies(any(User.class));
             doReturn(new HashMap<>()).when(mRosterManagerMock).getContacts();
             doNothing().when(mRosterManagerMock).removeAllContacts();
+            doReturn(Presence.Type.unavailable).when(mRosterManagerMock).getStatusFromContact(any(User.class));
+            doReturn(Presence.Type.unavailable).when(mRosterManagerMock).getStatusFromContact(any(String.class));
         } catch (Exception e) {
             e.printStackTrace();
         }

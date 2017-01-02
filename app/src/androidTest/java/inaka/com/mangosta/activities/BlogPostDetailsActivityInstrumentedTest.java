@@ -132,7 +132,6 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         "comment1",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
-                        null,
                         new Date());
 
         BlogPostComment comment2 =
@@ -141,7 +140,6 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         "comment2",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
-                        null,
                         new Date());
 
         BlogPostComment comment3 =
@@ -150,7 +148,6 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         "comment3",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
-                        null,
                         new Date());
 
         BlogPostComment comment4 =
@@ -159,7 +156,6 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         "comment4",
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
-                        null,
                         new Date());
 
         mBlogPostComments.add(comment1);
@@ -201,7 +197,6 @@ public class BlogPostDetailsActivityInstrumentedTest extends BaseInstrumentedTes
                         commentText,
                         XMPPUtils.fromJIDToUserName(mBlogPost.getOwnerJid()),
                         mBlogPost.getOwnerJid(),
-                        null,
                         new Date()));
         mBlogPostCommentsContent.add(commentText);
         when(mRealmManagerMock.getBlogPostComments(mBlogPost.getId())).thenReturn(mBlogPostComments);

@@ -83,7 +83,7 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
     }
 
     @Test
-    public void goToManageFriendsWithMenuItem() throws Exception {
+    public void goToManageContactsWithMenuItem() throws Exception {
         assumeTrue(isUserLoggedIn());
 
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
@@ -93,15 +93,10 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isEnabled()))
                 .perform(click());
 
-        onView(withId(R.id.manageFriendsSearchUserLayout))
+        onView(withId(R.id.manageContactsSearchUserLayout))
                 .check(matches(isDisplayed()));
 
         pressBack();
-
-        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
-
-        onView(withText(R.string.action_manage_contacts))
-                .check(matches(isDisplayed()));
     }
 
     @Test
@@ -117,11 +112,6 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isDisplayed()));
 
         pressBack();
-
-        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
-
-        onView(withText(R.string.action_block_users))
-                .check(matches(isDisplayed()));
     }
 
     @Test
