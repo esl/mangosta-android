@@ -35,7 +35,7 @@ public class MangostaApplication extends Application {
     }
 
     public void moveToBackground() {
-        XMPPSession.getInstance().logoff();
+//        XMPPSession.getInstance().logoff();
         XMPPSession.startService(this);
         mIsInBackground = true;
     }

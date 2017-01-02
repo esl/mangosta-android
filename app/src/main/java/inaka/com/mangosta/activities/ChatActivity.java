@@ -496,7 +496,15 @@ public class ChatActivity extends BaseActivity {
             case android.R.id.home:
                 mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-                finish();
+
+                if (mSessionDepth == 1) {
+                    Intent intent = new Intent(this, MainMenuActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                } else {
+                    finish();
+                }
+
                 EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
                 break;
 
