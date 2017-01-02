@@ -11,6 +11,31 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <receiver
+            android:name=".services.BroadcastBoot"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.HOME"/>
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED"/>
+                <action android:name="android.net.wifi.STATE_CHANGE"/>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".services.XMPPSessionService"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/service_xmpp_session"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.nanoscopia.services.XMPPSessionService"/>
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".activities.BaseActivity"
             android:label="@string/app_name"

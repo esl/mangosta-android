@@ -1,5 +1,7 @@
 package inaka.com.mangosta.xmpp;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -106,7 +108,9 @@ import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
@@ -384,6 +388,18 @@ public class XMPPSession {
         if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
             backgroundLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
         }
+    }
+
+    public static void startService(Context context) {
+        Intent serviceIntent = new Intent(context, XMPPSessionService.class);
+        serviceIntent.setPackage("com.nanoscopia.services");
+        context.startService(serviceIntent);
+    }
+
+    public static void stopService(Context context) {
+        Intent serviceIntent = new Intent(context, XMPPSessionService.class);
+        serviceIntent.setPackage("com.nanoscopia.services");
+        context.stopService(serviceIntent);
     }
 
     /**
@@ -798,6 +814,7 @@ public class XMPPSession {
 
         } else { // normal message received
             manageMessageReceived(message, null, messageId);
+            MessageNotifications.chatMessageNotification(messageId);
         }
     }
 
