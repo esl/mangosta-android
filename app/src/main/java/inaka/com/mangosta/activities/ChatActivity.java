@@ -66,6 +66,7 @@ import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
@@ -279,6 +280,8 @@ public class ChatActivity extends BaseActivity {
                 loadMoreMessages(recyclerView, dy);
             }
         });
+
+        MessageNotifications.cancelChatNotifications(this, mChatJID);
     }
 
     private void loadMoreMessages(RecyclerView recyclerView, int dy) {

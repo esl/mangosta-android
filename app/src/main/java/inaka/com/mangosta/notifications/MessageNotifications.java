@@ -16,6 +16,7 @@ import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
+import inaka.com.mangosta.utils.MangostaApplication;
 
 public class MessageNotifications {
 
@@ -24,33 +25,23 @@ public class MessageNotifications {
     public final static int CHAT_MESSAGE_NOTIFICATION = 7000001;
 
     public static void chatMessageNotification(String messageId) {
+        // show notification only if the app is closed
+        if (MangostaApplication.getInstance().getCurrentActivity() != null) {
+            return;
+        }
+
         Context context = XMPPSessionService.CONTEXT;
 
         ChatMessage chatMessage = RealmManager.getInstance().getChatMessage(messageId);
         String chatJid = chatMessage.getRoomJid();
 
-        Integer count = mChatMessageCounters.get(chatJid);
-        if (count == null) {
-            count = 0;
-        }
-        count++;
-        mChatMessageCounters.put(chatJid, count);
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Integer count = updateMessageCounters(chatJid);
 
         Chat chat = RealmManager.getInstance().getChat(chatJid);
         String chatName = chat.getName();
         String text = String.format(Locale.getDefault(), context.getString(R.string.chat_message_notification), count);
 
-        Intent intent = new Intent(context, ChatActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        Bundle bundle = new Bundle();
-        bundle.putString(ChatActivity.CHAT_JID_PARAMETER, chatJid);
-        bundle.putString(ChatActivity.CHAT_NAME_PARAMETER, chatName);
-        bundle.putBoolean(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
-        intent.putExtras(bundle);
-        PendingIntent chatPendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent chatPendingIntent = preparePendingIntent(context, chatJid, chatName);
 
         Notification.Builder mNotifyBuilder = new Notification.Builder(context)
                 .setContentTitle(chatName)
@@ -59,7 +50,30 @@ public class MessageNotifications {
                 .setContentIntent(chatPendingIntent)
                 .setAutoCancel(true);
 
+        NotificationManager mNotificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(CHAT_MESSAGE_NOTIFICATION, mNotifyBuilder.build());
+    }
+
+    private static Integer updateMessageCounters(String chatJid) {
+        Integer count = mChatMessageCounters.get(chatJid);
+        if (count == null) {
+            count = 0;
+        }
+        count++;
+        mChatMessageCounters.put(chatJid, count);
+        return count;
+    }
+
+    private static PendingIntent preparePendingIntent(Context context, String chatJid, String chatName) {
+        Intent intent = new Intent(context, ChatActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Bundle bundle = new Bundle();
+        bundle.putString(ChatActivity.CHAT_JID_PARAMETER, chatJid);
+        bundle.putString(ChatActivity.CHAT_NAME_PARAMETER, chatName);
+        bundle.putBoolean(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
+        intent.putExtras(bundle);
+        return PendingIntent.getActivity(context, 0, intent, 0);
     }
 
     public static void cancelChatNotifications(Context context, String chatJid) {
