@@ -189,21 +189,8 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     private void changeChatsList() {
-        boolean deletedGroupChat = deletedChat(mGroupChats);
-        if (deletedGroupChat) {
-            mGroupChats.clear();
-            mGroupChats.addAll(RealmManager.getInstance().getMUCLights());
-        } else {
-            refineChatsList(mGroupChats, RealmManager.getInstance().getMUCLights());
-        }
-
-        boolean deletedOneToOneChat = deletedChat(mOneToOneChats);
-        if (deletedOneToOneChat) {
-            mOneToOneChats.clear();
-            mOneToOneChats.addAll(RealmManager.getInstance().get1to1Chats());
-        } else {
-            refineChatsList(mOneToOneChats, RealmManager.getInstance().get1to1Chats());
-        }
+        updateChatsList(mGroupChats, RealmManager.getInstance().getMUCLights());
+        updateChatsList(mOneToOneChats, RealmManager.getInstance().get1to1Chats());
 
         Collections.sort(mGroupChats, new ChatOrderComparator());
         Collections.sort(mOneToOneChats, new ChatOrderComparator());
@@ -221,6 +208,16 @@ public class ChatsListsFragment extends BaseFragment {
 
         if (chatsLoading != null) {
             chatsLoading.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateChatsList(List<Chat> chatsList, List<Chat> updaterList) {
+        boolean deletedOneToOneChat = deletedChat(chatsList);
+        if (deletedOneToOneChat) {
+            chatsList.clear();
+            chatsList.addAll(updaterList);
+        } else {
+            refineChatsList(chatsList, updaterList);
         }
     }
 
