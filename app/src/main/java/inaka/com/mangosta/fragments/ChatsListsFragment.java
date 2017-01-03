@@ -236,11 +236,6 @@ public class ChatsListsFragment extends BaseFragment {
                 list.add(chat);
             }
         }
-        for (Chat chat : list) {
-            if (chat.isValid() && !refiner.contains(chat)) {
-                list.remove(chat);
-            }
-        }
     }
 
     private void loadChatsAfterRoomLeft() {
