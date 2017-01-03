@@ -903,6 +903,7 @@ public class ChatActivity extends BaseActivity {
                 chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
             }
         }
+        cancelMessageNotificationsForChat();
     }
 
     private boolean isMessagesListScrolledToBottom() {
