@@ -281,7 +281,14 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
+        cancelMessageNotificationsForChat();
+    }
+
+    private void cancelMessageNotificationsForChat() {
         MessageNotifications.cancelChatNotifications(this, mChatJID);
+        getRealm().beginTransaction();
+        mChat.resetUnreadMessageCount();
+        getRealm().commitTransaction();
     }
 
     private void loadMoreMessages(RecyclerView recyclerView, int dy) {

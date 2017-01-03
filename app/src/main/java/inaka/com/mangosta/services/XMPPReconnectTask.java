@@ -5,6 +5,7 @@ import android.content.Context;
 import java.util.TimerTask;
 
 import inaka.com.mangosta.utils.MangostaApplication;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 
 public class XMPPReconnectTask extends TimerTask {
@@ -20,8 +21,18 @@ public class XMPPReconnectTask extends TimerTask {
     @Override
     public void run() {
         synchronized (LOCK_1) {
+            // if app is closed
             if (MangostaApplication.getInstance().getCurrentActivity() == null) {
-                XMPPSession.getInstance().backgroundRelogin();
+
+                Preferences preferences = Preferences.getInstance();
+
+                // if user logged in
+                if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+                    XMPPSession.getInstance().backgroundRelogin();
+                } else {
+                    XMPPSession.getInstance().getXMPPConnection().disconnect();
+                }
+
             }
         }
     }

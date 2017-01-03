@@ -1,25 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:layout_marginBottom="1dp"
-              android:layout_marginEnd="1dp"
-              android:layout_marginStart="1dp"
-              android:background="@color/background_chat"
-              android:orientation="horizontal"
-              android:padding="5dp">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="1dp"
+    android:layout_marginEnd="1dp"
+    android:layout_marginStart="1dp"
+    android:background="@color/background_chat"
+    android:orientation="horizontal"
+    android:padding="5dp"
+    android:weightSum="1">
 
     <ImageView
         android:id="@+id/chatImageView"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center_vertical"
-        android:layout_marginEnd="5dp"
         android:src="@mipmap/ic_user"/>
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:layout_marginStart="5dp"
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/chatNameTextView"
@@ -48,5 +52,16 @@
             android:src="@mipmap/ic_disconnected"/>
 
     </RelativeLayout>
+
+    <TextView
+        android:id="@+id/unreadMessageIndicatorTextView"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/notification_background"
+        android:gravity="center"
+        android:text="1"
+        android:textColor="@color/complete_white"
+        android:textStyle="bold"/>
 
 </LinearLayout>

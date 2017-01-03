@@ -10,10 +10,12 @@ import android.os.Bundle;
 import java.util.HashMap;
 import java.util.Locale;
 
+import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.ChatActivity;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
@@ -22,16 +24,14 @@ public class MessageNotifications {
 
     private static HashMap<String, Integer> mChatMessageCounters = new HashMap<>();
 
-    public final static int CHAT_MESSAGE_NOTIFICATION = 7000001;
-
     public static void chatMessageNotification(String messageId) {
         // show notification only if the app is closed
         if (MangostaApplication.getInstance().getCurrentActivity() != null) {
+            EventBus.getDefault().post(new Event(Event.Type.REFRESH_UNREAD_MESSAGES_COUNT));
             return;
         }
 
         Context context = XMPPSessionService.CONTEXT;
-
         ChatMessage chatMessage = RealmManager.getInstance().getChatMessage(messageId);
         String chatJid = chatMessage.getRoomJid();
 
@@ -39,7 +39,7 @@ public class MessageNotifications {
 
         Chat chat = RealmManager.getInstance().getChat(chatJid);
         String chatName = chat.getName();
-        String text = String.format(Locale.getDefault(), context.getString(R.string.chat_message_notification), count);
+        String text = String.format(Locale.getDefault(), context.getResources().getQuantityString(R.plurals.chat_message_notification, count), count);
 
         PendingIntent chatPendingIntent = preparePendingIntent(context, chatJid, chatName);
 
@@ -52,7 +52,7 @@ public class MessageNotifications {
 
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(CHAT_MESSAGE_NOTIFICATION, mNotifyBuilder.build());
+        mNotificationManager.notify(chatJid, NotificationsControl.CHAT_MESSAGE_NOTIFICATION, mNotifyBuilder.build());
     }
 
     private static Integer updateMessageCounters(String chatJid) {
@@ -77,7 +77,7 @@ public class MessageNotifications {
     }
 
     public static void cancelChatNotifications(Context context, String chatJid) {
-        NotificationsControl.cancelNotifications(context, chatJid, CHAT_MESSAGE_NOTIFICATION);
+        NotificationsControl.cancelNotifications(context, chatJid, NotificationsControl.CHAT_MESSAGE_NOTIFICATION);
         mChatMessageCounters.put(chatJid, 0);
     }
 

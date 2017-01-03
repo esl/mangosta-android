@@ -76,6 +76,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         @Bind(R.id.connectionStatusImageView)
         ImageView connectionStatusImageView;
 
+        @Bind(R.id.unreadMessageIndicatorTextView)
+        TextView unreadMessageIndicatorTextView;
+
         private Context mContext;
         private View mView;
         private ChatClickListener mChatClickListener;
@@ -123,6 +126,21 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                 }
             });
 
+            manageUnreadMessagesCount(chat);
+        }
+
+        private void manageUnreadMessagesCount(Chat chat) {
+            int unreadMessagesCount = chat.getUnreadMessagesCount();
+            if (unreadMessagesCount == 0) {
+                unreadMessageIndicatorTextView.setVisibility(View.GONE);
+            } else {
+                unreadMessageIndicatorTextView.setVisibility(View.VISIBLE);
+                if (unreadMessagesCount > 99) {
+                    unreadMessageIndicatorTextView.setText("+99");
+                } else {
+                    unreadMessageIndicatorTextView.setText(String.valueOf(unreadMessagesCount));
+                }
+            }
         }
 
         private void assignConnectionStatusImage(Chat chat) {

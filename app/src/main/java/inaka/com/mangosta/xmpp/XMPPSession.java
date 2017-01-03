@@ -797,7 +797,7 @@ public class XMPPSession {
                 saveMessageCorrection(message, delayDate);
             } else { // normal message received
                 if (!RealmManager.getInstance().chatMessageExists(messageId)) {
-                    manageMessageReceived(message, delayDate, messageId);
+                    manageMessageReceived(message, delayDate, messageId, true);
                 }
             }
         }
@@ -813,7 +813,7 @@ public class XMPPSession {
             manageMessageCorrection(message, null);
 
         } else { // normal message received
-            manageMessageReceived(message, null, messageId);
+            manageMessageReceived(message, null, messageId, false);
             MessageNotifications.chatMessageNotification(messageId);
         }
     }
@@ -855,7 +855,7 @@ public class XMPPSession {
         realm.close();
     }
 
-    private void manageMessageReceived(Message message, Date delayDate, String messageId) {
+    private void manageMessageReceived(Message message, Date delayDate, String messageId, boolean fromMam) {
         String[] jidList = message.getFrom().toString().split("/");
 
         ChatMessage chatMessage = new ChatMessage();
@@ -898,6 +898,10 @@ public class XMPPSession {
         Realm realm = RealmManager.getInstance().getRealm();
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
+
+        if (!fromMam) {
+            chatRoom.addUnreadMessage();
+        }
 
         // room name or subject change
         manageConfigurationsChange(message, chatMessage, chatRoom);

@@ -11,7 +11,8 @@ public class Event {
         CONTACTS_CHANGED,
         BLOG_POST_CREATED,
         PRESENCE_RECEIVED,
-        PRESENCE_SUBSCRIPTION_REQUEST
+        PRESENCE_SUBSCRIPTION_REQUEST,
+        REFRESH_UNREAD_MESSAGES_COUNT
     }
 
     private Type mType;
