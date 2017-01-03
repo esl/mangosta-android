@@ -189,11 +189,21 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     private void changeChatsList() {
-        mGroupChats.clear();
-        mOneToOneChats.clear();
+        boolean deletedGroupChat = deletedChat(mGroupChats);
+        if (deletedGroupChat) {
+            mGroupChats.clear();
+            mGroupChats.addAll(RealmManager.getInstance().getMUCLights());
+        } else {
+            refineChatsList(mGroupChats, RealmManager.getInstance().getMUCLights());
+        }
 
-        mGroupChats.addAll(RealmManager.getInstance().getMUCLights());
-        mOneToOneChats.addAll(RealmManager.getInstance().get1to1Chats());
+        boolean deletedOneToOneChat = deletedChat(mOneToOneChats);
+        if (deletedOneToOneChat) {
+            mOneToOneChats.clear();
+            mOneToOneChats.addAll(RealmManager.getInstance().get1to1Chats());
+        } else {
+            refineChatsList(mOneToOneChats, RealmManager.getInstance().get1to1Chats());
+        }
 
         Collections.sort(mGroupChats, new ChatOrderComparator());
         Collections.sort(mOneToOneChats, new ChatOrderComparator());
@@ -211,6 +221,28 @@ public class ChatsListsFragment extends BaseFragment {
 
         if (chatsLoading != null) {
             chatsLoading.setVisibility(View.GONE);
+        }
+    }
+
+    private boolean deletedChat(List<Chat> chats) {
+        for (Chat chat : chats) {
+            if (!chat.isValid()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void refineChatsList(List<Chat> list, List<Chat> refiner) {
+        for (Chat chat : refiner) {
+            if (!list.contains(chat)) {
+                list.add(chat);
+            }
+        }
+        for (Chat chat : list) {
+            if (chat.isValid() && !refiner.contains(chat)) {
+                list.remove(chat);
+            }
         }
     }
 
