@@ -48,6 +48,7 @@ public class MessageNotifications {
                 .setContentText(text)
                 .setSmallIcon(R.mipmap.ic_launcher_empty_back)
                 .setContentIntent(chatPendingIntent)
+                .setVibrate(new long[]{1000, 1000})
                 .setAutoCancel(true);
 
         NotificationManager mNotificationManager =
