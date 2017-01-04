@@ -68,6 +68,7 @@ import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -286,6 +287,7 @@ public class ChatActivity extends BaseActivity {
 
     private void cancelMessageNotificationsForChat() {
         MessageNotifications.cancelChatNotifications(this, mChatJID);
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         getRealm().beginTransaction();
         mChat.resetUnreadMessageCount();
         getRealm().commitTransaction();
@@ -903,7 +905,6 @@ public class ChatActivity extends BaseActivity {
                 chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
             }
         }
-        cancelMessageNotificationsForChat();
     }
 
     private boolean isMessagesListScrolledToBottom() {
@@ -914,6 +915,9 @@ public class ChatActivity extends BaseActivity {
     private void refreshMessagesAndScrollToEnd() {
         refreshMessages();
         scrollToEnd();
+        if (MangostaApplication.getInstance().getCurrentActivity() instanceof ChatActivity) {
+            cancelMessageNotificationsForChat();
+        }
     }
 
     RealmChangeListener<RealmResults<ChatMessage>> mRealmChangeListener = new RealmChangeListener<RealmResults<ChatMessage>>() {
