@@ -49,6 +49,9 @@ public class XMPPUtils {
     }
 
     public static boolean isAutenticatedUser(User user) {
+        if(user == null || user.getLogin() == null) {
+            return false;
+        }
         return user.getLogin().equals(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
     }
 

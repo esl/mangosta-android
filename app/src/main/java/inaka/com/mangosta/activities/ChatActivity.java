@@ -199,7 +199,7 @@ public class ChatActivity extends BaseActivity {
         }
 
         List<ChatMessage> messages = ((mMessages == null) ? new ArrayList<ChatMessage>() : mMessages);
-        mMessagesAdapter = new ChatMessagesAdapter(this, messages);
+        mMessagesAdapter = new ChatMessagesAdapter(this, messages, mChat);
 
         chatMessagesRecyclerView.setAdapter(mMessagesAdapter);
 
