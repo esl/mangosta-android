@@ -133,7 +133,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
                 }
             });
 
-            if (RosterManager.getInstance().getStatusFromContact(user).equals(Presence.Type.available)) {
+            if (XMPPUtils.isAutenticatedUser(user) || isUserConnected(user)) {
                 imageConnectionStatus.setImageResource(R.mipmap.ic_connected);
             } else {
                 imageConnectionStatus.setImageResource(R.mipmap.ic_disconnected);
@@ -141,6 +141,10 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
 
         }
 
+    }
+
+    private static boolean isUserConnected(User user) {
+        return RosterManager.getInstance().getStatusFromContact(user).equals(Presence.Type.available);
     }
 
     private static boolean isAuthorizedXMPPUser(User user) {
