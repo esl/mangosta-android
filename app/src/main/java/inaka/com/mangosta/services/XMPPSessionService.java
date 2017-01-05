@@ -11,9 +11,11 @@ public class XMPPSessionService extends Service {
     private Timer mTimer;
     private final long TIMER_LAPSE = 2 * 60 * 1000; // 2 minutes
     public static Context CONTEXT;
+    private static boolean RUNNING;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        RUNNING = true;
         CONTEXT = getApplicationContext();
         mTimer = new Timer();
         XMPPReconnectTask xmppReconnectTask = new XMPPReconnectTask(CONTEXT);
@@ -29,6 +31,11 @@ public class XMPPSessionService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        RUNNING = false;
+    }
+
+    public static boolean isRunning() {
+        return RUNNING;
     }
 
 }

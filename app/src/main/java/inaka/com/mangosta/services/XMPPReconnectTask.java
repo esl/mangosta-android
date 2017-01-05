@@ -25,9 +25,7 @@ public class XMPPReconnectTask extends TimerTask {
             if (MangostaApplication.getInstance().getCurrentActivity() == null) {
 
                 Preferences preferences = Preferences.getInstance();
-
-                // if user logged in
-                if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+                if (preferences.isLoggedIn()) {
                     XMPPSession.getInstance().backgroundRelogin();
                 } else {
                     XMPPSession.getInstance().getXMPPConnection().disconnect();

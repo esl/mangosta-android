@@ -48,7 +48,7 @@ public class MessageNotifications {
                 .setContentText(text)
                 .setSmallIcon(R.mipmap.ic_launcher_empty_back)
                 .setContentIntent(chatPendingIntent)
-                .setVibrate(new long[]{100, 100})
+                .setVibrate(new long[]{0, 200, 0, 200})
                 .setAutoCancel(true);
 
         NotificationManager mNotificationManager =
@@ -69,12 +69,13 @@ public class MessageNotifications {
     private static PendingIntent preparePendingIntent(Context context, String chatJid, String chatName) {
         Intent intent = new Intent(context, ChatActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setAction(Long.toString(System.currentTimeMillis()));
         Bundle bundle = new Bundle();
         bundle.putString(ChatActivity.CHAT_JID_PARAMETER, chatJid);
         bundle.putString(ChatActivity.CHAT_NAME_PARAMETER, chatName);
         bundle.putBoolean(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
         intent.putExtras(bundle);
-        return PendingIntent.getActivity(context, 0, intent, 0);
+        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     public static void cancelChatNotifications(Context context, String chatJid) {

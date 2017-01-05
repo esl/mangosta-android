@@ -580,10 +580,6 @@ public class XMPPSession {
         ProviderManager.addExtensionProvider(PostEntryExtension.ELEMENT, PostEntryExtension.NAMESPACE, new PostEntryProvider());
     }
 
-    public MultiUserChatManager getMUCManager() {
-        return MultiUserChatManager.getInstanceFor(mXMPPConnection);
-    }
-
     public MultiUserChatLightManager getMUCLightManager() {
         return MultiUserChatLightManager.getInstanceFor(mXMPPConnection);
     }
