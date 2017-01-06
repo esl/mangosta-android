@@ -282,14 +282,15 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-    }
+        chatMessagesRecyclerView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                cancelMessageNotificationsForChat();
+                mMessagesAdapter.notifyDataSetChanged();
+                return false;
+            }
+        });
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        super.dispatchTouchEvent(ev);
-        cancelMessageNotificationsForChat();
-        mMessagesAdapter.notifyDataSetChanged();
-        return true;
     }
 
     private void cancelMessageNotificationsForChat() {
