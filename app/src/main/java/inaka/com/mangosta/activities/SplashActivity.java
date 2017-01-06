@@ -19,6 +19,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.fragments.LoginDialogFragment;
+import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -62,8 +63,10 @@ public class SplashActivity extends FragmentActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                Preferences preferences = Preferences.getInstance();
-                XMPPSession.getInstance().login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
+                if (!XMPPSessionService.isRunning()) {
+                    Preferences preferences = Preferences.getInstance();
+                    XMPPSession.getInstance().login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
+                }
                 return null;
             }
         }, new Completion<Object>() {

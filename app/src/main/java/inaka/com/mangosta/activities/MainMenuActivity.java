@@ -158,6 +158,9 @@ public class MainMenuActivity extends BaseActivity {
                 mViewpagerMainMenu.setCurrentItem(ViewPagerMainMenuAdapter.SOCIAL_MEDIA_FRAGMENT_POSITION);
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
                 break;
+            case REFRESH_UNREAD_MESSAGES_COUNT:
+                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
+                break;
         }
     }
 
