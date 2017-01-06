@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -68,7 +69,6 @@ import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
-import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -282,7 +282,14 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        super.dispatchTouchEvent(ev);
         cancelMessageNotificationsForChat();
+        mMessagesAdapter.notifyDataSetChanged();
+        return true;
     }
 
     private void cancelMessageNotificationsForChat() {
@@ -900,24 +907,21 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void scrollToEnd() {
-        if (mMessages != null) {
+        if (mMessagesAdapter != null) {
             if (!isMessagesListScrolledToBottom() && chatMessagesRecyclerView != null) {
-                chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
+                chatMessagesRecyclerView.scrollToPosition(mMessagesAdapter.getItemCount() - 1);
             }
         }
     }
 
     private boolean isMessagesListScrolledToBottom() {
         int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
-        return !(lastPosition <= mMessages.size() - 2);
+        return !(lastPosition <= mMessagesAdapter.getItemCount() - 2);
     }
 
     private void refreshMessagesAndScrollToEnd() {
         refreshMessages();
         scrollToEnd();
-        if (MangostaApplication.getInstance().getCurrentActivity() instanceof ChatActivity) {
-            cancelMessageNotificationsForChat();
-        }
     }
 
     RealmChangeListener<RealmResults<ChatMessage>> mRealmChangeListener = new RealmChangeListener<RealmResults<ChatMessage>>() {

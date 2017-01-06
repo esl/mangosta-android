@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:weightSum="1"
-              app:layout_behavior="@string/appbar_scrolling_view_behavior"
-              tools:showIn="@layout/activity_chat">
+<LinearLayout
+    android:id="@+id/chatMainLayout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="1"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:showIn="@layout/activity_chat">
 
     <FrameLayout
         android:layout_width="fill_parent"
@@ -32,9 +34,9 @@
             android:id="@+id/scrollDownImageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@mipmap/ic_scroll_down"
             android:layout_gravity="end|bottom"
             android:layout_margin="10dp"
+            android:background="@mipmap/ic_scroll_down"
             android:visibility="gone"/>
 
     </FrameLayout>
@@ -53,8 +55,8 @@
         android:id="@+id/stickersRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:scrollbars="horizontal"
         android:background="@color/complete_white"
+        android:scrollbars="horizontal"
         android:visibility="gone"/>
 
     <LinearLayout
@@ -73,8 +75,8 @@
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:layout_gravity="center_vertical"
-            android:src="@mipmap/ic_stickers_menu"
-            android:background="@android:color/transparent"/>
+            android:background="@android:color/transparent"
+            android:src="@mipmap/ic_stickers_menu"/>
 
         <EditText
             android:id="@+id/chatSendMessageEditText"
