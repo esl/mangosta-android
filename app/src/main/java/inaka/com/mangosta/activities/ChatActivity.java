@@ -525,6 +525,7 @@ public class ChatActivity extends BaseActivity {
                     finish();
                 }
 
+                cancelMessageNotificationsForChat();
                 EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
                 break;
 
@@ -978,6 +979,7 @@ public class ChatActivity extends BaseActivity {
     public void onBackPressed() {
         super.onBackPressed();
         mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+        cancelMessageNotificationsForChat();
         EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
     }
 
