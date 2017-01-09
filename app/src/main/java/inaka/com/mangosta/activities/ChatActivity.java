@@ -751,6 +751,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendTextMessage() {
+        cancelMessageNotificationsForChat();
         if (!XMPPSession.isInstanceNull()
                 && (XMPPSession.getInstance().isConnectedAndAuthenticated() || Preferences.isTesting())) {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
@@ -993,6 +994,7 @@ public class ChatActivity extends BaseActivity {
         super.onEvent(event);
         switch (event.getType()) {
             case STICKER_SENT:
+                cancelMessageNotificationsForChat();
                 stickerSent(event.getImageName());
                 break;
 
