@@ -551,6 +551,7 @@ public class ChatActivity extends BaseActivity {
                     finish();
                 }
 
+                cancelMessageNotificationsForChat();
                 EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
                 break;
 
@@ -790,6 +791,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendTextMessage() {
+        cancelMessageNotificationsForChat();
         if (!XMPPSession.isInstanceNull()
                 && (XMPPSession.getInstance().isConnectedAndAuthenticated() || Preferences.isTesting())) {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
@@ -1015,6 +1017,7 @@ public class ChatActivity extends BaseActivity {
     public void onBackPressed() {
         super.onBackPressed();
         mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+        cancelMessageNotificationsForChat();
         EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
     }
 
@@ -1028,6 +1031,7 @@ public class ChatActivity extends BaseActivity {
         super.onEvent(event);
         switch (event.getType()) {
             case STICKER_SENT:
+                cancelMessageNotificationsForChat();
                 stickerSent(event.getImageName());
                 break;
 
