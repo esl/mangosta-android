@@ -21,6 +21,7 @@ public class Chat extends RealmObject {
     private Date dateCreated;
     private String lastRetrievedFromMAM;
     private int sortPosition;
+    private int unreadMessagesCount;
 
     public Chat() {
     }
@@ -107,6 +108,18 @@ public class Chat extends RealmObject {
 
     public void setSortPosition(int sortPosition) {
         this.sortPosition = sortPosition;
+    }
+
+    public int getUnreadMessagesCount() {
+        return unreadMessagesCount;
+    }
+
+    public void addUnreadMessage() {
+        this.unreadMessagesCount++;
+    }
+
+    public void resetUnreadMessageCount() {
+        this.unreadMessagesCount = 0;
     }
 
 }

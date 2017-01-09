@@ -25,6 +25,7 @@ import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -43,20 +44,43 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
     private final int VIEW_TYPE_CHAT_MESSAGE = 0;
     private final int VIEW_TYPE_CHAT_ME_MESSAGE = 1;
     private final int VIEW_TYPE_STICKER_MESSAGE = 2;
+    private final int VIEW_TYPE_UNREAD_MESSAGES = 3;
 
     private Context mContext;
     private List<ChatMessage> mMessages;
+    private Chat mChat;
 
-    public ChatMessagesAdapter(Context context, List<ChatMessage> messages) {
+    public ChatMessagesAdapter(Context context, List<ChatMessage> messages, Chat chat) {
         mContext = context;
         mMessages = messages;
+        mChat = chat;
     }
 
     @Override
     public int getItemViewType(int position) {
-        ChatMessage chatMessage = mMessages.get(position);
+        int viewType;
 
+        int unreadMessages = mChat.getUnreadMessagesCount();
+        int unreadMessagesViewPosition = mMessages.size() - unreadMessages;
+
+        if (unreadMessages == 0) {
+            viewType = getViewType(position);
+        } else {
+            if (position < unreadMessagesViewPosition) {
+                viewType = getViewType(position);
+            } else if (position == unreadMessagesViewPosition) {
+                viewType = VIEW_TYPE_UNREAD_MESSAGES;
+            } else {
+                viewType = getViewType(position - 1);
+            }
+        }
+
+        return viewType;
+    }
+
+    private int getViewType(int position) {
         int viewType = 0;
+        ChatMessage chatMessage = mMessages.get(position);
 
         switch (chatMessage.getType()) {
             case ChatMessage.TYPE_CHAT:
@@ -71,7 +95,6 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                 viewType = VIEW_TYPE_STICKER_MESSAGE;
                 break;
         }
-
         return viewType;
     }
 
@@ -96,6 +119,11 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                 viewHolder = new StickerMessageViewHolder(viewStickerMessage, mContext);
                 break;
 
+            case VIEW_TYPE_UNREAD_MESSAGES:
+                View viewUnreadMessages = LayoutInflater.from(parent.getContext()).inflate(R.layout.view_item_unread_messages, parent, false);
+                viewHolder = new UnreadMessagesViewHolder(viewUnreadMessages, mContext);
+                break;
+
             default:
                 viewHolder = null;
                 break;
@@ -105,6 +133,23 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     @Override
     public void onBindViewHolder(ChatMessagesAdapter.ViewHolder holder, int position) {
+        int unreadMessages = mChat.getUnreadMessagesCount();
+        int unreadMessagesViewPosition = mMessages.size() - unreadMessages;
+
+        if (unreadMessages == 0) {
+            bindChatMessage(holder, position);
+        } else {
+            if (position < unreadMessagesViewPosition) {
+                bindChatMessage(holder, position);
+            } else if (position == unreadMessagesViewPosition) {
+                ((UnreadMessagesViewHolder) holder).bind(unreadMessages);
+            } else {
+                bindChatMessage(holder, position - 1);
+            }
+        }
+    }
+
+    private void bindChatMessage(ViewHolder holder, int position) {
         ChatMessage chatMessage = mMessages.get(position);
 
         switch (chatMessage.getType()) {
@@ -133,7 +178,16 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     @Override
     public int getItemCount() {
-        return mMessages.size();
+        if (mChat != null && mChat.isValid()) {
+            int unreadMessages = mChat.getUnreadMessagesCount();
+            if (unreadMessages == 0) {
+                return mMessages.size();
+            } else {
+                return mMessages.size() + 1;
+            }
+        } else {
+            return mMessages.size();
+        }
     }
 
     protected static class ViewHolder extends RecyclerView.ViewHolder {
@@ -371,6 +425,26 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
             stickerLayout.setLayoutParams(params);
             stickerMainLayout.setLayoutParams(paramsMargins);
+        }
+
+    }
+
+    public static class UnreadMessagesViewHolder extends ChatMessagesAdapter.ViewHolder {
+
+        @Bind(R.id.unreadMessagesContentTextView)
+        TextView unreadMessagesContentTextView;
+
+        private Context mContext;
+
+        private UnreadMessagesViewHolder(View view, Context context) {
+            super(view);
+            mContext = context;
+            ButterKnife.bind(this, view);
+        }
+
+        public void bind(int count) {
+            String unreadMessagesString = mContext.getResources().getQuantityString(R.plurals.unread_messages, count);
+            unreadMessagesContentTextView.setText(String.format(Locale.getDefault(), unreadMessagesString, count));
         }
 
     }

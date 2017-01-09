@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -66,6 +67,7 @@ import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
@@ -197,7 +199,7 @@ public class ChatActivity extends BaseActivity {
         }
 
         List<ChatMessage> messages = ((mMessages == null) ? new ArrayList<ChatMessage>() : mMessages);
-        mMessagesAdapter = new ChatMessagesAdapter(this, messages);
+        mMessagesAdapter = new ChatMessagesAdapter(this, messages, mChat);
 
         chatMessagesRecyclerView.setAdapter(mMessagesAdapter);
 
@@ -279,6 +281,24 @@ public class ChatActivity extends BaseActivity {
                 loadMoreMessages(recyclerView, dy);
             }
         });
+
+        chatMessagesRecyclerView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                cancelMessageNotificationsForChat();
+                mMessagesAdapter.notifyDataSetChanged();
+                return false;
+            }
+        });
+
+    }
+
+    private void cancelMessageNotificationsForChat() {
+        MessageNotifications.cancelChatNotifications(this, mChatJID);
+        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+        getRealm().beginTransaction();
+        mChat.resetUnreadMessageCount();
+        getRealm().commitTransaction();
     }
 
     private void loadMoreMessages(RecyclerView recyclerView, int dy) {
@@ -496,7 +516,16 @@ public class ChatActivity extends BaseActivity {
             case android.R.id.home:
                 mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                 mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-                finish();
+
+                if (mSessionDepth == 1) {
+                    Intent intent = new Intent(this, MainMenuActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                } else {
+                    finish();
+                }
+
+                cancelMessageNotificationsForChat();
                 EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
                 break;
 
@@ -722,6 +751,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendTextMessage() {
+        cancelMessageNotificationsForChat();
         if (!XMPPSession.isInstanceNull()
                 && (XMPPSession.getInstance().isConnectedAndAuthenticated() || Preferences.isTesting())) {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
@@ -880,16 +910,16 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void scrollToEnd() {
-        if (mMessages != null) {
+        if (mMessagesAdapter != null) {
             if (!isMessagesListScrolledToBottom() && chatMessagesRecyclerView != null) {
-                chatMessagesRecyclerView.scrollToPosition(mMessages.size() - 1);
+                chatMessagesRecyclerView.scrollToPosition(mMessagesAdapter.getItemCount() - 1);
             }
         }
     }
 
     private boolean isMessagesListScrolledToBottom() {
         int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
-        return !(lastPosition <= mMessages.size() - 2);
+        return !(lastPosition <= mMessagesAdapter.getItemCount() - 2);
     }
 
     private void refreshMessagesAndScrollToEnd() {
@@ -950,6 +980,7 @@ public class ChatActivity extends BaseActivity {
     public void onBackPressed() {
         super.onBackPressed();
         mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+        cancelMessageNotificationsForChat();
         EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
     }
 
@@ -963,6 +994,7 @@ public class ChatActivity extends BaseActivity {
         super.onEvent(event);
         switch (event.getType()) {
             case STICKER_SENT:
+                cancelMessageNotificationsForChat();
                 stickerSent(event.getImageName());
                 break;
 

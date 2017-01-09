@@ -27,7 +27,7 @@ import io.realm.Realm;
 public class BaseActivity extends AppCompatActivity {
 
     private Realm mRealm;
-    private static int mSessionDepth = 0;
+    public static int mSessionDepth = 0;
     private boolean mIsRegistered;
 
     @Override
@@ -104,7 +104,7 @@ public class BaseActivity extends AppCompatActivity {
         Log.wtf("activities", String.valueOf(mSessionDepth));
 
         if (mSessionDepth == 0) {
-            XMPPSession.getInstance().inactiveCSI();
+//            XMPPSession.getInstance().inactiveCSI();
             MangostaApplication.getInstance().moveToBackground();
         }
 

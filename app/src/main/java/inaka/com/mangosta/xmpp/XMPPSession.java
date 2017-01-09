@@ -1,5 +1,7 @@
 package inaka.com.mangosta.xmpp;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -106,7 +108,9 @@ import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
@@ -386,6 +390,18 @@ public class XMPPSession {
         }
     }
 
+    public static void startService(Context context) {
+        Intent serviceIntent = new Intent(context, XMPPSessionService.class);
+        serviceIntent.setPackage("com.nanoscopia.services");
+        context.startService(serviceIntent);
+    }
+
+    public static void stopService(Context context) {
+        Intent serviceIntent = new Intent(context, XMPPSessionService.class);
+        serviceIntent.setPackage("com.nanoscopia.services");
+        context.stopService(serviceIntent);
+    }
+
     /**
      * This method is not necessary on this app, is only to show how BoB could be used
      */
@@ -562,10 +578,6 @@ public class XMPPSession {
     private void addExtensions() {
         // Microblogging
         ProviderManager.addExtensionProvider(PostEntryExtension.ELEMENT, PostEntryExtension.NAMESPACE, new PostEntryProvider());
-    }
-
-    public MultiUserChatManager getMUCManager() {
-        return MultiUserChatManager.getInstanceFor(mXMPPConnection);
     }
 
     public MultiUserChatLightManager getMUCLightManager() {
@@ -781,7 +793,7 @@ public class XMPPSession {
                 saveMessageCorrection(message, delayDate);
             } else { // normal message received
                 if (!RealmManager.getInstance().chatMessageExists(messageId)) {
-                    manageMessageReceived(message, delayDate, messageId);
+                    manageMessageReceived(message, delayDate, messageId, true);
                 }
             }
         }
@@ -797,7 +809,8 @@ public class XMPPSession {
             manageMessageCorrection(message, null);
 
         } else { // normal message received
-            manageMessageReceived(message, null, messageId);
+            manageMessageReceived(message, null, messageId, false);
+            MessageNotifications.chatMessageNotification(messageId);
         }
     }
 
@@ -838,7 +851,7 @@ public class XMPPSession {
         realm.close();
     }
 
-    private void manageMessageReceived(Message message, Date delayDate, String messageId) {
+    private void manageMessageReceived(Message message, Date delayDate, String messageId, boolean fromMam) {
         String[] jidList = message.getFrom().toString().split("/");
 
         ChatMessage chatMessage = new ChatMessage();
@@ -881,6 +894,10 @@ public class XMPPSession {
         Realm realm = RealmManager.getInstance().getRealm();
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
+
+        if (!fromMam) {
+            chatRoom.addUnreadMessage();
+        }
 
         // room name or subject change
         manageConfigurationsChange(message, chatMessage, chatRoom);

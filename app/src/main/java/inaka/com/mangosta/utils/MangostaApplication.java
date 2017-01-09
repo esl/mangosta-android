@@ -8,6 +8,7 @@ import android.support.multidex.MultiDex;
 import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;
 
+import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.xmpp.XMPPSession;
 
 public class MangostaApplication extends Application {
@@ -35,14 +36,16 @@ public class MangostaApplication extends Application {
     }
 
     public void moveToBackground() {
-        XMPPSession.getInstance().logoff();
+        if (!XMPPSessionService.isRunning()) {
+            XMPPSession.startService(this);
+        }
         mIsInBackground = true;
     }
 
     public void moveToForeground() {
         if (mIsInBackground) {
-            if (Preferences.getInstance().isLoggedIn()) {
-                XMPPSession.getInstance().backgroundRelogin();
+            if (!XMPPSessionService.isRunning()) {
+                XMPPSession.startService(this);
             }
         }
         mIsInBackground = false;
