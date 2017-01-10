@@ -80,21 +80,25 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     private int getViewType(int position) {
         int viewType = 0;
-        ChatMessage chatMessage = mMessages.get(position);
 
-        switch (chatMessage.getType()) {
-            case ChatMessage.TYPE_CHAT:
-                if (chatMessage.isMeMessage()) {
-                    viewType = VIEW_TYPE_CHAT_ME_MESSAGE;
-                } else {
-                    viewType = VIEW_TYPE_CHAT_MESSAGE;
-                }
-                break;
+        if (position >= 0) {
+            ChatMessage chatMessage = mMessages.get(position);
 
-            case ChatMessage.TYPE_STICKER:
-                viewType = VIEW_TYPE_STICKER_MESSAGE;
-                break;
+            switch (chatMessage.getType()) {
+                case ChatMessage.TYPE_CHAT:
+                    if (chatMessage.isMeMessage()) {
+                        viewType = VIEW_TYPE_CHAT_ME_MESSAGE;
+                    } else {
+                        viewType = VIEW_TYPE_CHAT_MESSAGE;
+                    }
+                    break;
+
+                case ChatMessage.TYPE_STICKER:
+                    viewType = VIEW_TYPE_STICKER_MESSAGE;
+                    break;
+            }
         }
+
         return viewType;
     }
 
@@ -150,29 +154,31 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
     }
 
     private void bindChatMessage(ViewHolder holder, int position) {
-        ChatMessage chatMessage = mMessages.get(position);
+        if (position >= 0) {
+            ChatMessage chatMessage = mMessages.get(position);
 
-        switch (chatMessage.getType()) {
-            case ChatMessage.TYPE_CHAT:
-                if (chatMessage.isMeMessage()) {
-                    ((MeMessageViewHolder) holder).bind(chatMessage);
-                } else {
-                    ((MessageViewHolder) holder).bind(chatMessage, position == mMessages.size() - 1);
-                }
-                break;
+            switch (chatMessage.getType()) {
+                case ChatMessage.TYPE_CHAT:
+                    if (chatMessage.isMeMessage()) {
+                        ((MeMessageViewHolder) holder).bind(chatMessage);
+                    } else {
+                        ((MessageViewHolder) holder).bind(chatMessage, position == mMessages.size() - 1);
+                    }
+                    break;
 
-            case ChatMessage.TYPE_STICKER:
-                ((StickerMessageViewHolder) holder).bind(chatMessage);
-                break;
-        }
+                case ChatMessage.TYPE_STICKER:
+                    ((StickerMessageViewHolder) holder).bind(chatMessage);
+                    break;
+            }
 
-        if (chatMessage.isUnread()) {
-            Realm realm = RealmManager.getInstance().getRealm();
-            realm.beginTransaction();
-            chatMessage.setUnread(false);
-            realm.copyToRealmOrUpdate(chatMessage);
-            realm.commitTransaction();
-            realm.close();
+            if (chatMessage.isUnread()) {
+                Realm realm = RealmManager.getInstance().getRealm();
+                realm.beginTransaction();
+                chatMessage.setUnread(false);
+                realm.copyToRealmOrUpdate(chatMessage);
+                realm.commitTransaction();
+                realm.close();
+            }
         }
     }
 
