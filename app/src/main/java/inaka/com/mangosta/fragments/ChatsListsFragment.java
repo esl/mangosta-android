@@ -43,7 +43,6 @@ import inaka.com.mangosta.xmpp.XMPPUtils;
 import rx.Subscription;
 import rx.functions.Action1;
 
-
 public class ChatsListsFragment extends BaseFragment {
 
     @Bind(R.id.groupChatsRecyclerView)
