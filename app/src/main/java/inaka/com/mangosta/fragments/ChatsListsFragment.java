@@ -79,6 +79,9 @@ public class ChatsListsFragment extends BaseFragment {
 
     Activity mContext;
 
+    private static final Object SYNC_CHATS = new Object() {
+    };
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chats_lists, container, false);
@@ -207,6 +210,10 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     public void loadChats() {
+        if (chatsLoading != null) {
+            chatsLoading.setVisibility(View.VISIBLE);
+        }
+
         if (mContext == null) {
             changeChatsList();
         } else {
@@ -220,25 +227,27 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     private void changeChatsList() {
-        updateChatsList(mGroupChats, RealmManager.getInstance().getMUCLights());
-        updateChatsList(mOneToOneChats, RealmManager.getInstance().get1to1Chats());
+        synchronized (SYNC_CHATS) {
+            updateChatsList(mGroupChats, RealmManager.getInstance().getMUCLights());
+            updateChatsList(mOneToOneChats, RealmManager.getInstance().get1to1Chats());
 
-        Collections.sort(mGroupChats, new ChatOrderComparator());
-        Collections.sort(mOneToOneChats, new ChatOrderComparator());
+            Collections.sort(mGroupChats, new ChatOrderComparator());
+            Collections.sort(mOneToOneChats, new ChatOrderComparator());
 
-        if (mOneToOneChatsAdapter == null) {
-            mOneToOneChatsAdapter = getOneToOneChatsAdapter();
-        }
+            if (mOneToOneChatsAdapter == null) {
+                mOneToOneChatsAdapter = getOneToOneChatsAdapter();
+            }
 
-        if (mGroupChatsAdapter == null) {
-            mGroupChatsAdapter = getGroupChatsAdapter();
-        }
+            if (mGroupChatsAdapter == null) {
+                mGroupChatsAdapter = getGroupChatsAdapter();
+            }
 
-        mOneToOneChatsAdapter.notifyDataSetChanged();
-        mGroupChatsAdapter.notifyDataSetChanged();
+            mOneToOneChatsAdapter.notifyDataSetChanged();
+            mGroupChatsAdapter.notifyDataSetChanged();
 
-        if (chatsLoading != null) {
-            chatsLoading.setVisibility(View.GONE);
+            if (chatsLoading != null) {
+                chatsLoading.setVisibility(View.GONE);
+            }
         }
     }
 
