@@ -178,7 +178,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     @Override
     public int getItemCount() {
-        if (mChat != null && mChat.isValid()) {
+        if (mChat.isValid()) {
             int unreadMessages = mChat.getUnreadMessagesCount();
             if (unreadMessages == 0) {
                 return mMessages.size();

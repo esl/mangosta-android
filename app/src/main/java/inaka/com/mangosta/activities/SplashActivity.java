@@ -5,8 +5,10 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -85,10 +87,21 @@ public class SplashActivity extends FragmentActivity {
     }
 
     private void createLoginDialog() {
-        DialogFragment fragment = LoginDialogFragment.newInstance();
-        fragment.setCancelable(false);
-        fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0);
-        fragment.show(getSupportFragmentManager(), getString(R.string.title_login));
+        if (!isFinishing()) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    DialogFragment fragment = LoginDialogFragment.newInstance();
+                    fragment.setCancelable(false);
+                    fragment.setStyle(DialogFragment.STYLE_NO_TITLE, 0);
+
+                    FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+                    fragmentTransaction.add(fragment, getString(R.string.title_login));
+                    fragmentTransaction.commitAllowingStateLoss();
+                }
+            });
+        }
     }
 
     public void startApplication() {
