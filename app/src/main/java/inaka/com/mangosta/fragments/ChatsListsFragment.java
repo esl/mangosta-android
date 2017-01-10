@@ -37,6 +37,7 @@ import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.ui.itemTouchHelper.SimpleItemTouchHelperCallback;
 import inaka.com.mangosta.utils.ChatOrderComparator;
+import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import rx.Subscription;
@@ -92,8 +93,33 @@ public class ChatsListsFragment extends BaseFragment {
         mOneToOneChats = new ArrayList<>();
         initOneToOneChatsRecyclerView();
 
-        setExpandLayout(expandGroupChatsLayout, groupChatsRecyclerView, expandGroupChatsImage);
-        setExpandLayout(expandOneToOneChatsLayout, oneToOneChatsRecyclerView, expandOneToOneChatsImage);
+        final Preferences preferences = Preferences.getInstance();
+        setExpandLayout(expandGroupChatsLayout, groupChatsRecyclerView, expandGroupChatsImage,
+                preferences.isMenuRoomsExpanded(), new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (groupChatsRecyclerView.getVisibility() == View.VISIBLE) {
+                            notExpanded(groupChatsRecyclerView, expandGroupChatsImage);
+                            preferences.setMenuRoomsExpanded(false);
+                        } else {
+                            expanded(groupChatsRecyclerView, expandGroupChatsImage);
+                            preferences.setMenuRoomsExpanded(true);
+                        }
+                    }
+                });
+        setExpandLayout(expandOneToOneChatsLayout, oneToOneChatsRecyclerView, expandOneToOneChatsImage,
+                preferences.isMenuPeopleExpanded(), new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (oneToOneChatsRecyclerView.getVisibility() == View.VISIBLE) {
+                            notExpanded(oneToOneChatsRecyclerView, expandOneToOneChatsImage);
+                            preferences.setMenuPeopleExpanded(false);
+                        } else {
+                            expanded(oneToOneChatsRecyclerView, expandOneToOneChatsImage);
+                            preferences.setMenuPeopleExpanded(true);
+                        }
+                    }
+                });
 
         mMessageSubscription = XMPPSession.getInstance().subscribeToMessages(new Action1<Message>() {
             @Override
@@ -114,19 +140,24 @@ public class ChatsListsFragment extends BaseFragment {
         return view;
     }
 
-    private void setExpandLayout(LinearLayout layout, final RecyclerView recyclerView, final ImageView imageView) {
-        layout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (recyclerView.getVisibility() == View.VISIBLE) {
-                    recyclerView.setVisibility(View.GONE);
-                    imageView.setImageResource(R.mipmap.ic_expand_less);
-                } else {
-                    recyclerView.setVisibility(View.VISIBLE);
-                    imageView.setImageResource(R.mipmap.ic_expand_more);
-                }
-            }
-        });
+    private void setExpandLayout(LinearLayout layout, final RecyclerView recyclerView, final ImageView imageView,
+                                 boolean expanded, View.OnClickListener onClickListener) {
+        if (expanded) {
+            expanded(recyclerView, imageView);
+        } else {
+            notExpanded(recyclerView, imageView);
+        }
+        layout.setOnClickListener(onClickListener);
+    }
+
+    private void notExpanded(RecyclerView recyclerView, ImageView imageView) {
+        recyclerView.setVisibility(View.GONE);
+        imageView.setImageResource(R.mipmap.ic_expand_less);
+    }
+
+    private void expanded(RecyclerView recyclerView, ImageView imageView) {
+        recyclerView.setVisibility(View.VISIBLE);
+        imageView.setImageResource(R.mipmap.ic_expand_more);
     }
 
     private void initGroupChatsRecyclerView() {
