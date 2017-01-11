@@ -24,6 +24,12 @@ public class Preferences {
     private final String USER_XMPP_JID = "user_xmpp_jid";
     private final String USER_XMPP_PASSWORD = "user_xmpp_password";
 
+    /**
+     * Chats menus expanded
+     */
+    private final String MENU_ROOMS_EXPANDED = "menu_rooms_expanded";
+    private final String MENU_PEOPLE_EXPANDED = "menu_people_expanded";
+
     private SharedPreferences mPreferences;
     private static Preferences mInstance;
     private static boolean mIsTesting = false;
@@ -106,6 +112,26 @@ public class Preferences {
     public void setLoggedIn(boolean logged) {
         final SharedPreferences.Editor editor = mPreferences.edit();
         editor.putBoolean(LOGGED_IN, logged);
+        editor.apply();
+    }
+
+    public boolean isMenuRoomsExpanded() {
+        return mPreferences.getBoolean(MENU_ROOMS_EXPANDED, true);
+    }
+
+    public void setMenuRoomsExpanded(boolean expanded) {
+        final SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putBoolean(MENU_ROOMS_EXPANDED, expanded);
+        editor.apply();
+    }
+
+    public boolean isMenuPeopleExpanded() {
+        return mPreferences.getBoolean(MENU_PEOPLE_EXPANDED, true);
+    }
+
+    public void setMenuPeopleExpanded(boolean expanded) {
+        final SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putBoolean(MENU_PEOPLE_EXPANDED, expanded);
         editor.apply();
     }
 

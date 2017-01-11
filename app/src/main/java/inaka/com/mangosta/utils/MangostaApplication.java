@@ -16,7 +16,6 @@ public class MangostaApplication extends Application {
     private static MangostaApplication CONTEXT;
 
     private Activity mCurrentActivity = null;
-    private boolean mIsInBackground;
     public static Bus bus = new Bus(ThreadEnforcer.MAIN);
 
     @Override
@@ -39,20 +38,20 @@ public class MangostaApplication extends Application {
         if (!XMPPSessionService.isRunning()) {
             XMPPSession.startService(this);
         }
-        mIsInBackground = true;
     }
 
     public void moveToForeground() {
-        if (mIsInBackground) {
-            if (!XMPPSessionService.isRunning()) {
-                XMPPSession.startService(this);
-            }
+        if (!XMPPSessionService.isRunning()) {
+            XMPPSession.startService(this);
         }
-        mIsInBackground = false;
     }
 
     public Activity getCurrentActivity() {
         return mCurrentActivity;
+    }
+
+    public boolean isClosed() {
+        return mCurrentActivity == null;
     }
 
     public void setCurrentActivity(Activity currentActivity) {

@@ -17,6 +17,7 @@ import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.BlogPostsListAdapter;
 import inaka.com.mangosta.models.BlogPost;
+import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 
 public class BlogsListFragment extends Fragment {
@@ -82,6 +83,7 @@ public class BlogsListFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadBlogPosts();
+        BlogPostNotifications.cancelBlogPostNotifications(getActivity());
     }
 
 }

@@ -503,6 +503,8 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        cancelMessageNotificationsForChat();
+        mMessagesAdapter.notifyDataSetChanged();
         mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
         if (mChat != null) {
             mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
@@ -537,6 +539,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        cancelMessageNotificationsForChat();
 
         switch (id) {
             case android.R.id.home:
@@ -551,7 +554,6 @@ public class ChatActivity extends BaseActivity {
                     finish();
                 }
 
-                cancelMessageNotificationsForChat();
                 EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
                 break;
 

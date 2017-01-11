@@ -26,10 +26,14 @@ public class XMPPUtils {
     }
 
     public static String fromUserNameToJID(String userName) {
-        if (userName.contains("@")) {
-            return userName;
+        if (userName != null) {
+            if (userName.contains("@")) {
+                return userName;
+            } else {
+                return userName + "@" + XMPPSession.SERVICE_NAME;
+            }
         } else {
-            return userName + "@" + XMPPSession.SERVICE_NAME;
+            return "";
         }
     }
 

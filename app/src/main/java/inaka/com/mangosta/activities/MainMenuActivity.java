@@ -39,6 +39,8 @@ public class MainMenuActivity extends BaseActivity {
 
     public boolean mRoomsLoaded = false;
 
+    public static String NEW_BLOG_POST = "newBlogPost";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +76,17 @@ public class MainMenuActivity extends BaseActivity {
             }
         });
 
+        manageCallFromBlogPostNotification();
+    }
+
+    private void manageCallFromBlogPostNotification() {
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
+            boolean newBlogPost = bundle.getBoolean(NEW_BLOG_POST, false);
+            if (newBlogPost) {
+                goToSocialTab();
+            }
+        }
     }
 
     @Override
@@ -155,13 +168,17 @@ public class MainMenuActivity extends BaseActivity {
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
                 break;
             case BLOG_POST_CREATED:
-                mViewpagerMainMenu.setCurrentItem(ViewPagerMainMenuAdapter.SOCIAL_MEDIA_FRAGMENT_POSITION);
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
+                goToSocialTab();
                 break;
             case REFRESH_UNREAD_MESSAGES_COUNT:
                 ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
                 break;
         }
+    }
+
+    private void goToSocialTab() {
+        mViewpagerMainMenu.setCurrentItem(ViewPagerMainMenuAdapter.SOCIAL_MEDIA_FRAGMENT_POSITION);
+        ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
     }
 
     @Override

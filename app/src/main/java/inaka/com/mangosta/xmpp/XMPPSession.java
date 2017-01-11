@@ -110,6 +110,7 @@ import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.MongooseMUCLightMessage;
 import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
@@ -476,13 +477,21 @@ public class XMPPSession {
                     String commentsNode = PublishCommentExtension.NODE + "/" + id;
                     ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
 
-                    MangostaApplication.getInstance().getCurrentActivity().runOnUiThread(new Runnable() {
+                    notifyNewBlogPost();
+                }
+            }
+
+            private void notifyNewBlogPost() {
+                MangostaApplication mangostaApplication = MangostaApplication.getInstance();
+                if (mangostaApplication.isClosed()) {
+                    BlogPostNotifications.newBlogPostNotification();
+                } else {
+                    mangostaApplication.getCurrentActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             EventBus.getDefault().post(new Event(Event.Type.BLOG_POST_CREATED));
                         }
                     });
-
                 }
             }
         });
@@ -526,6 +535,7 @@ public class XMPPSession {
             e.printStackTrace();
         }
 
+        // TODO: comments node not working on server yet, add this later
 //        try {
 //            pubSubManager.getNode(commentsNode).subscribe(myJIDString);
 //        } catch (Exception e) {
@@ -864,8 +874,16 @@ public class XMPPSession {
 
         } else { // normal message received
             manageMessageReceived(message, null, messageId, false);
-            MessageNotifications.chatMessageNotification(messageId);
+
+            if (canBeTextMessageOrSticker(message)) {
+                MessageNotifications.chatMessageNotification(messageId);
+            }
         }
+    }
+
+    private boolean canBeTextMessageOrSticker(Message message) {
+        return message.getType().equals(Message.Type.chat) || message.getType().equals(Message.Type.groupchat)
+                && !hasAffiliationsChangeExtension(message) && !hasConfigurationChangeExtension(message);
     }
 
     private boolean isMessageCorrection(Message message) {
@@ -949,7 +967,7 @@ public class XMPPSession {
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
 
-        if (!fromMam) {
+        if (canBeTextMessageOrSticker(message) && !fromMam) {
             chatRoom.addUnreadMessage();
         }
 
