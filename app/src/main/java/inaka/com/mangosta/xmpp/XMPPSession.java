@@ -108,6 +108,7 @@ import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
@@ -472,13 +473,21 @@ public class XMPPSession {
                     String commentsNode = PublishCommentExtension.NODE + "/" + id;
                     ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
 
-                    MangostaApplication.getInstance().getCurrentActivity().runOnUiThread(new Runnable() {
+                    notifyNewBlogPost();
+                }
+            }
+
+            private void notifyNewBlogPost() {
+                MangostaApplication mangostaApplication = MangostaApplication.getInstance();
+                if (mangostaApplication.isClosed()) {
+                    BlogPostNotifications.newBlogPostNotification();
+                } else {
+                    mangostaApplication.getCurrentActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             EventBus.getDefault().post(new Event(Event.Type.BLOG_POST_CREATED));
                         }
                     });
-
                 }
             }
         });

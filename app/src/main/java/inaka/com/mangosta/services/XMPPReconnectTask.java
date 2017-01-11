@@ -22,7 +22,7 @@ public class XMPPReconnectTask extends TimerTask {
     public void run() {
         synchronized (LOCK_1) {
             // if app is closed
-            if (MangostaApplication.getInstance().getCurrentActivity() == null) {
+            if (MangostaApplication.getInstance().isClosed()) {
 
                 Preferences preferences = Preferences.getInstance();
                 if (preferences.isLoggedIn()) {
