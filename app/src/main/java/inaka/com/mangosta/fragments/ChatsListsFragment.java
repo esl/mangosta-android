@@ -209,8 +209,11 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     public void loadChats() {
-        if (chatsLoading != null) {
-            chatsLoading.setVisibility(View.VISIBLE);
+        try {
+            if (chatsLoading != null) {
+                chatsLoading.setVisibility(View.VISIBLE);
+            }
+        } catch (Exception e) {
         }
 
         if (mContext == null) {
