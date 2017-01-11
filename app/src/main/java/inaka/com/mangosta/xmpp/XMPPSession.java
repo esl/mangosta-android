@@ -522,6 +522,7 @@ public class XMPPSession {
             e.printStackTrace();
         }
 
+        // TODO: comments node not working on server yet, add this later
 //        try {
 //            pubSubManager.getNode(commentsNode).subscribe(myJIDString);
 //        } catch (Exception e) {
@@ -810,8 +811,16 @@ public class XMPPSession {
 
         } else { // normal message received
             manageMessageReceived(message, null, messageId, false);
-            MessageNotifications.chatMessageNotification(messageId);
+
+            if (canBeTextMessageOrSticker(message)) {
+                MessageNotifications.chatMessageNotification(messageId);
+            }
         }
+    }
+
+    private boolean canBeTextMessageOrSticker(Message message) {
+        return message.getType().equals(Message.Type.chat) || message.getType().equals(Message.Type.groupchat)
+                && !hasAffiliationsChangeExtension(message) && !hasConfigurationChangeExtension(message);
     }
 
     private boolean isMessageCorrection(Message message) {
@@ -895,7 +904,7 @@ public class XMPPSession {
         Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
         realm.beginTransaction();
 
-        if (!fromMam) {
+        if (canBeTextMessageOrSticker(message) && !fromMam) {
             chatRoom.addUnreadMessage();
         }
 
