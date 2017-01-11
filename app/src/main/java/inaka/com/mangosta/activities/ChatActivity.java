@@ -294,11 +294,14 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void cancelMessageNotificationsForChat() {
-        MessageNotifications.cancelChatNotifications(this, mChatJID);
-        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-        getRealm().beginTransaction();
-        mChat.resetUnreadMessageCount();
-        getRealm().commitTransaction();
+        if (!Preferences.isTesting()) {
+            MessageNotifications.cancelChatNotifications(this, mChatJID);
+            Realm realm = RealmManager.getInstance().getRealm();
+            mChat = RealmManager.getInstance().getChatFromRealm(realm, mChatJID);
+            realm.beginTransaction();
+            mChat.resetUnreadMessageCount();
+            realm.commitTransaction();
+        }
     }
 
     private void loadMoreMessages(RecyclerView recyclerView, int dy) {
@@ -1004,7 +1007,7 @@ public class ChatActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+                        if (mChat != null && mChat.getType() == Chat.TYPE_1_T0_1) {
                             setOneToOneChatConnectionStatus();
                         }
                     }

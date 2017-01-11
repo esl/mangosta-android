@@ -59,9 +59,13 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
     @Override
     public int getItemViewType(int position) {
         int viewType;
+        int unreadMessages = 0;
+        int unreadMessagesViewPosition = 0;
 
-        int unreadMessages = mChat.getUnreadMessagesCount();
-        int unreadMessagesViewPosition = mMessages.size() - unreadMessages;
+        if (mChat.isValid()) {
+            unreadMessages = mChat.getUnreadMessagesCount();
+            unreadMessagesViewPosition = mMessages.size() - unreadMessages;
+        }
 
         if (unreadMessages == 0) {
             viewType = getViewType(position);
@@ -137,8 +141,13 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     @Override
     public void onBindViewHolder(ChatMessagesAdapter.ViewHolder holder, int position) {
-        int unreadMessages = mChat.getUnreadMessagesCount();
-        int unreadMessagesViewPosition = mMessages.size() - unreadMessages;
+        int unreadMessages = 0;
+        int unreadMessagesViewPosition = 0;
+
+        if (mChat.isValid()) {
+            unreadMessages = mChat.getUnreadMessagesCount();
+            unreadMessagesViewPosition = mMessages.size() - unreadMessages;
+        }
 
         if (unreadMessages == 0) {
             bindChatMessage(holder, position);
@@ -192,7 +201,11 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                 return mMessages.size() + 1;
             }
         } else {
-            return mMessages.size();
+            try {
+                return mMessages.size();
+            } catch (Exception e) {
+                return 0;
+            }
         }
     }
 
