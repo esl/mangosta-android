@@ -35,6 +35,11 @@
         <item quantity="other">%1$d new messages</item>
     </plurals>
 
+    <plurals name="blog_post_notification">
+        <item quantity="one">%1$d new blog post</item>
+        <item quantity="other">%1$d new blog posts</item>
+    </plurals>
+
     <plurals name="unread_messages">
         <item quantity="one">%1$d unread message</item>
         <item quantity="other">%1$d unread messages</item>

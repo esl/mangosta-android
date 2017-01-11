@@ -209,6 +209,17 @@ public class RealmManager {
         return blogPosts;
     }
 
+    public BlogPost getBlogPost(String blogPostId) {
+        Realm realm = getRealm();
+        BlogPost blogPost =
+                realm.where(BlogPost.class)
+                        .equalTo("id", blogPostId)
+                        .findFirst();
+        realm.close();
+
+        return blogPost;
+    }
+
     public void saveBlogPostComment(BlogPostComment comment) {
         Realm realm = getRealm();
 

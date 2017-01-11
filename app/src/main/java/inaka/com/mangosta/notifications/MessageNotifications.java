@@ -26,7 +26,7 @@ public class MessageNotifications {
 
     public static void chatMessageNotification(String messageId) {
         // show notification only if the app is closed
-        if (MangostaApplication.getInstance().getCurrentActivity() != null) {
+        if (!MangostaApplication.getInstance().isClosed()) {
             EventBus.getDefault().post(new Event(Event.Type.REFRESH_UNREAD_MESSAGES_COUNT));
             return;
         }

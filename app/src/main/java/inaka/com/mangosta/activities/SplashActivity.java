@@ -58,6 +58,8 @@ public class SplashActivity extends FragmentActivity {
                 }
             }
         }, WAIT_TIME);
+
+        XMPPSession.startService(this);
     }
 
     private void xmppReloginAndStart() {
