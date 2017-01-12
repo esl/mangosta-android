@@ -33,8 +33,7 @@
     <string name="title_button_create_blog">Create blog</string>
     <string name="action_manage_contacts">Manage contacts</string>
 
-    <string name="date_seconds_ago"
-            tools:ignore="PluralsCandidate">%1$d seconds ago</string>
+    <string name="date_seconds_ago" tools:ignore="PluralsCandidate">%1$d seconds ago</string>
     <string name="date_seconds_now">just now</string>
 
     <string name="comment_created">Comment sent successfully</string>
@@ -99,6 +98,8 @@
     <string name="button_remove_all_contacts">Remove all contacts</string>
     <string name="user_removed_from_contacts">%1$s removed from contacts</string>
     <string name="user_added_to_contacts">%1$s added to contacts</string>
-    <string name="roster_subscription_request">%1$s added you as a contact. Do you want to add him/her too?</string>
+    <string name="roster_subscription_request">%1$s wants to add you as a contact</string>
     <string name="connected">Connected</string>
+    <string name="accept">Accept</string>
+    <string name="decline">decline</string>
 </resources>

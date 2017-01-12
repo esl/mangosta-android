@@ -144,11 +144,11 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    private void answerSubscriptionRequest(final Jid jid) {
+    protected void answerSubscriptionRequest(final Jid jid) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(String.format(Locale.getDefault(), getString(R.string.roster_subscription_request), jid.toString()));
 
-        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 try {
@@ -164,7 +164,7 @@ public class BaseActivity extends AppCompatActivity {
                 }
             }
         });
-        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.decline, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
@@ -174,7 +174,11 @@ public class BaseActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    if (!RosterManager.getInstance().isContact(jid)) {
+                    if (RosterManager.getInstance().isContact(jid)) {
+                        Presence subscribed = new Presence(Presence.Type.subscribed);
+                        subscribed.setTo(jid);
+                        XMPPSession.getInstance().sendStanza(subscribed);
+                    } else {
                         AlertDialog dialog = builder.show();
                         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
                         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
