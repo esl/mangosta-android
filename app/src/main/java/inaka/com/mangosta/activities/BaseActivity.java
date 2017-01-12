@@ -7,7 +7,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.packet.Presence;
 import org.jxmpp.jid.Jid;
 
@@ -145,6 +144,7 @@ public class BaseActivity extends AppCompatActivity {
 
     protected void answerSubscriptionRequest(final Jid jid) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
         builder.setMessage(String.format(Locale.getDefault(), getString(R.string.roster_subscription_request), jid.toString()));
 
         builder.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
@@ -166,25 +166,15 @@ public class BaseActivity extends AppCompatActivity {
         builder.setNegativeButton(R.string.decline, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
+                dialog.dismiss();
             }
         });
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    if (RosterManager.getInstance().isContact(jid)) {
-                        Presence subscribed = new Presence(Presence.Type.subscribed);
-                        subscribed.setTo(jid);
-                        XMPPSession.getInstance().sendStanza(subscribed);
-                    } else {
-                        AlertDialog dialog = builder.show();
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-                    }
-                } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException e) {
-                    e.printStackTrace();
-                }
+                AlertDialog dialog = builder.show();
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
             }
         });
 

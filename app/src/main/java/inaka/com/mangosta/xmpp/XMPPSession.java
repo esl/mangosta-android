@@ -341,8 +341,22 @@ public class XMPPSession {
             private void processSubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
                 if (presence.getType().equals(Presence.Type.subscribe)) {
                     Jid sender = presence.getFrom();
-//                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
-                    RosterNotifications.rosterRequestNotification(sender);
+
+                    if (RosterManager.getInstance().isContact(sender)) {
+                        Presence subscribed = new Presence(Presence.Type.subscribed);
+                        subscribed.setTo(sender);
+                        XMPPSession.getInstance().sendStanza(subscribed);
+
+                        if (RosterManager.getInstance().isContactSubscriptionPending(sender)) {
+                            Presence subscribe = new Presence(Presence.Type.subscribe);
+                            subscribe.setTo(sender);
+                            XMPPSession.getInstance().sendStanza(subscribe);
+                        }
+
+                    } else {
+                        RosterNotifications.rosterRequestNotification(sender);
+                    }
+
                 }
             }
         };

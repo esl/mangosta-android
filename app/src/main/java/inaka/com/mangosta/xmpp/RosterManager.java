@@ -77,6 +77,37 @@ public class RosterManager {
         return buddies;
     }
 
+    public HashMap<Jid, Presence.Type> getContactsWithSubscriptionPending()
+            throws SmackException.NotLoggedInException, InterruptedException,
+            SmackException.NotConnectedException {
+        Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+        if (!roster.isLoaded()) {
+            roster.reloadAndWait();
+        }
+
+        String groupName = "Buddies";
+
+        RosterGroup group = roster.getGroup(groupName);
+
+        if (group == null) {
+            roster.createGroup(groupName);
+            group = roster.getGroup(groupName);
+        }
+
+        HashMap<Jid, Presence.Type> buddiesPending = new HashMap<>();
+
+        List<RosterEntry> entries = group.getEntries();
+        for (RosterEntry entry : entries) {
+            if (entry.isSubscriptionPending()) {
+                BareJid jid = entry.getJid();
+                Presence.Type status = roster.getPresence(jid).getType();
+                buddiesPending.put(jid, status);
+            }
+        }
+
+        return buddiesPending;
+    }
+
     public void removeFromBuddies(String jidString)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
@@ -152,6 +183,14 @@ public class RosterManager {
             SmackException.NotConnectedException {
         HashMap<Jid, Presence.Type> buddies = getContacts();
         return buddies.containsKey(jid);
+    }
+
+    public boolean isContactSubscriptionPending(Jid jid)
+            throws SmackException.NotLoggedInException, InterruptedException,
+            SmackException.NotConnectedException {
+        HashMap<Jid, Presence.Type> buddies = getContactsWithSubscriptionPending();
+        return buddies.containsKey(jid);
+
     }
 
 }
