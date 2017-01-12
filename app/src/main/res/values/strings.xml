@@ -98,6 +98,7 @@
     <string name="button_remove_all_contacts">Remove all contacts</string>
     <string name="user_removed_from_contacts">%1$s removed from contacts</string>
     <string name="user_added_to_contacts">%1$s added to contacts</string>
+    <string name="roster_subscription_request_notification_title">Contact request</string>
     <string name="roster_subscription_request">%1$s wants to add you as a contact</string>
     <string name="connected">Connected</string>
     <string name="accept">Accept</string>

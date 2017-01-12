@@ -110,6 +110,7 @@ import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.notifications.MessageNotifications;
+import inaka.com.mangosta.notifications.RosterNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
@@ -340,7 +341,8 @@ public class XMPPSession {
             private void processSubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
                 if (presence.getType().equals(Presence.Type.subscribe)) {
                     Jid sender = presence.getFrom();
-                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
+//                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
+                    RosterNotifications.rosterRequestNotification(sender);
                 }
             }
         };

@@ -104,7 +104,6 @@ public class BaseActivity extends AppCompatActivity {
         Log.wtf("activities", String.valueOf(mSessionDepth));
 
         if (mSessionDepth == 0) {
-//            XMPPSession.getInstance().inactiveCSI();
             MangostaApplication.getInstance().moveToBackground();
         }
 
