@@ -2,8 +2,6 @@ package inaka.com.mangosta.services;
 
 import android.content.Context;
 
-import org.jivesoftware.smack.tcp.XMPPTCPConnection;
-
 import java.util.TimerTask;
 
 import inaka.com.mangosta.utils.MangostaApplication;
@@ -28,16 +26,12 @@ public class XMPPReconnectTask extends TimerTask {
 
                 Preferences preferences = Preferences.getInstance();
                 XMPPSession xmppSession = XMPPSession.getInstance();
+
                 if (preferences.isLoggedIn()) {
                     try {
                         xmppSession.relogin();
                     } catch (Exception e) {
                         e.printStackTrace();
-                    }
-                } else {
-                    XMPPTCPConnection connection = xmppSession.getXMPPConnection();
-                    if (connection != null) {
-                        connection.disconnect();
                     }
                 }
 
