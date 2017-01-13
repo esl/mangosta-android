@@ -138,6 +138,8 @@ public class XMPPSession {
     public static final String SERVICE_NAME = "erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
+    public static final int REPLY_TIMEOUT = 15000;
+
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
     private PublishSubject<Presence> mPresencePublisher = PublishSubject.create();
@@ -178,7 +180,7 @@ public class XMPPSession {
     }
 
     private XMPPSession() {
-        SmackConfiguration.setDefaultPacketReplyTimeout(15000);
+        SmackConfiguration.setDefaultPacketReplyTimeout(REPLY_TIMEOUT);
         XMPPTCPConnectionConfiguration config = null;
         try {
             XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder()
@@ -333,7 +335,7 @@ public class XMPPSession {
                     sendStanza(subscribed);
 
                     if (RosterManager.getInstance().isContact(sender)) {
-                        RosterManager.getInstance().removeFromBuddies(sender.toString());
+                        RosterManager.getInstance().removeContact(sender.toString());
                     }
                 }
             }
@@ -347,7 +349,7 @@ public class XMPPSession {
                         subscribed.setTo(sender);
                         XMPPSession.getInstance().sendStanza(subscribed);
 
-                        if (RosterManager.getInstance().isContactSubscriptionPending(sender)) {
+                        if (RosterManager.getInstance().hasContactSubscriptionPending(sender)) {
                             Presence subscribe = new Presence(Presence.Type.subscribe);
                             subscribe.setTo(sender);
                             XMPPSession.getInstance().sendStanza(subscribe);
@@ -404,6 +406,13 @@ public class XMPPSession {
         Preferences preferences = Preferences.getInstance();
         if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
             backgroundLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
+        }
+    }
+
+    public void relogin() throws Exception {
+        Preferences preferences = Preferences.getInstance();
+        if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+            login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
         }
     }
 
@@ -715,6 +724,7 @@ public class XMPPSession {
 
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
+                    stopService(MangostaApplication.getInstance());
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

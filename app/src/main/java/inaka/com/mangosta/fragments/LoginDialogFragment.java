@@ -79,7 +79,9 @@ public class LoginDialogFragment extends DialogFragment {
         Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                XMPPSession.getInstance().login(userName, password);
+                XMPPSession.startService(getActivity());
+                ((SplashActivity) getActivity()).getService().login(userName, password);
+                Thread.sleep(XMPPSession.REPLY_TIMEOUT);
                 return null;
             }
         }, new Completion<Object>() {

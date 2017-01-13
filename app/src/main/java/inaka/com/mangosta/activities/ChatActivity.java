@@ -576,7 +576,7 @@ public class ChatActivity extends BaseActivity {
         User userNotContact = new User();
         userNotContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.getInstance().removeFromBuddies(userNotContact);
+            RosterManager.getInstance().removeContact(userNotContact);
             setMenuChatNotContact();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_contacts),
                     userNotContact.getLogin()), Toast.LENGTH_SHORT).show();
@@ -591,7 +591,7 @@ public class ChatActivity extends BaseActivity {
         User userContact = new User();
         userContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.getInstance().addToBuddies(userContact);
+            RosterManager.getInstance().addContact(userContact);
             setMenuChatWithContact();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_contacts),
                     userContact.getLogin()), Toast.LENGTH_SHORT).show();

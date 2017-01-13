@@ -6,15 +6,19 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
+import org.jivesoftware.smack.roster.RosterListener;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.greenrobot.event.EventBus;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 
 public class RosterManager {
@@ -24,6 +28,28 @@ public class RosterManager {
     public static RosterManager getInstance() {
         if (mInstance == null) {
             mInstance = new RosterManager();
+
+            Roster roster = Roster.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+            roster.addRosterListener(new RosterListener() {
+                @Override
+                public void entriesAdded(Collection<Jid> collection) {
+                    EventBus.getDefault().post(new Event(Event.Type.ROSTER_CHANGED));
+                }
+
+                @Override
+                public void entriesUpdated(Collection<Jid> collection) {
+                    EventBus.getDefault().post(new Event(Event.Type.ROSTER_CHANGED));
+                }
+
+                @Override
+                public void entriesDeleted(Collection<Jid> collection) {
+                    EventBus.getDefault().post(new Event(Event.Type.ROSTER_CHANGED));
+                }
+
+                @Override
+                public void presenceChanged(Presence presence) {
+                }
+            });
         }
         return mInstance;
     }
@@ -108,7 +134,7 @@ public class RosterManager {
         return buddiesPending;
     }
 
-    public void removeFromBuddies(String jidString)
+    public void removeContact(String jidString)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
@@ -125,15 +151,15 @@ public class RosterManager {
         XMPPSession.getInstance().sendStanza(presence);
     }
 
-    public void removeFromBuddies(User user)
+    public void removeContact(User user)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
         String jidString = XMPPUtils.fromUserNameToJID(user.getLogin());
-        removeFromBuddies(jidString);
+        removeContact(jidString);
     }
 
-    public void addToBuddies(String jidString)
+    public void addContact(String jidString)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
@@ -150,11 +176,11 @@ public class RosterManager {
         roster.sendSubscriptionRequest(jid);
     }
 
-    public void addToBuddies(User user)
+    public void addContact(User user)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
-        addToBuddies(XMPPUtils.fromUserNameToJID(user.getLogin()));
+        addContact(XMPPUtils.fromUserNameToJID(user.getLogin()));
     }
 
     public Presence.Type getStatusFromContact(User user) {
@@ -185,7 +211,7 @@ public class RosterManager {
         return buddies.containsKey(jid);
     }
 
-    public boolean isContactSubscriptionPending(Jid jid)
+    public boolean hasContactSubscriptionPending(Jid jid)
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException {
         HashMap<Jid, Presence.Type> buddies = getContactsWithSubscriptionPending();

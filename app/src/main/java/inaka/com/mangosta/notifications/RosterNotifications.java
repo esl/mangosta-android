@@ -38,6 +38,7 @@ public class RosterNotifications {
                 .setSmallIcon(R.mipmap.ic_launcher_empty_back)
                 .setContentIntent(chatPendingIntent)
                 .setVibrate(new long[]{0, 200, 0, 200})
+                .setAutoCancel(true)
                 .setOngoing(true);
 
         NotificationManager mNotificationManager =

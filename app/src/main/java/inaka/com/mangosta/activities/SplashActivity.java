@@ -1,10 +1,13 @@
 package inaka.com.mangosta.activities;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -23,7 +26,6 @@ import inaka.com.mangosta.fragments.LoginDialogFragment;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
-import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class SplashActivity extends FragmentActivity {
 
@@ -31,6 +33,29 @@ public class SplashActivity extends FragmentActivity {
     ProgressBar progressLoading;
 
     public static final int WAIT_TIME = 2000;
+
+    private XMPPSessionService xmppSessionService;
+    protected ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            xmppSessionService = ((XMPPSessionService.XMPPSessionServiceBinder) binder).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            xmppSessionService = null;
+        }
+    };
+
+    public XMPPSessionService getService() {
+        return xmppSessionService;
+    }
+
+    public void bindService() {
+        Intent serviceIntent = new Intent(this, XMPPSessionService.class);
+        serviceIntent.setPackage("com.nanoscopia.services");
+        bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,14 +87,29 @@ public class SplashActivity extends FragmentActivity {
         XMPPSession.startService(this);
     }
 
+    @Override
+    protected void onResume() {
+        if (xmppSessionService == null) {
+            bindService();
+        }
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (xmppSessionService != null) {
+            unbindService(mServiceConnection);
+            xmppSessionService = null;
+        }
+        super.onPause();
+    }
+
     private void xmppReloginAndStart() {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                if (!XMPPSessionService.isRunning()) {
-                    Preferences preferences = Preferences.getInstance();
-                    XMPPSession.getInstance().login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
-                }
+                xmppSessionService.relogin();
+                Thread.sleep(XMPPSession.REPLY_TIMEOUT);
                 return null;
             }
         }, new Completion<Object>() {

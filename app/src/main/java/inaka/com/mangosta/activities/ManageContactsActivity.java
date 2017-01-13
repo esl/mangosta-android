@@ -71,6 +71,9 @@ public class ManageContactsActivity extends BaseActivity {
     UsersListAdapter mContactsAdapter;
     UsersListAdapter mSearchAdapter;
 
+    private static final Object LOCK_1 = new Object() {
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -236,6 +239,18 @@ public class ManageContactsActivity extends BaseActivity {
                     }
                 });
                 break;
+
+            case ROSTER_CHANGED:
+                synchronized (LOCK_1) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mContacts.clear();
+                            getContacts();
+                        }
+                    });
+                }
+                break;
         }
     }
 
@@ -255,7 +270,7 @@ public class ManageContactsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                RosterManager.getInstance().addToBuddies(user);
+                RosterManager.getInstance().addContact(user);
                 return null;
             }
         }, new Completion<Object>() {
@@ -298,7 +313,7 @@ public class ManageContactsActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                RosterManager.getInstance().removeFromBuddies(user);
+                RosterManager.getInstance().removeContact(user);
                 return null;
             }
         }, new Completion<Object>() {
@@ -336,9 +351,10 @@ public class ManageContactsActivity extends BaseActivity {
     }
 
     private void getContacts() {
-        final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, Presence.Type>>() {
+        final ProgressDialog progress = ProgressDialog.show(ManageContactsActivity.this, getString(R.string.loading), null, true);
+
+        Tasks.executeInBackground(ManageContactsActivity.this, new BackgroundWork<HashMap<Jid, Presence.Type>>() {
             @Override
             public HashMap<Jid, Presence.Type> doInBackground() throws Exception {
                 return RosterManager.getInstance().getContacts();
@@ -372,7 +388,6 @@ public class ManageContactsActivity extends BaseActivity {
                 e.printStackTrace();
             }
         });
-
     }
 
     private void removeAllContacts() {

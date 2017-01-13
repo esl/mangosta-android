@@ -12,7 +12,8 @@ public class Event {
         BLOG_POST_CREATED,
         PRESENCE_RECEIVED,
         PRESENCE_SUBSCRIPTION_REQUEST,
-        REFRESH_UNREAD_MESSAGES_COUNT
+        REFRESH_UNREAD_MESSAGES_COUNT,
+        ROSTER_CHANGED
     }
 
     private Type mType;

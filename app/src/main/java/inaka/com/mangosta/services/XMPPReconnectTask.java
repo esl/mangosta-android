@@ -29,7 +29,11 @@ public class XMPPReconnectTask extends TimerTask {
                 Preferences preferences = Preferences.getInstance();
                 XMPPSession xmppSession = XMPPSession.getInstance();
                 if (preferences.isLoggedIn()) {
-                    xmppSession.backgroundRelogin();
+                    try {
+                        xmppSession.relogin();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     XMPPTCPConnection connection = xmppSession.getXMPPConnection();
                     if (connection != null) {
