@@ -11,7 +11,6 @@ import org.jxmpp.jid.Jid;
 
 import java.util.Locale;
 
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.MainMenuActivity;
 import inaka.com.mangosta.models.Event;
@@ -23,7 +22,7 @@ public class RosterNotifications {
     public static void rosterRequestNotification(Jid sender) {
         // show notification only if the app is closed
         if (!MangostaApplication.getInstance().isClosed()) {
-            EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
+            new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender).post();
             return;
         }
 

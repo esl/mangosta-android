@@ -14,7 +14,6 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
 
@@ -73,7 +72,7 @@ public class StickersAdapter extends RecyclerView.Adapter<StickersAdapter.Sticke
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    EventBus.getDefault().post(new Event(Event.Type.STICKER_SENT, sticker));
+                    new Event(Event.Type.STICKER_SENT, sticker).post();
                 }
             });
         }

@@ -36,8 +36,8 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.utils.Preferences;
-import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -200,7 +200,7 @@ public class ManageContactsActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
-                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
+                new Event(Event.Type.CONTACTS_CHANGED).post();
                 finish();
                 break;
         }
@@ -288,7 +288,7 @@ public class ManageContactsActivity extends BaseActivity {
                     mSearchAdapter.notifyDataSetChanged();
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
+                new Event(Event.Type.CONTACTS_CHANGED).post();
             }
 
             @Override
@@ -331,7 +331,7 @@ public class ManageContactsActivity extends BaseActivity {
                     }
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
+                new Event(Event.Type.CONTACTS_CHANGED).post();
             }
 
             @Override
@@ -411,7 +411,7 @@ public class ManageContactsActivity extends BaseActivity {
                     manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
+                new Event(Event.Type.CONTACTS_CHANGED).post();
             }
 
             @Override
@@ -432,7 +432,7 @@ public class ManageContactsActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        EventBus.getDefault().post(new Event(Event.Type.CONTACTS_CHANGED));
+        new Event(Event.Type.CONTACTS_CHANGED).post();
         super.onBackPressed();
     }
 

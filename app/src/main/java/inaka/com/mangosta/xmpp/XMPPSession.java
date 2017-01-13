@@ -101,7 +101,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
@@ -303,7 +302,7 @@ public class XMPPSession {
                         e.printStackTrace();
                     }
 
-                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_RECEIVED));
+                    new Event(Event.Type.PRESENCE_RECEIVED).post();
 
                 } else if (stanza instanceof ErrorIQ) {
                     ErrorIQ errorIq = (ErrorIQ) stanza;
@@ -510,7 +509,7 @@ public class XMPPSession {
                     mangostaApplication.getCurrentActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            EventBus.getDefault().post(new Event(Event.Type.BLOG_POST_CREATED));
+                            new Event(Event.Type.BLOG_POST_CREATED).post();
                         }
                     });
                 }

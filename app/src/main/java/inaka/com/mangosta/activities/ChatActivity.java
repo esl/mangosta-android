@@ -55,7 +55,6 @@ import java.util.TimerTask;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ChatMessagesAdapter;
 import inaka.com.mangosta.adapters.StickersAdapter;
@@ -531,7 +530,7 @@ public class ChatActivity extends BaseActivity {
                     finish();
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
+                new Event(Event.Type.GO_BACK_FROM_CHAT).post();
                 break;
 
             case R.id.actionChatMembers:
@@ -986,7 +985,7 @@ public class ChatActivity extends BaseActivity {
         super.onBackPressed();
         mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
         cancelMessageNotificationsForChat();
-        EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
+        new Event(Event.Type.GO_BACK_FROM_CHAT).post();
     }
 
     @Override

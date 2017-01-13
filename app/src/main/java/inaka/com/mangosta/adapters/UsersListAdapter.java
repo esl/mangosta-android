@@ -19,11 +19,10 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.utils.NavigateToUserProfile;
-import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -115,14 +114,14 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
             addUserButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    EventBus.getDefault().post(new UserEvent(UserEvent.Type.ADD_USER, user));
+                    new UserEvent(UserEvent.Type.ADD_USER, user).post();
                 }
             });
 
             removeUserButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    EventBus.getDefault().post(new UserEvent(UserEvent.Type.REMOVE_USER, user));
+                    new UserEvent(UserEvent.Type.REMOVE_USER, user).post();
                 }
             });
 

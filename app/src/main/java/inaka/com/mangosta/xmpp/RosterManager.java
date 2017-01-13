@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
 
@@ -33,17 +32,17 @@ public class RosterManager {
             roster.addRosterListener(new RosterListener() {
                 @Override
                 public void entriesAdded(Collection<Jid> collection) {
-                    EventBus.getDefault().post(new Event(Event.Type.ROSTER_CHANGED));
+                    new Event(Event.Type.ROSTER_CHANGED).post();
                 }
 
                 @Override
                 public void entriesUpdated(Collection<Jid> collection) {
-                    EventBus.getDefault().post(new Event(Event.Type.ROSTER_CHANGED));
+                    new Event(Event.Type.ROSTER_CHANGED).post();
                 }
 
                 @Override
                 public void entriesDeleted(Collection<Jid> collection) {
-                    EventBus.getDefault().post(new Event(Event.Type.ROSTER_CHANGED));
+                    new Event(Event.Type.ROSTER_CHANGED).post();
                 }
 
                 @Override

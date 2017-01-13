@@ -36,8 +36,8 @@ import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.realm.RealmManager;
-import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 

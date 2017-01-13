@@ -2,6 +2,8 @@ package inaka.com.mangosta.models;
 
 import org.jxmpp.jid.Jid;
 
+import de.greenrobot.event.EventBus;
+
 public class Event {
 
     public enum Type {
@@ -48,6 +50,10 @@ public class Event {
 
     public Jid getJidSender() {
         return mJidSender;
+    }
+
+    public void post() {
+        EventBus.getDefault().post(this);
     }
 
 }
