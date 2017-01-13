@@ -7,7 +7,6 @@ It is designed to be a technology demonstration: it is not available on the Play
 Mangosta for Android is part of the [MongooseIM platform](https://github.com/esl/MongooseIM).
 
 It comes with features such as:
-
 * Group chats (MUC Light)
 * One-to-one chats
 * Microblogging
@@ -21,9 +20,8 @@ It comes with features such as:
 It includes unit tests and UI tests (using Espresso).
 
 2 different implementations (same features in both):
-
-* ~master~ branch: only xmpp
-* ~use.mongoose.rest.api~ branch: xmpp + some features using the Mongoose REST API
+* **master** branch: only xmpp
+* **use.mongoose.rest.api** branch: xmpp + some features using the Mongoose REST API
 
 Feel free to comment, we will be glad to hear from your uses.
 You can [report issues](https://github.com/esl/mangosta-android/issues) and/or [contribute](https://github.com/esl/mangosta-android/pulls).
