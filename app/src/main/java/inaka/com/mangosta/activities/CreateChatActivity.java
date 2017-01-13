@@ -33,8 +33,8 @@ import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.utils.NavigateToChat;
-import inaka.com.mangosta.utils.UserEvent;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 

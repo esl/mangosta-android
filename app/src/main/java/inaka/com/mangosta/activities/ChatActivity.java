@@ -55,7 +55,6 @@ import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ChatMessagesAdapter;
 import inaka.com.mangosta.adapters.StickersAdapter;
@@ -557,7 +556,7 @@ public class ChatActivity extends BaseActivity {
                     finish();
                 }
 
-                EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
+                new Event(Event.Type.GO_BACK_FROM_CHAT).post();
                 break;
 
             case R.id.actionChatMembers:
@@ -602,7 +601,7 @@ public class ChatActivity extends BaseActivity {
         User userNotContact = new User();
         userNotContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.getInstance().removeFromBuddies(userNotContact);
+            RosterManager.getInstance().removeContact(userNotContact);
             setMenuChatNotContact();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_contacts),
                     userNotContact.getLogin()), Toast.LENGTH_SHORT).show();
@@ -617,7 +616,7 @@ public class ChatActivity extends BaseActivity {
         User userContact = new User();
         userContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
         try {
-            RosterManager.getInstance().addToBuddies(userContact);
+            RosterManager.getInstance().addContact(userContact);
             setMenuChatWithContact();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_contacts),
                     userContact.getLogin()), Toast.LENGTH_SHORT).show();
@@ -1023,7 +1022,7 @@ public class ChatActivity extends BaseActivity {
         super.onBackPressed();
         mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
         cancelMessageNotificationsForChat();
-        EventBus.getDefault().post(new Event(Event.Type.GO_BACK_FROM_CHAT));
+        new Event(Event.Type.GO_BACK_FROM_CHAT).post();
     }
 
     @Override

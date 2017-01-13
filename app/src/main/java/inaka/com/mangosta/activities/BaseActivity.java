@@ -1,13 +1,17 @@
 package inaka.com.mangosta.activities;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.packet.Presence;
 import org.jxmpp.jid.Jid;
 
@@ -18,6 +22,7 @@ import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
@@ -29,6 +34,25 @@ public class BaseActivity extends AppCompatActivity {
     private Realm mRealm;
     public static int mSessionDepth = 0;
     private boolean mIsRegistered;
+
+    private XMPPSessionService myService;
+    protected ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            myService = ((XMPPSessionService.XMPPSessionServiceBinder) binder).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            myService = null;
+        }
+    };
+
+    public void bindService() {
+        Intent serviceIntent = new Intent(this, XMPPSessionService.class);
+        serviceIntent.setPackage("com.nanoscopia.services");
+        bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +69,14 @@ public class BaseActivity extends AppCompatActivity {
             mRealm.close();
         }
         clearReferences();
-
         super.onDestroy();
     }
 
     @Override
     protected void onResume() {
+        if (myService == null) {
+            bindService();
+        }
         super.onResume();
         MangostaApplication.bus.register(this);
         setIsRegistered(true);
@@ -59,6 +85,11 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        if (myService != null) {
+            unbindService(mServiceConnection);
+            myService = null;
+        }
+
         clearReferences();
         super.onPause();
 
@@ -104,11 +135,11 @@ public class BaseActivity extends AppCompatActivity {
         Log.wtf("activities", String.valueOf(mSessionDepth));
 
         if (mSessionDepth == 0) {
-//            XMPPSession.getInstance().inactiveCSI();
             MangostaApplication.getInstance().moveToBackground();
         }
 
     }
+
 
     public Realm getRealm() {
         try {
@@ -130,7 +161,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     private void clearReferences() {
-        Activity currActivity = MangostaApplication.getInstance().getCurrentActivity();
+        Activity currActivity = getAppCurrentActivity();
         if (this.equals(currActivity)) {
             MangostaApplication.getInstance().setCurrentActivity(null);
         }
@@ -139,16 +170,23 @@ public class BaseActivity extends AppCompatActivity {
     public void onEvent(Event event) {
         switch (event.getType()) {
             case PRESENCE_SUBSCRIPTION_REQUEST:
-                answerSubscriptionRequest(event.getJidSender());
+                if (getAppCurrentActivity().equals(this)) {
+                    answerSubscriptionRequest(event.getJidSender());
+                }
                 break;
         }
     }
 
-    private void answerSubscriptionRequest(final Jid jid) {
+    private Activity getAppCurrentActivity() {
+        return MangostaApplication.getInstance().getCurrentActivity();
+    }
+
+    protected void answerSubscriptionRequest(final Jid jid) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
         builder.setMessage(String.format(Locale.getDefault(), getString(R.string.roster_subscription_request), jid.toString()));
 
-        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 try {
@@ -157,31 +195,25 @@ public class BaseActivity extends AppCompatActivity {
                     XMPPSession.getInstance().sendStanza(subscribed);
 
                     if (!RosterManager.getInstance().isContact(jid)) {
-                        RosterManager.getInstance().addToBuddies(jid.toString());
+                        RosterManager.getInstance().addContact(jid.toString());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
-        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.decline, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
+                dialog.dismiss();
             }
         });
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    if (!RosterManager.getInstance().isContact(jid)) {
-                        AlertDialog dialog = builder.show();
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-                    }
-                } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException e) {
-                    e.printStackTrace();
-                }
+                AlertDialog dialog = builder.show();
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
             }
         });
 
