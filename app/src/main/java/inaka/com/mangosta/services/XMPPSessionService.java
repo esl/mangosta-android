@@ -29,7 +29,7 @@ public class XMPPSessionService extends Service {
         CONTEXT = getApplicationContext();
         Timer timer = new Timer();
         XMPPReconnectTask xmppReconnectTask = new XMPPReconnectTask(CONTEXT);
-        timer.schedule(xmppReconnectTask, TIMER_LAPSE, TIMER_LAPSE);
+        timer.schedule(xmppReconnectTask, 0, TIMER_LAPSE);
         return Service.START_STICKY;
     }
 

@@ -116,7 +116,7 @@ public class BaseActivity extends AppCompatActivity {
             XMPPSession.getInstance().activeCSI();
         }
 
-//        MangostaApplication.getInstance().moveToForeground();
+        MangostaApplication.getInstance().moveToForeground();
     }
 
     @Override
