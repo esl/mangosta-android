@@ -101,7 +101,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.BlogPost;
@@ -110,6 +109,7 @@ import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.notifications.MessageNotifications;
+import inaka.com.mangosta.notifications.RosterNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
@@ -136,6 +136,8 @@ public class XMPPSession {
     public static final String SERVER_NAME = "xmpp.erlang-solutions.com";
     public static final String SERVICE_NAME = "erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
+
+    public static final int REPLY_TIMEOUT = 15000;
 
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
@@ -177,7 +179,7 @@ public class XMPPSession {
     }
 
     private XMPPSession() {
-        SmackConfiguration.setDefaultPacketReplyTimeout(15000);
+        SmackConfiguration.setDefaultPacketReplyTimeout(REPLY_TIMEOUT);
         XMPPTCPConnectionConfiguration config = null;
         try {
             XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder()
@@ -204,7 +206,7 @@ public class XMPPSession {
 
         Roster roster = Roster.getInstanceFor(mXMPPConnection);
         roster.setRosterLoadedAtLogin(false);
-        roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
+        roster.setSubscriptionMode(Roster.SubscriptionMode.manual);
 
         mXMPPConnection.addConnectionListener(new AbstractConnectionClosedListener() {
             @Override
@@ -300,7 +302,7 @@ public class XMPPSession {
                         e.printStackTrace();
                     }
 
-                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_RECEIVED));
+                    new Event(Event.Type.PRESENCE_RECEIVED).post();
 
                 } else if (stanza instanceof ErrorIQ) {
                     ErrorIQ errorIq = (ErrorIQ) stanza;
@@ -332,7 +334,7 @@ public class XMPPSession {
                     sendStanza(subscribed);
 
                     if (RosterManager.getInstance().isContact(sender)) {
-                        RosterManager.getInstance().removeFromBuddies(sender.toString());
+                        RosterManager.getInstance().removeContact(sender.toString());
                     }
                 }
             }
@@ -340,7 +342,22 @@ public class XMPPSession {
             private void processSubscribePresence(Presence presence) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException, XMPPException.XMPPErrorException, SmackException.NoResponseException, XmppStringprepException {
                 if (presence.getType().equals(Presence.Type.subscribe)) {
                     Jid sender = presence.getFrom();
-                    EventBus.getDefault().post(new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender));
+
+                    if (RosterManager.getInstance().isContact(sender)) {
+                        Presence subscribed = new Presence(Presence.Type.subscribed);
+                        subscribed.setTo(sender);
+                        XMPPSession.getInstance().sendStanza(subscribed);
+
+                        if (RosterManager.getInstance().hasContactSubscriptionPending(sender)) {
+                            Presence subscribe = new Presence(Presence.Type.subscribe);
+                            subscribe.setTo(sender);
+                            XMPPSession.getInstance().sendStanza(subscribe);
+                        }
+
+                    } else {
+                        RosterNotifications.rosterRequestNotification(sender);
+                    }
+
                 }
             }
         };
@@ -388,6 +405,13 @@ public class XMPPSession {
         Preferences preferences = Preferences.getInstance();
         if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
             backgroundLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
+        }
+    }
+
+    public void relogin() throws Exception {
+        Preferences preferences = Preferences.getInstance();
+        if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+            login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
         }
     }
 
@@ -485,7 +509,7 @@ public class XMPPSession {
                     mangostaApplication.getCurrentActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            EventBus.getDefault().post(new Event(Event.Type.BLOG_POST_CREATED));
+                            new Event(Event.Type.BLOG_POST_CREATED).post();
                         }
                     });
                 }
@@ -699,6 +723,7 @@ public class XMPPSession {
 
                     mReconnectionManager.disableAutomaticReconnection();
                     mXMPPConnection.disconnect();
+                    stopService(MangostaApplication.getInstance());
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

@@ -20,7 +20,6 @@ import org.jxmpp.jid.Jid;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -98,7 +97,7 @@ public class CreateBlogActivity extends BaseActivity {
                 progress.dismiss();
                 createBlogText.setText("");
                 Toast.makeText(CreateBlogActivity.this, getString(R.string.blog_post_published), Toast.LENGTH_SHORT).show();
-                EventBus.getDefault().post(new Event(Event.Type.BLOG_POST_CREATED));
+                new Event(Event.Type.BLOG_POST_CREATED).post();
                 finish();
             }
 

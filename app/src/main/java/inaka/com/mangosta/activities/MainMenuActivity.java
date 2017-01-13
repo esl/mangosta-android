@@ -11,6 +11,9 @@ import android.view.View;
 import com.astuetz.PagerSlidingTabStrip;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
@@ -18,6 +21,7 @@ import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.fragments.ChatsListsFragment;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.notifications.RosterNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -40,6 +44,8 @@ public class MainMenuActivity extends BaseActivity {
     public boolean mRoomsLoaded = false;
 
     public static String NEW_BLOG_POST = "newBlogPost";
+    public static String NEW_ROSTER_REQUEST = "newRosterRequest";
+    public static String NEW_ROSTER_REQUEST_SENDER = "newRosterRequestSender";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +83,24 @@ public class MainMenuActivity extends BaseActivity {
         });
 
         manageCallFromBlogPostNotification();
+        manageCallFromRosterRequestNotification();
+    }
+
+    private void manageCallFromRosterRequestNotification() {
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
+            boolean newRosterRequest = bundle.getBoolean(NEW_ROSTER_REQUEST, false);
+            if (newRosterRequest) {
+                try {
+                    String sender = bundle.getString(NEW_ROSTER_REQUEST_SENDER);
+                    Jid jid = JidCreate.from(sender);
+                    RosterNotifications.cancelRosterRequestNotification(this, sender);
+                    answerSubscriptionRequest(jid);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private void manageCallFromBlogPostNotification() {

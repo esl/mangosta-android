@@ -10,7 +10,6 @@ import android.os.Bundle;
 import java.util.HashMap;
 import java.util.Locale;
 
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.ChatActivity;
 import inaka.com.mangosta.models.Chat;
@@ -27,7 +26,7 @@ public class MessageNotifications {
     public static void chatMessageNotification(String messageId) {
         // show notification only if the app is closed
         if (!MangostaApplication.getInstance().isClosed()) {
-            EventBus.getDefault().post(new Event(Event.Type.REFRESH_UNREAD_MESSAGES_COUNT));
+            new Event(Event.Type.REFRESH_UNREAD_MESSAGES_COUNT).post();
             return;
         }
 

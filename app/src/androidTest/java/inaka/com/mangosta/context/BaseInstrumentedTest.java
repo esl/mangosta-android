@@ -183,8 +183,8 @@ public class BaseInstrumentedTest {
         RosterManager.setSpecialInstanceForTesting(mRosterManagerMock);
 
         try {
-            doNothing().when(mRosterManagerMock).addToBuddies(any(User.class));
-            doNothing().when(mRosterManagerMock).removeFromBuddies(any(User.class));
+            doNothing().when(mRosterManagerMock).addContact(any(User.class));
+            doNothing().when(mRosterManagerMock).removeContact(any(User.class));
             doReturn(new HashMap<>()).when(mRosterManagerMock).getContacts();
             doNothing().when(mRosterManagerMock).removeAllContacts();
             doReturn(Presence.Type.unavailable).when(mRosterManagerMock).getStatusFromContact(any(User.class));
