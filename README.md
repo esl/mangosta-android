@@ -15,13 +15,13 @@ It comes with features such as:
 * Stickers (Bits of Binary)
 * Token-based reconnection
 * Instant stream resumption
-* Background service managing the xmpp connection and sending notifications (when the app is closed)
+* Background service managing the XMPP connection and sending notifications (when the app is closed)
 
 It includes unit tests and UI tests (using Espresso).
 
 2 different implementations (same features in both):
-* **master** branch: only xmpp
-* **use.mongoose.rest.api** branch: xmpp + some features using the Mongoose REST API
+* **master** branch: only XMPP
+* **use.mongoose.rest.api** branch: XMPP + some features using the MongooseIM REST API
 
 Feel free to comment, we will be glad to hear from your uses.
 You can [report issues](https://github.com/esl/mangosta-android/issues) and/or [contribute](https://github.com/esl/mangosta-android/pulls).
