@@ -496,15 +496,17 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void saveMessageBeingComposed() {
-        mChat = getChatFromRealm();
+        if (!Preferences.isTesting()) {
+            mChat = getChatFromRealm();
 
-        if (mChat != null && chatSendMessageEditText != null) {
-            String message = chatSendMessageEditText.getText().toString();
+            if (mChat != null && chatSendMessageEditText != null) {
+                String message = chatSendMessageEditText.getText().toString();
 
-            Realm realm = getRealm();
-            realm.beginTransaction();
-            mChat.setMessageBeingComposed(message);
-            realm.commitTransaction();
+                Realm realm = getRealm();
+                realm.beginTransaction();
+                mChat.setMessageBeingComposed(message);
+                realm.commitTransaction();
+            }
         }
     }
 
