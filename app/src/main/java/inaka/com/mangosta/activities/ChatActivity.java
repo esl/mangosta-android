@@ -236,7 +236,7 @@ public class ChatActivity extends BaseActivity {
                     schedulePauseTimer();
                 } else { // delete or send message
                     mPauseComposeTimer.cancel();
-                    mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                    mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.getType());
                 }
             }
 
@@ -351,7 +351,7 @@ public class ChatActivity extends BaseActivity {
                     @Override
                     public void run() {
                         mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-                        mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                        sendInactiveTypingStatus();
                     }
                 });
             }
@@ -482,9 +482,11 @@ public class ChatActivity extends BaseActivity {
         cancelMessageNotificationsForChat();
         mMessagesAdapter.notifyDataSetChanged();
         mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+
         if (mChat != null) {
-            mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+            sendInactiveTypingStatus();
         }
+
         disconnectRoomFromServer();
     }
 
@@ -519,8 +521,9 @@ public class ChatActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
+
                 mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                sendInactiveTypingStatus();
 
                 if (mSessionDepth == 1) {
                     Intent intent = new Intent(this, MainMenuActivity.class);
@@ -550,12 +553,12 @@ public class ChatActivity extends BaseActivity {
                 break;
 
             case R.id.actionLeaveChat:
-                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.getType());
                 leaveChat();
                 break;
 
             case R.id.actionDestroyChat:
-                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.getType());
                 destroyChat();
                 break;
 
@@ -569,6 +572,18 @@ public class ChatActivity extends BaseActivity {
         }
 
         return true;
+    }
+
+    private void sendInactiveTypingStatus() {
+        if (wasComposingMessage()) {
+            mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+        } else {
+            mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.getType());
+        }
+    }
+
+    private boolean wasComposingMessage() {
+        return chatSendMessageEditText != null && chatSendMessageEditText.getText().length() > 0;
     }
 
     private void removeChatGuyFromContacts() {
@@ -983,7 +998,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+        sendInactiveTypingStatus();
         cancelMessageNotificationsForChat();
         new Event(Event.Type.GO_BACK_FROM_CHAT).post();
     }
