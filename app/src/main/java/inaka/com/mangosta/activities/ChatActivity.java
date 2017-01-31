@@ -300,7 +300,7 @@ public class ChatActivity extends BaseActivity {
         });
 
     }
-    
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -535,10 +535,12 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void getMessageBeingComposed() {
-        mChat = getChatFromRealm();
-        String message = mChat.getMessageBeingComposed();
-        if (message != null && message.length() > 0) {
-            chatSendMessageEditText.setText(message);
+        if (!Preferences.isTesting()) {
+            mChat = getChatFromRealm();
+            String message = mChat.getMessageBeingComposed();
+            if (message != null && message.length() > 0) {
+                chatSendMessageEditText.setText(message);
+            }
         }
     }
 
