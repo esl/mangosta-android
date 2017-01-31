@@ -226,7 +226,7 @@ public class XMPPSession {
                 backgroundRelogin();
                 mConnectionPublisher.onNext(new ChatConnection(ChatConnection.ChatConnectionStatus.Connected));
                 sendPresenceAvailable();
-                activeCSI();
+//                activeCSI();
             }
 
             @Override
@@ -387,7 +387,10 @@ public class XMPPSession {
             @Override
             public void run() {
                 try {
-                    mXMPPConnection.connect();
+                    Preferences preferences = Preferences.getInstance();
+                    if (preferences.userAndPasswordNotEmpty()) {
+                        mXMPPConnection.connect();
+                    }
                 } catch (SmackException.AlreadyConnectedException ace) {
                     Log.w("SMACK", "Already Connected");
                 } catch (Exception ex) {
@@ -403,14 +406,14 @@ public class XMPPSession {
 
     public void backgroundRelogin() {
         Preferences preferences = Preferences.getInstance();
-        if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+        if (preferences.userAndPasswordNotEmpty()) {
             backgroundLogin(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
         }
     }
 
     public void relogin() throws Exception {
         Preferences preferences = Preferences.getInstance();
-        if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+        if (preferences.userAndPasswordNotEmpty()) {
             login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
         }
     }

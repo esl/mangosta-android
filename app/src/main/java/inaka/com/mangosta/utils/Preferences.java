@@ -141,4 +141,8 @@ public class Preferences {
         editor.apply();
     }
 
+    public boolean userAndPasswordNotEmpty() {
+        return !getUserXMPPJid().equals("") && !getUserXMPPPassword().equals("");
+    }
+
 }

@@ -162,11 +162,11 @@ public class ChatActivity extends BaseActivity {
         String chatName = getIntent().getStringExtra(CHAT_NAME_PARAMETER);
         boolean isNewChat = getIntent().getBooleanExtra(IS_NEW_CHAT_PARAMETER, false);
 
-        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+        mChat = getChatFromRealm();
 
         if (isNewChat) {
             RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
-            mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+            mChat = getChatFromRealm();
         }
 
         if (!mChat.isShow()) {
@@ -236,7 +236,7 @@ public class ChatActivity extends BaseActivity {
                     schedulePauseTimer();
                 } else { // delete or send message
                     mPauseComposeTimer.cancel();
-                    mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                    mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.getType());
                 }
             }
 
@@ -290,6 +290,236 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mMessageSubscription = XMPPSession.getInstance().subscribeRoomToMessages(mChatJID, new XMPPSession.MessageSubscriber() {
+            @Override
+            public void onMessageReceived(final Message message) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (message.hasExtension(ChatStateExtension.NAMESPACE)) {
+                            ChatStateExtension chatStateExtension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
+                            ChatState chatState = chatStateExtension.getChatState();
+
+                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
+                            String userSender = "";
+                            String messageType = message.getType().name();
+
+                            String[] jidList = message.getFrom().toString().split("/");
+
+                            switch (mChat.getType()) {
+
+                                case Chat.TYPE_1_T0_1:
+                                    userSender = XMPPUtils.fromJIDToUserName(jidList[0]);
+                                    break;
+
+                                case Chat.TYPE_MUC_LIGHT:
+                                    if (jidList.length > 1) {
+                                        userSender = XMPPUtils.fromJIDToUserName(jidList[1]);
+                                    }
+                                    break;
+                            }
+
+                            showTypingStatus(chatState, myUser, userSender, messageType);
+                        } else {
+                            String subject = message.getSubject();
+                            if (subject != null) {
+                                setTitle(subject);
+                            }
+                            refreshMessagesAndScrollToEnd();
+
+                            XMPPError error = message.getError();
+                            showErrorToast(error);
+                        }
+
+                    }
+
+                    private void showErrorToast(XMPPError error) {
+                        if (BlockedErrorExtension.isInside(message)) {
+                            Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
+                        } else if (error != null && error.getCondition().equals(XMPPError.Condition.service_unavailable)) {
+                            Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    private void showTypingStatus(ChatState chatState, String myUser, String userSender, String messageType) {
+                        if (!userSender.equals(myUser) && !messageType.equals("error")) {
+                            if (chatState.equals(ChatState.composing)) { // typing
+                                chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
+                                chatTypingTextView.setVisibility(View.VISIBLE);
+                            } else { // not typing
+                                chatTypingTextView.setVisibility(View.GONE);
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+
+        mConnectionSubscription = XMPPSession.getInstance().subscribeToConnection(new Action1<ChatConnection>() {
+            @Override
+            public void call(ChatConnection chatConnection) {
+                switch (chatConnection.getStatus()) {
+                    case Connected:
+                    case Authenticated:
+                        break;
+                    case Connecting:
+                    case Disconnected:
+                        break;
+                }
+            }
+        });
+
+        getMessageBeingComposed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        saveMessageBeingComposed();
+
+        cancelMessageNotificationsForChat();
+        mMessagesAdapter.notifyDataSetChanged();
+
+        mChat = getChatFromRealm();
+        if (mChat != null) {
+            sendInactiveTypingStatus();
+        }
+
+        disconnectRoomFromServer();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_chat, menu);
+        mMenu = menu;
+
+        menu.findItem(R.id.actionChatMembers).setVisible(mChat.getType() != Chat.TYPE_1_T0_1);
+
+        // can change room name or subject only if it is a MUC Light
+        menu.findItem(R.id.actionChangeRoomName).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
+        menu.findItem(R.id.actionChangeSubject).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
+
+        menu.findItem(R.id.actionDestroyChat).setVisible(false);
+        setDestroyButtonVisibility(menu);
+
+        menu.findItem(R.id.actionAddToContacts).setVisible(false);
+        menu.findItem(R.id.actionRemoveFromContacts).setVisible(false);
+        if (mChat.getType() == Chat.TYPE_1_T0_1) {
+            menu.findItem(R.id.actionLeaveChat).setTitle(getString(R.string.action_delete_chat));
+            manageLeaveAndContactMenuItems();
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        cancelMessageNotificationsForChat();
+
+        switch (id) {
+            case android.R.id.home:
+
+                mChat = getChatFromRealm();
+                sendInactiveTypingStatus();
+
+                if (mSessionDepth == 1) {
+                    Intent intent = new Intent(this, MainMenuActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                } else {
+                    finish();
+                }
+
+                new Event(Event.Type.GO_BACK_FROM_CHAT).post();
+                break;
+
+            case R.id.actionChatMembers:
+                mChat = getChatFromRealm();
+                Intent chatMembersIntent = new Intent(ChatActivity.this, ChatMembersActivity.class);
+                chatMembersIntent.putExtra(ChatMembersActivity.ROOM_JID_PARAMETER, mChatJID);
+                chatMembersIntent.putExtra(ChatMembersActivity.IS_ADMIN_PARAMETER, mIsOwner);
+                startActivity(chatMembersIntent);
+                break;
+
+            case R.id.actionChangeRoomName:
+                changeMUCLightRoomName();
+                break;
+
+            case R.id.actionChangeSubject:
+                changeMUCLightRoomSubject();
+                break;
+
+            case R.id.actionLeaveChat:
+                mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.getType());
+                leaveChat();
+                break;
+
+            case R.id.actionDestroyChat:
+                mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.getType());
+                destroyChat();
+                break;
+
+            case R.id.actionAddToContacts:
+                addChatGuyToContacts();
+                break;
+
+            case R.id.actionRemoveFromContacts:
+                removeChatGuyFromContacts();
+                break;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        saveMessageBeingComposed();
+        sendInactiveTypingStatus();
+        cancelMessageNotificationsForChat();
+        new Event(Event.Type.GO_BACK_FROM_CHAT).post();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        saveMessageBeingComposed();
+    }
+
+    private void saveMessageBeingComposed() {
+        if (!Preferences.isTesting()) {
+            mChat = getChatFromRealm();
+
+            if (mChat != null && chatSendMessageEditText != null) {
+                String message = chatSendMessageEditText.getText().toString();
+
+                Realm realm = getRealm();
+                realm.beginTransaction();
+                mChat.setMessageBeingComposed(message);
+                realm.commitTransaction();
+            }
+        }
+    }
+
+    private void getMessageBeingComposed() {
+        mChat = getChatFromRealm();
+        String message = mChat.getMessageBeingComposed();
+        if (message != null && message.length() > 0) {
+            chatSendMessageEditText.setText(message);
+        }
+    }
+
+    private Chat getChatFromRealm() {
+        return RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
     }
 
     private void cancelMessageNotificationsForChat() {
@@ -350,8 +580,8 @@ public class ChatActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-                        mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+                        mChat = getChatFromRealm();
+                        sendInactiveTypingStatus();
                     }
                 });
             }
@@ -395,180 +625,16 @@ public class ChatActivity extends BaseActivity {
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        mMessageSubscription = XMPPSession.getInstance().subscribeRoomToMessages(mChatJID, new XMPPSession.MessageSubscriber() {
-            @Override
-            public void onMessageReceived(final Message message) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (message.hasExtension(ChatStateExtension.NAMESPACE)) {
-                            ChatStateExtension chatStateExtension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
-                            ChatState chatState = chatStateExtension.getChatState();
-
-                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
-                            String userSender = "";
-                            String messageType = message.getType().name();
-
-                            String[] jidList = message.getFrom().toString().split("/");
-
-                            switch (mChat.getType()) {
-
-                                case Chat.TYPE_1_T0_1:
-                                    userSender = XMPPUtils.fromJIDToUserName(jidList[0]);
-                                    break;
-
-                                case Chat.TYPE_MUC_LIGHT:
-                                    if (jidList.length > 1) {
-                                        userSender = XMPPUtils.fromJIDToUserName(jidList[1]);
-                                    }
-                                    break;
-                            }
-
-                            if (!userSender.equals(myUser) && !messageType.equals("error")) {
-                                if (chatState.equals(ChatState.composing)) { // typing
-                                    chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
-                                    chatTypingTextView.setVisibility(View.VISIBLE);
-                                } else { // not typing
-                                    chatTypingTextView.setVisibility(View.GONE);
-                                }
-                            }
-
-
-                        } else {
-                            String subject = message.getSubject();
-                            if (subject != null) {
-                                setTitle(subject);
-                            }
-                            refreshMessagesAndScrollToEnd();
-
-                            XMPPError error = message.getError();
-
-                            if (BlockedErrorExtension.isInside(message)) {
-                                Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
-                            } else if (error != null && error.getCondition().equals(XMPPError.Condition.service_unavailable)) {
-                                Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
-                    }
-                });
-            }
-
-        });
-
-        mConnectionSubscription = XMPPSession.getInstance().subscribeToConnection(new Action1<ChatConnection>() {
-            @Override
-            public void call(ChatConnection chatConnection) {
-                switch (chatConnection.getStatus()) {
-                    case Connected:
-                    case Authenticated:
-                        break;
-                    case Connecting:
-                    case Disconnected:
-                        break;
-                }
-            }
-        });
-
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        cancelMessageNotificationsForChat();
-        mMessagesAdapter.notifyDataSetChanged();
-        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-        if (mChat != null) {
+    private void sendInactiveTypingStatus() {
+        if (wasComposingMessage()) {
             mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
+        } else {
+            mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.getType());
         }
-        disconnectRoomFromServer();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_chat, menu);
-        mMenu = menu;
-
-        menu.findItem(R.id.actionChatMembers).setVisible(mChat.getType() != Chat.TYPE_1_T0_1);
-
-        // can change room name or subject only if it is a MUC Light
-        menu.findItem(R.id.actionChangeRoomName).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
-        menu.findItem(R.id.actionChangeSubject).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
-
-        menu.findItem(R.id.actionDestroyChat).setVisible(false);
-        setDestroyButtonVisibility(menu);
-
-        menu.findItem(R.id.actionAddToContacts).setVisible(false);
-        menu.findItem(R.id.actionRemoveFromContacts).setVisible(false);
-        if (mChat.getType() == Chat.TYPE_1_T0_1) {
-            menu.findItem(R.id.actionLeaveChat).setTitle(getString(R.string.action_delete_chat));
-            manageLeaveAndContactMenuItems();
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        cancelMessageNotificationsForChat();
-
-        switch (id) {
-            case android.R.id.home:
-                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-
-                if (mSessionDepth == 1) {
-                    Intent intent = new Intent(this, MainMenuActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(intent);
-                } else {
-                    finish();
-                }
-
-                new Event(Event.Type.GO_BACK_FROM_CHAT).post();
-                break;
-
-            case R.id.actionChatMembers:
-                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-                Intent chatMembersIntent = new Intent(ChatActivity.this, ChatMembersActivity.class);
-                chatMembersIntent.putExtra(ChatMembersActivity.ROOM_JID_PARAMETER, mChatJID);
-                chatMembersIntent.putExtra(ChatMembersActivity.IS_ADMIN_PARAMETER, mIsOwner);
-                startActivity(chatMembersIntent);
-                break;
-
-            case R.id.actionChangeRoomName:
-                changeMUCLightRoomName();
-                break;
-
-            case R.id.actionChangeSubject:
-                changeMUCLightRoomSubject();
-                break;
-
-            case R.id.actionLeaveChat:
-                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-                leaveChat();
-                break;
-
-            case R.id.actionDestroyChat:
-                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-                destroyChat();
-                break;
-
-            case R.id.actionAddToContacts:
-                addChatGuyToContacts();
-                break;
-
-            case R.id.actionRemoveFromContacts:
-                removeChatGuyFromContacts();
-                break;
-        }
-
-        return true;
+    private boolean wasComposingMessage() {
+        return chatSendMessageEditText != null && chatSendMessageEditText.getText().length() > 0;
     }
 
     private void removeChatGuyFromContacts() {
@@ -763,7 +829,7 @@ public class ChatActivity extends BaseActivity {
             if (!TextUtils.isEmpty(content)) {
                 String messageId = RealmManager.getInstance()
                         .saveMessageLocally(mChat, mChatJID, content, ChatMessage.TYPE_CHAT);
-                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+                mChat = getChatFromRealm();
                 mRoomManager.sendTextMessage(messageId, mChatJID, content, mChat.getType());
                 chatSendMessageEditText.setText("");
                 refreshMessagesAndScrollToEnd();
@@ -829,7 +895,7 @@ public class ChatActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mLeaving = true;
-                mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+                mChat = getChatFromRealm();
                 if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
                     disconnectRoomFromServer();
                     mRoomManager.destroyMUCLight(mChatJID);
@@ -850,7 +916,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void loadArchivedMessages() {
-        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+        mChat = getChatFromRealm();
 
         if (mChat == null || !mChat.isValid()) {
 
@@ -980,19 +1046,6 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-        cancelMessageNotificationsForChat();
-        new Event(Event.Type.GO_BACK_FROM_CHAT).post();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
     // receives events from EventBus
     public void onEvent(Event event) {
         super.onEvent(event);
@@ -1018,7 +1071,7 @@ public class ChatActivity extends BaseActivity {
     private void stickerSent(String imageName) {
         String messageId = RealmManager.getInstance()
                 .saveMessageLocally(mChat, mChatJID, imageName, ChatMessage.TYPE_STICKER);
-        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
+        mChat = getChatFromRealm();
         mRoomManager.sendStickerMessage(messageId, mChatJID, imageName, mChat.getType());
         stickersRecyclerView.setVisibility(View.GONE);
         refreshMessagesAndScrollToEnd();
