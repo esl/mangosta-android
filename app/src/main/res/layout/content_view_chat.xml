@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/chatMainLayout"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/chatMainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -26,7 +25,7 @@
                 android:id="@+id/chatMessagesRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="vertical"/>
+                android:scrollbars="vertical" />
 
         </android.support.v4.widget.SwipeRefreshLayout>
 
@@ -37,7 +36,7 @@
             android:layout_gravity="end|bottom"
             android:layout_margin="10dp"
             android:background="@mipmap/ic_scroll_down"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
     </FrameLayout>
 
@@ -49,7 +48,7 @@
         android:padding="5dp"
         android:textColor="@color/complete_white"
         android:textSize="15sp"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/stickersRecyclerView"
@@ -57,7 +56,7 @@
         android:layout_height="60dp"
         android:background="@color/complete_white"
         android:scrollbars="horizontal"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -76,7 +75,7 @@
             android:layout_height="45dp"
             android:layout_gravity="center_vertical"
             android:background="@android:color/transparent"
-            android:src="@mipmap/ic_stickers_menu"/>
+            android:src="@mipmap/ic_stickers_menu" />
 
         <EditText
             android:id="@+id/chatSendMessageEditText"
@@ -87,7 +86,7 @@
             android:layout_weight="1"
             android:background="@color/complete_white"
             android:hint="@string/hint_edit_text"
-            android:padding="2dp"/>
+            android:padding="2dp" />
 
         <ImageButton
             android:id="@+id/chatSendMessageButton"
@@ -95,7 +94,7 @@
             android:layout_height="45dp"
             android:layout_gravity="center_vertical"
             android:background="@drawable/send_button"
-            android:src="@drawable/ic_action_send_dark"/>
+            android:src="@drawable/ic_action_send_dark" />
 
     </LinearLayout>
 
