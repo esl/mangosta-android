@@ -22,6 +22,7 @@ public class Chat extends RealmObject {
     private String lastRetrievedFromMAM;
     private int sortPosition;
     private int unreadMessagesCount;
+    private String messageBeingComposed;
 
     public Chat() {
     }
@@ -120,6 +121,14 @@ public class Chat extends RealmObject {
 
     public void resetUnreadMessageCount() {
         this.unreadMessagesCount = 0;
+    }
+
+    public String getMessageBeingComposed() {
+        return messageBeingComposed;
+    }
+
+    public void setMessageBeingComposed(String messageBeingComposed) {
+        this.messageBeingComposed = messageBeingComposed;
     }
 
 }
