@@ -56,12 +56,12 @@ public class LoginDialogFragment extends DialogFragment {
         String userName = "test.user";
         String password = "9xpW9mmUenFgMjay";
 
-        loginUserNameEditText.setText(userName);
+        //loginUserNameEditText.setText(userName);
         loginUserNameEditText.setSelection(userName.length());
-        loginJidCompletionEditText.setText("@" + XMPPSession.SERVICE_NAME);
+        //loginJidCompletionEditText.setText("@" + XMPPSession.SERVICE_NAME);
 
-        loginPasswordEditText.setText(password);
-        loginServerEditText.setText(XMPPSession.SERVER_NAME);
+        //loginPasswordEditText.setText(password);
+        //loginServerEditText.setText(XMPPSession.SERVER_NAME);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override

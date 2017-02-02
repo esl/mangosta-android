@@ -13,7 +13,7 @@ public class XMPPUtils {
 
         if (position >= 0 && !jidString.equals("")) {
 
-            if (jidString.substring(position + 1).startsWith(XMPPSession.SERVICE_NAME)) {
+            if (jidString.substring(position + 1).startsWith(XMPPSession.getServiceName())) {
                 return jidString.substring(0, position);
             } else {
                 return jidString;
@@ -30,7 +30,7 @@ public class XMPPUtils {
             if (userName.contains("@")) {
                 return userName;
             } else {
-                return userName + "@" + XMPPSession.SERVICE_NAME;
+                return userName + "@" + XMPPSession.getServiceName();
             }
         } else {
             return "";

@@ -39,10 +39,10 @@ public class LoginInstrumentedTest extends BaseInstrumentedTest {
         IdlingResource resource = startTiming(SplashActivity.WAIT_TIME);
 
         onView(withId(R.id.loginJidCompletionEditText))
-                .check(matches(withText("@" + XMPPSession.SERVICE_NAME)));
+                .check(matches(withText("@" + XMPPSession.getServiceName())));
 
         onView(withId(R.id.loginServerEditText))
-                .check(matches(withText(XMPPSession.SERVER_NAME)));
+                .check(matches(withText(XMPPSession.getServerName())));
 
         stopTiming(resource);
     }

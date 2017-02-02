@@ -67,8 +67,7 @@
                 android:id="@+id/loginJidCompletionEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/half_black_light"
-                android:enabled="false"
+                android:backgroundTint="@android:color/transparent"
                 android:inputType="text"
                 android:padding="5dp"
                 android:paddingEnd="5dp"
@@ -116,9 +115,9 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="5dp"
             android:layout_marginStart="5dp"
-            android:background="@color/half_black_light"
-            android:enabled="false"
             android:padding="5dp"
+            android:inputType="text"
+            android:background="@color/colorAccent"
             android:textColor="@color/colorPrimary" />
 
         <Button

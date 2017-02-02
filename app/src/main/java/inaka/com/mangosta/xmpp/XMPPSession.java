@@ -33,6 +33,7 @@ import org.jivesoftware.smack.tbr.TBRTokens;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.stringencoder.Base64;
+import org.jivesoftware.smack.util.stringencoder.StringEncoder;
 import org.jivesoftware.smackx.blocking.BlockingCommandManager;
 import org.jivesoftware.smackx.bob.BoBData;
 import org.jivesoftware.smackx.bob.BoBHash;
@@ -139,6 +140,11 @@ public class XMPPSession {
 
     public static final int REPLY_TIMEOUT = 15000;
 
+    //added
+    private static String serverName = null;
+    private static String serviceName = null;
+    //TODO: Add configurable MUC light
+
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
     private PublishSubject<Presence> mPresencePublisher = PublishSubject.create();
@@ -170,6 +176,13 @@ public class XMPPSession {
         return mInstance;
     }
 
+    public static XMPPSession getInstance(String serverName, String serviceName) {
+        if(mInstance == null) {
+            mInstance = new XMPPSession(serverName, serviceName);
+        }
+        return mInstance;
+    }
+
     public static void setSpecialInstanceForTesting(XMPPSession xmppSession) {
         mInstance = xmppSession;
     }
@@ -179,13 +192,21 @@ public class XMPPSession {
     }
 
     private XMPPSession() {
+        this(SERVER_NAME, SERVICE_NAME);
+    }
+
+    private XMPPSession(String serverName, String serviceName) {
+
+        setServerName(serverName);
+        setServiceName(serviceName);
+
         SmackConfiguration.setDefaultPacketReplyTimeout(REPLY_TIMEOUT);
         XMPPTCPConnectionConfiguration config = null;
         try {
             XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder()
                     .setDebuggerEnabled(XMPP_DEBUG_MODE)
-                    .setXmppDomain(JidCreate.from(SERVICE_NAME).asDomainBareJid())
-                    .setHost(SERVER_NAME)
+                    .setXmppDomain(JidCreate.from(getServiceName()).asDomainBareJid())
+                    .setHost(getServerName())
                     .setPort(5222)
                     .setSendPresence(true)
                     .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
@@ -718,7 +739,7 @@ public class XMPPSession {
                 try {
                     Presence presence = new Presence(Presence.Type.unavailable);
                     presence.setMode(Presence.Mode.away);
-                    presence.setTo(JidCreate.from(SERVICE_NAME));
+                    presence.setTo(JidCreate.from(getServiceName()));
                     sendStanza(presence);
 
                     mReconnectionManager.disableAutomaticReconnection();
@@ -807,7 +828,7 @@ public class XMPPSession {
                 @Override
                 public void run() {
                     try {
-                        Presence presence = new Presence(JidCreate.from(SERVICE_NAME), Presence.Type.available);
+                        Presence presence = new Presence(JidCreate.from(getServiceName()), Presence.Type.available);
                         presence.setMode(Presence.Mode.available);
                         sendStanza(presence);
                     } catch (Exception e) {
@@ -817,6 +838,26 @@ public class XMPPSession {
             }).start();
 
         }
+    }
+
+    public static String getServerName() {
+        if(serverName == null)
+            return SERVER_NAME;
+        return serverName;
+    }
+
+    public static void setServerName(String _serverName) {
+        serverName = _serverName;
+    }
+
+    public static String getServiceName() {
+        if(serviceName == null)
+            return SERVICE_NAME;
+        return serviceName;
+    }
+
+    public static void setServiceName(String _serviceName) {
+        serviceName = _serviceName;
     }
 
     private void saveMamMessage(Message message, Date delayDate) {
