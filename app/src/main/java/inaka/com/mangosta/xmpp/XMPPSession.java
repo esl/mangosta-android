@@ -192,7 +192,7 @@ public class XMPPSession {
     }
 
     private XMPPSession() {
-        this(SERVER_NAME, SERVICE_NAME);
+        this(getServerName(), getServiceName());
     }
 
     private XMPPSession(String serverName, String serviceName) {
@@ -200,6 +200,7 @@ public class XMPPSession {
         setServerName(serverName);
         setServiceName(serviceName);
 
+        Log.w(XMPP_TAG, "Server name: " + serverName + " , service name: " + serviceName);
         SmackConfiguration.setDefaultPacketReplyTimeout(REPLY_TIMEOUT);
         XMPPTCPConnectionConfiguration config = null;
         try {
@@ -432,6 +433,7 @@ public class XMPPSession {
     public void relogin() throws Exception {
         Preferences preferences = Preferences.getInstance();
         if (!preferences.getUserXMPPJid().equals("") && !preferences.getUserXMPPPassword().equals("")) {
+            Log.w(XMPP_TAG, "Prefs user jid and user pass: " + preferences.getUserXMPPJid() + " , " + preferences.getUserXMPPPassword());
             login(XMPPUtils.fromJIDToUserName(preferences.getUserXMPPJid()), preferences.getUserXMPPPassword());
         }
     }
@@ -696,6 +698,7 @@ public class XMPPSession {
     }
 
     public void login(String userName, String password) throws Exception {
+        Log.w(XMPP_TAG, "Username: " + userName + " , password: " + password);
         try {
             mXMPPConnection.connect();
         } catch (SmackException.AlreadyConnectedException ace) {
@@ -807,6 +810,11 @@ public class XMPPSession {
 
     public void messageSentAlert(Message message) {
         mMessageSentAlert.onNext(message);
+    }
+
+    public static XMPPSession rebuild(String serverName, String serviceName) {
+        mInstance = new XMPPSession(serverName, serviceName);
+        return mInstance;
     }
 
     public interface MessageSubscriber {

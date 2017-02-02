@@ -57,15 +57,18 @@ public class LoginDialogFragment extends DialogFragment {
         String password = "9xpW9mmUenFgMjay";
 
         //loginUserNameEditText.setText(userName);
-        loginUserNameEditText.setSelection(userName.length());
-        //loginJidCompletionEditText.setText("@" + XMPPSession.SERVICE_NAME);
+        //loginUserNameEditText.setSelection(userName.length());
+        loginJidCompletionEditText.setText("@" + XMPPSession.getServiceName());
 
         //loginPasswordEditText.setText(password);
-        //loginServerEditText.setText(XMPPSession.SERVER_NAME);
+        loginServerEditText.setText(XMPPSession.getServerName());
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String server = loginServerEditText.getText().toString();
+                String service =  loginJidCompletionEditText.getText().toString().substring(1);
+                XMPPSession.rebuild(server, service);
                 loginAndStart(loginUserNameEditText.getText().toString(), loginPasswordEditText.getText().toString());
             }
         });
