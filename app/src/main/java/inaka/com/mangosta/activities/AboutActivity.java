@@ -1,7 +1,12 @@
 package inaka.com.mangosta.activities;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.Locale;
@@ -16,17 +21,61 @@ public class AboutActivity extends BaseActivity {
     @Bind(R.id.aboutVersionNumberTextView)
     TextView aboutVersionNumberTextView;
 
+    @Bind(R.id.mangostaLinkButton)
+    Button mangostaLinkButton;
+
+    @Bind(R.id.mongooseimLinkButton)
+    Button mongooseimLinkButton;
+
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         ButterKnife.bind(this);
 
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
+
         String version = String.format(Locale.getDefault(), getString(R.string.version), BuildConfig.VERSION_NAME);
         aboutVersionNumberTextView.setText(version);
+
+        mangostaLinkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openBrowserWithUrl(getString(R.string.mangosta_link));
+            }
+        });
+
+        mongooseimLinkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openBrowserWithUrl(getString(R.string.mongooseim_link));
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id) {
+            case android.R.id.home:
+                finish();
+                break;
+        }
+
+        return true;
+    }
+
+    private void openBrowserWithUrl(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
     }
 
 }

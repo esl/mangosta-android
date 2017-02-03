@@ -109,5 +109,8 @@
     <string name="about_mangosta">Mangosta for Android is part of the MongooseIM platform</string>
     <string name="version">v%1$s</string>
     <string name="about_copyright">Copyright © 2017 Erlang Solutions Ltd.</string>
-    <string name="about_author">Author: Fernando Ramirez @ramabit</string>
+    <string name="mangosta_link">https://github.com/esl/mangosta-android</string>
+    <string name="mongooseim_link">https://github.com/esl/MongooseIM</string>
+    <string name="source_code">Source code:</string>
+    <string name="mongooseim_platform">MongooseIM platform:</string>
 </resources>
