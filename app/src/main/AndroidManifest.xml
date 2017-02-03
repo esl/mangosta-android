@@ -16,7 +16,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <receiver
             android:name=".services.BroadcastBoot"
             android:exported="true">
@@ -96,6 +95,10 @@
             android:name=".activities.ManageContactsActivity"
             android:label="@string/title_activity_manage_contacts"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activities.AboutActivity"
+            android:label="@string/title_activity_about"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

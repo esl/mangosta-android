@@ -16,6 +16,10 @@
         android:title="@string/action_block_users"
         app:showAsAction="never"/>
     <item
+        android:id="@+id/actionAbout"
+        android:title="@string/action_about"
+        app:showAsAction="never"/>
+    <item
         android:id="@+id/actionSignOut"
         android:title="@string/action_signout"
         app:showAsAction="never"/>

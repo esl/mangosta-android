@@ -158,6 +158,12 @@ public class MainMenuActivity extends BaseActivity {
                 return true;
             }
 
+            case R.id.actionAbout: {
+                Intent intent = new Intent(MainMenuActivity.this, AboutActivity.class);
+                MainMenuActivity.this.startActivity(intent);
+                return true;
+            }
+
         }
 
         return super.onOptionsItemSelected(item);
