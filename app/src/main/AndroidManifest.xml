@@ -82,7 +82,8 @@
         <activity
             android:name=".activities.CreateBlogActivity"
             android:label="@string/title_activity_create_blog"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".activities.EditChatMemberActivity"
             android:label="@string/title_activity_edit_room_members"
@@ -98,7 +99,7 @@
         <activity
             android:name=".activities.AboutActivity"
             android:label="@string/title_activity_about"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

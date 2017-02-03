@@ -48,14 +48,20 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isEnabled()))
                 .check(matches(isClickable()));
 
+        onView(withId(R.id.actionManageContacts))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .check(matches(isClickable()));
+
+        onView(withId(R.id.actionBlockUsers))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .check(matches(isClickable()));
+
         // click to see hided menu items
         openActionBarOverflowOrOptionsMenu(getContext());
 
-        onView(withText(R.string.action_manage_contacts))
-                .check(matches(isDisplayed()))
-                .check(matches(isEnabled()));
-
-        onView(withText(R.string.action_block_users))
+        onView(withText(R.string.action_about))
                 .check(matches(isDisplayed()))
                 .check(matches(isEnabled()));
 
@@ -77,21 +83,17 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
                 .check(matches(isDisplayed()));
 
         pressBack();
-
-        onView(withId(R.id.actionUserOptions))
-                .check(matches(isDisplayed()));
     }
 
     @Test
     public void goToManageContactsWithMenuItem() throws Exception {
         assumeTrue(isUserLoggedIn());
 
-        openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
-
-        onView(withText(R.string.action_manage_contacts))
+        onView(withId(R.id.actionManageContacts))
                 .check(matches(isDisplayed()))
                 .check(matches(isEnabled()))
-                .perform(click());
+                .perform(click())
+                .check(doesNotExist());
 
         onView(withId(R.id.manageContactsSearchUserLayout))
                 .check(matches(isDisplayed()));
@@ -101,14 +103,28 @@ public class MainMenuInstrumentedTest extends BaseInstrumentedTest {
 
     @Test
     public void goToBlockingPageWithMenuItem() throws Exception {
+        onView(withId(R.id.actionBlockUsers))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .perform(click())
+                .check(doesNotExist());
+
+        onView(withId(R.id.blockSearchResultRecyclerView))
+                .check(matches(isDisplayed()));
+
+        pressBack();
+    }
+
+    @Test
+    public void goToAboutPageWithMenuItem() throws Exception {
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getTargetContext());
 
-        onView(withText(R.string.action_block_users))
+        onView(withText(R.string.action_about))
                 .check(matches(isDisplayed()))
                 .check(matches(isEnabled()))
                 .perform(click());
 
-        onView(withId(R.id.blockSearchResultRecyclerView))
+        onView(withId(R.id.content_about))
                 .check(matches(isDisplayed()));
 
         pressBack();

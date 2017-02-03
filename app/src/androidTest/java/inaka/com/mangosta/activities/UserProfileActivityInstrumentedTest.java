@@ -14,8 +14,11 @@ import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.isClickable;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 
@@ -55,6 +58,18 @@ public class UserProfileActivityInstrumentedTest extends BaseInstrumentedTest {
         onView(withId(R.id.textNameUserProfile))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(XMPPUtils.fromUserNameToJID(mUser.getLogin()))));
+    }
+
+    @Test
+    public void openChat() throws Exception {
+        onView(withId(R.id.actionOpenChat))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .check(matches(isClickable()))
+                .perform(click());
+
+        onView(withId(R.id.chatSendMessageEditText))
+                .check(matches(isDisplayed()));
     }
 
 }
