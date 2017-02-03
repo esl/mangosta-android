@@ -14,16 +14,19 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
-import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smackx.pubsub.packet.PubSub;
-import org.jxmpp.jid.Jid;
+import org.jivesoftware.smackx.pubsub.LeafNode;
+import org.jivesoftware.smackx.pubsub.PayloadItem;
+import org.jivesoftware.smackx.pubsub.PubSubManager;
+
+import java.util.Date;
+import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
-import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
+import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 
 public class CreateBlogActivity extends BaseActivity {
 
@@ -77,17 +80,25 @@ public class CreateBlogActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
+//                Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
+
+                PostEntryExtension postExtension = new PostEntryExtension(createBlogText.getText().toString(),
+                        UUID.randomUUID().toString(), new Date(), new Date(), null, null);
+
+                PubSubManager pubSubManager = XMPPSession.getInstance().getPubSubManager();
+                LeafNode node = pubSubManager.getNode(PostEntryExtension.BLOG_POSTS_NODE);
+                node.send(new PayloadItem<>(postExtension));
 
                 // create stanza
-                PublishPostExtension publishPostExtension = new PublishPostExtension(jid, createBlogText.getText().toString());
-                PubSub publishPostPubSub = PubSub.createPubsubPacket(jid, IQ.Type.set, publishPostExtension, null);
+//                PublishPostExtension publishPostExtension = new PublishPostExtension(jid, createBlogText.getText().toString());
+//                PubSub publishPostPubSub = PubSub.createPubsubPacket(jid, IQ.Type.set, publishPostExtension, null);
 
                 // send stanza
-                XMPPSession.getInstance().sendStanza(publishPostPubSub);
+//                XMPPSession.getInstance().sendStanza(publishPostPubSub);
 
                 // allow comments
-                XMPPSession.getInstance().createNodeToAllowComments(publishPostExtension.getId());
+//                XMPPSession.getInstance().createNodeToAllowComments(publishPostExtension.getId());
+                XMPPSession.getInstance().createNodeToAllowComments(postExtension.getId());
 
                 return null;
             }

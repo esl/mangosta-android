@@ -116,8 +116,6 @@ import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
-import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
-import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
 import io.realm.Realm;
 import rx.Subscription;
@@ -483,24 +481,35 @@ public class XMPPSession {
         pepManager.addPEPListener(new PEPListener() {
             @Override
             public void eventReceived(EntityBareJid entityBareJid, EventElement eventElement, Message message) {
+
+
                 if (EventElementType.items == eventElement.getEventType()) {
                     ItemsExtension itemsExtension = (ItemsExtension) eventElement.getExtensions().get(0);
                     PayloadItem payloadItem = (PayloadItem) itemsExtension.getItems().get(0);
                     PostEntryExtension postEntryExtension = (PostEntryExtension) payloadItem.getPayload();
 
-                    String id = postEntryExtension.getId();
-                    String jid = entityBareJid.toString();
-                    String title = postEntryExtension.getTitle();
-                    Date published = postEntryExtension.getPublished();
-                    Date updated = postEntryExtension.getUpdated();
+                    String node = eventElement.getEvent().getNode();
+                    if (node.equals(PostEntryExtension.BLOG_POSTS_NODE)) { // blog post
 
-                    BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
-                    RealmManager.getInstance().saveBlogPost(blogPost);
+                        String id = postEntryExtension.getId();
+                        String jid = entityBareJid.toString();
+                        String title = postEntryExtension.getTitle();
+                        Date published = postEntryExtension.getPublished();
+                        Date updated = postEntryExtension.getUpdated();
 
-                    String commentsNode = PublishCommentExtension.NODE + "/" + id;
-                    ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
+                        BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
+                        RealmManager.getInstance().saveBlogPost(blogPost);
 
-                    notifyNewBlogPost();
+                        String commentsNode = PostEntryExtension.COMMENTS_NODE + "/" + id;
+                        ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
+
+                        notifyNewBlogPost();
+
+                    } else { // comment
+                        // TODO: parse comment
+                        // ...
+                    }
+
                 }
             }
 
@@ -528,8 +537,8 @@ public class XMPPSession {
     public void subscribeToBlogPosts() {
         PubSubManager pubSubManager = getPubSubManager();
 
-        String postsNode = PublishPostExtension.NODE;
-        String commentsNode = PublishCommentExtension.NODE;
+        String postsNode = PostEntryExtension.BLOG_POSTS_NODE;
+        String commentsNode = PostEntryExtension.COMMENTS_NODE;
 
         ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(postsNode + "+notify");
         ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
@@ -1112,7 +1121,7 @@ public class XMPPSession {
     }
 
     public void createNodeToAllowComments(String blogPostId) {
-        String nodeName = PublishCommentExtension.NODE + "/" + blogPostId;
+        String nodeName = PostEntryExtension.COMMENTS_NODE + "/" + blogPostId;
 
         PubSubManager pubSubManager = PubSubManager.getInstance(XMPPSession.getInstance().getXMPPConnection());
         try {

@@ -14,8 +14,9 @@ import android.widget.Toast;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smackx.pubsub.packet.PubSub;
+import org.jivesoftware.smackx.pubsub.LeafNode;
+import org.jivesoftware.smackx.pubsub.PayloadItem;
+import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jxmpp.jid.Jid;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
+import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 
 public class BlogPostDetailsActivity extends BaseActivity {
 
@@ -136,18 +137,23 @@ public class BlogPostDetailsActivity extends BaseActivity {
         Jid pubSubServiceJid = XMPPSession.getInstance().getPubSubService();
 
         // create stanza
-        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(blogPost.getId(), userName, jid, content, new Date());
-        PubSub publishCommentPubSub = PubSub.createPubsubPacket(pubSubServiceJid, IQ.Type.set, publishCommentExtension, null);
+        PostEntryExtension commentExtension = new PostEntryExtension(content, blogPost.getId(), new Date(), null, userName, jid);
+//        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(blogPost.getId(), userName, jid, content, new Date());
 
+        PubSubManager pubSubManager = XMPPSession.getInstance().getPubSubManager();
+        LeafNode node = pubSubManager.getNode(PostEntryExtension.COMMENTS_NODE + blogPost.getId());
+        node.send(new PayloadItem<>(commentExtension));
+
+//        PubSub publishCommentPubSub = PubSub.createPubsubPacket(pubSubServiceJid, IQ.Type.set, commentExtension, null);
         // send stanza
-        XMPPSession.getInstance().sendStanza(publishCommentPubSub);
+//        XMPPSession.getInstance().sendStanza(publishCommentPubSub);
 
-        return new BlogPostComment(publishCommentExtension.getId(),
+        return new BlogPostComment(commentExtension.getId(),
                 blogPost.getId(),
                 content,
                 userName,
                 jid.toString(),
-                publishCommentExtension.getPublished());
+                commentExtension.getPublished());
     }
 
     private void loadBlogPostComments() {

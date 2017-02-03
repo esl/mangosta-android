@@ -1,6 +1,8 @@
 package inaka.com.mangosta.xmpp.microblogging.providers;
 
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.util.XmppDateTime;
 import org.xmlpull.v1.XmlPullParser;
 
@@ -16,6 +18,8 @@ public class PostEntryProvider extends ExtensionElementProvider<PostEntryExtensi
         String id = null;
         Date published = null;
         Date updated = null;
+        String authorName = null;
+        Jid authorJid = null;
 
         outerloop:
         while (true) {
@@ -29,6 +33,18 @@ public class PostEntryProvider extends ExtensionElementProvider<PostEntryExtensi
 
                 if (parser.getName().equals("id")) {
                     id = parser.nextText().split("posts-")[1];
+                }
+
+                if (parser.getName().equals("author")) {
+                    parser.next();
+
+                    if (parser.getName().equals("name")) {
+                        authorName = parser.nextText();
+                    }
+
+                    if (parser.getName().equals("uri")) {
+                        authorJid = JidCreate.from(parser.nextText().split(":")[1]);
+                    }
                 }
 
                 if (parser.getName().equals("published")) {
@@ -47,7 +63,7 @@ public class PostEntryProvider extends ExtensionElementProvider<PostEntryExtensi
 
         }
 
-        return new PostEntryExtension(title, id, published, updated);
+        return new PostEntryExtension(title, id, published, updated, authorName, authorJid);
     }
 
 }
