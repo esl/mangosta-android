@@ -298,8 +298,8 @@ public class ChatsListsFragment extends BaseFragment {
         Tasks.executeInBackground(mContext, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-                mRoomManager.loadMUCLightRooms(); // load group chats
                 mRoomManager.loadRosterContactsChats(); // load 1 to 1 chats from contacts
+                mRoomManager.loadMUCLightRooms(); // load group chats
                 return null;
             }
         }, new Completion<Object>() {

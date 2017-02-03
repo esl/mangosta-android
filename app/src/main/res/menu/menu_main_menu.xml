@@ -1,22 +1,28 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto"
-      xmlns:tools="http://schemas.android.com/tools"
-      tools:context=".MainMenuActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainMenuActivity">
     <item
         android:id="@+id/actionUserOptions"
-        android:title="@string/action_settings"
-        android:icon="@drawable/ic_action_user_dark"
-        app:showAsAction="ifRoom"/>
+        android:icon="@mipmap/ic_action_user_dark"
+        android:title="@string/title_activity_user_profile"
+        app:showAsAction="always" />
     <item
         android:id="@+id/actionManageContacts"
+        android:icon="@mipmap/ic_contacts_dark"
         android:title="@string/action_manage_contacts"
-        app:showAsAction="never"/>
+        app:showAsAction="always" />
     <item
         android:id="@+id/actionBlockUsers"
+        android:icon="@mipmap/ic_block_unblock"
         android:title="@string/action_block_users"
-        app:showAsAction="never"/>
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/actionAbout"
+        android:title="@string/action_about"
+        app:showAsAction="never" />
     <item
         android:id="@+id/actionSignOut"
         android:title="@string/action_signout"
-        app:showAsAction="never"/>
+        app:showAsAction="never" />
 </menu>

@@ -207,7 +207,7 @@ public class CreateChatActivityInstrumentedTest extends BaseInstrumentedTest {
         addUser1();
         addUser2();
 
-        onView(atPositionOnRecyclerView(R.id.membersRecyclerView, 1, R.id.removeUserButton))
+        onView(atPositionOnRecyclerView(R.id.membersRecyclerView, 0, R.id.removeUserButton))
                 .check(matches(isDisplayed()))
                 .perform(click());
         assertEquals(1, getUsersForChatCount());

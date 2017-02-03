@@ -16,7 +16,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <receiver
             android:name=".services.BroadcastBoot"
             android:exported="true">
@@ -83,7 +82,8 @@
         <activity
             android:name=".activities.CreateBlogActivity"
             android:label="@string/title_activity_create_blog"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".activities.EditChatMemberActivity"
             android:label="@string/title_activity_edit_room_members"
@@ -95,6 +95,10 @@
         <activity
             android:name=".activities.ManageContactsActivity"
             android:label="@string/title_activity_manage_contacts"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activities.AboutActivity"
+            android:label="@string/title_activity_about"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
