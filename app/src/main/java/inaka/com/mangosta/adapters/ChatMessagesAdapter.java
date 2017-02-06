@@ -294,24 +294,16 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
         }
 
         private void correctMessage(final ChatMessage chatMessage) {
-            LinearLayout linearLayout = new LinearLayout(mContext);
-            linearLayout.setOrientation(LinearLayout.VERTICAL);
+            LayoutInflater inflater = LayoutInflater.from(mContext);
+            final View viewFixMessage = inflater.inflate(R.layout.view_dialog_fix_message, null);
 
-            final EditText messageEditText = new EditText(mContext);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(10, 0, 10, 0);
-            messageEditText.setLayoutParams(lp);
+            final EditText messageEditText = (EditText) viewFixMessage.findViewById(R.id.fixMessageEditText);
             messageEditText.setText(chatMessage.getContent());
-            messageEditText.setHint(mContext.getString(R.string.hint_edit_text));
-
-            linearLayout.addView(messageEditText);
 
             AlertDialog dialog = new AlertDialog.Builder(mContext)
                     .setTitle(mContext.getString(R.string.correct_message))
                     .setMessage(mContext.getString(R.string.enter_new_message))
-                    .setView(linearLayout)
+                    .setView(viewFixMessage)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             Realm realm = RealmManager.getInstance().getRealm();
