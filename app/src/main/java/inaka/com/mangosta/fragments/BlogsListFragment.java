@@ -9,7 +9,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.jivesoftware.smackx.pubsub.LeafNode;
+import org.jivesoftware.smackx.pubsub.PayloadItem;
+import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jxmpp.jid.Jid;
+
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.Bind;
@@ -19,6 +25,8 @@ import inaka.com.mangosta.adapters.BlogPostsListAdapter;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.xmpp.XMPPSession;
+import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 
 public class BlogsListFragment extends Fragment {
 
@@ -64,6 +72,8 @@ public class BlogsListFragment extends Fragment {
     }
 
     public void loadBlogPosts() {
+        getItemsFromBlogPostsNode();
+
         if (socialMediaSwipeRefreshLayout != null && !socialMediaSwipeRefreshLayout.isRefreshing()) {
             socialMediaSwipeRefreshLayout.setRefreshing(true);
         }
@@ -76,6 +86,33 @@ public class BlogsListFragment extends Fragment {
 
         if (socialMediaSwipeRefreshLayout != null) {
             socialMediaSwipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
+    private void getItemsFromBlogPostsNode() {
+        try {
+            PubSubManager pubSubManager = XMPPSession.getInstance().getPubSubManager();
+            LeafNode node = pubSubManager.getNode(PostEntryExtension.BLOG_POSTS_NODE);
+            List<PayloadItem<PostEntryExtension>> items = node.getItems();
+
+            for (PayloadItem<PostEntryExtension> item : items) {
+                PostEntryExtension postEntryExtension = item.getPayload();
+
+                String id = postEntryExtension.getId();
+                String content = postEntryExtension.getTitle();
+
+                // TODO: check this
+                Jid jid = postEntryExtension.getAuthorJid();
+
+                Date published = postEntryExtension.getPublished();
+                Date updated = postEntryExtension.getUpdated();
+
+                BlogPost blogPost = new BlogPost(id, jid.toString(), null, content, published, updated);
+                RealmManager.getInstance().saveBlogPost(blogPost);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

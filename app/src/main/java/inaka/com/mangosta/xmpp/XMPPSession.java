@@ -545,6 +545,7 @@ public class XMPPSession {
 
         ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
         configureForm.setPublishModel(PublishModel.open);
+        configureForm.setPersistentItems(true);
         configureForm.setAccessModel(AccessModel.roster);
 
         try {

@@ -60,6 +60,14 @@ public class PostEntryExtension implements ExtensionElement {
         return updated;
     }
 
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public Jid getAuthorJid() {
+        return authorJid;
+    }
+
     @Override
     public CharSequence toXML() {
         XmlStringBuilder xml = new XmlStringBuilder(this);
