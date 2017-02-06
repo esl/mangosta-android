@@ -86,6 +86,7 @@
             android:layout_weight="1"
             android:background="@color/complete_white"
             android:hint="@string/hint_edit_text"
+            android:inputType="textMultiLine|textShortMessage"
             android:padding="2dp" />
 
         <ImageButton
