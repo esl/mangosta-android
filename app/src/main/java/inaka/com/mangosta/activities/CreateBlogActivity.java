@@ -92,17 +92,7 @@ public class CreateBlogActivity extends BaseActivity {
                 LeafNode node = pubSubManager.getNode(PostEntryExtension.BLOG_POSTS_NODE);
                 node.send(new PayloadItem<>(postExtension));
 
-                // create stanza
-//                PublishPostExtension publishPostExtension = new PublishPostExtension(jid, createBlogText.getText().toString());
-//                PubSub publishPostPubSub = PubSub.createPubsubPacket(jid, IQ.Type.set, publishPostExtension, null);
-
-                // send stanza
-//                XMPPSession.getInstance().sendStanza(publishPostPubSub);
-
-                // allow comments
-//                XMPPSession.getInstance().createNodeToAllowComments(publishPostExtension.getId());
                 XMPPSession.getInstance().createNodeToAllowComments(postExtension.getId());
-
                 return null;
             }
         }, new Completion<Object>() {
