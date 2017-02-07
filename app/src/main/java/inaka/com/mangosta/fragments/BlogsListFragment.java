@@ -100,15 +100,14 @@ public class BlogsListFragment extends Fragment {
 
                 String id = postEntryExtension.getId();
                 String content = postEntryExtension.getTitle();
-
-                // TODO: check this
                 Jid jid = postEntryExtension.getAuthorJid();
-
                 Date published = postEntryExtension.getPublished();
                 Date updated = postEntryExtension.getUpdated();
 
-                BlogPost blogPost = new BlogPost(id, jid.toString(), null, content, published, updated);
-                RealmManager.getInstance().saveBlogPost(blogPost);
+                if (jid != null) {
+                    BlogPost blogPost = new BlogPost(id, jid.toString(), null, content, published, updated);
+                    RealmManager.getInstance().saveBlogPost(blogPost);
+                }
             }
 
         } catch (Exception e) {

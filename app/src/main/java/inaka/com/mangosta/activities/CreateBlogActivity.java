@@ -17,6 +17,7 @@ import com.nanotasks.Tasks;
 import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jxmpp.jid.Jid;
 
 import java.util.Date;
 import java.util.UUID;
@@ -26,6 +27,7 @@ import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
+import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 
 public class CreateBlogActivity extends BaseActivity {
@@ -80,10 +82,11 @@ public class CreateBlogActivity extends BaseActivity {
         Tasks.executeInBackground(this, new BackgroundWork<Object>() {
             @Override
             public Object doInBackground() throws Exception {
-//                Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
+                Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
+                String name = XMPPUtils.fromJIDToUserName(jid.toString());
 
                 PostEntryExtension postExtension = new PostEntryExtension(createBlogText.getText().toString(),
-                        UUID.randomUUID().toString(), new Date(), new Date(), null, null);
+                        UUID.randomUUID().toString(), new Date(), new Date(), name, jid);
 
                 PubSubManager pubSubManager = XMPPSession.getInstance().getPubSubManager();
                 LeafNode node = pubSubManager.getNode(PostEntryExtension.BLOG_POSTS_NODE);

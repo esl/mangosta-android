@@ -36,15 +36,27 @@ public class PostEntryProvider extends ExtensionElementProvider<PostEntryExtensi
                 }
 
                 if (parser.getName().equals("author")) {
-                    parser.next();
+                    int authorDepth = parser.getDepth();
 
-                    if (parser.getName().equals("name")) {
-                        authorName = parser.nextText();
+                    authorOuterloop:
+                    while (true) {
+                        int authorEventType = parser.next();
+
+                        if (authorEventType == XmlPullParser.START_TAG) {
+                            if (parser.getName().equals("name")) {
+                                authorName = parser.nextText();
+                            }
+
+                            if (parser.getName().equals("uri")) {
+                                authorJid = JidCreate.from(parser.nextText().split(":")[1]);
+                            }
+                        } else if (authorEventType == XmlPullParser.END_TAG) {
+                            if (parser.getDepth() == authorDepth) {
+                                break authorOuterloop;
+                            }
+                        }
                     }
 
-                    if (parser.getName().equals("uri")) {
-                        authorJid = JidCreate.from(parser.nextText().split(":")[1]);
-                    }
                 }
 
                 if (parser.getName().equals("published")) {

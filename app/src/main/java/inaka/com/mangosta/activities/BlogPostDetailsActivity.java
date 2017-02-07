@@ -111,7 +111,7 @@ public class BlogPostDetailsActivity extends BaseActivity {
                         loadBlogPostComments();
                         progressSendComment.dismiss();
 
-                    } catch (SmackException.NotConnectedException | InterruptedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+                    } catch (Throwable e) {
                         e.printStackTrace();
                         progressSendComment.dismiss();
                         Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
@@ -134,19 +134,13 @@ public class BlogPostDetailsActivity extends BaseActivity {
             XMPPException.XMPPErrorException, SmackException.NoResponseException {
         Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
         String userName = XMPPUtils.fromJIDToUserName(jid.toString());
-        Jid pubSubServiceJid = XMPPSession.getInstance().getPubSubService();
 
         // create stanza
         PostEntryExtension commentExtension = new PostEntryExtension(content, blogPost.getId(), new Date(), null, userName, jid);
-//        PublishCommentExtension publishCommentExtension = new PublishCommentExtension(blogPost.getId(), userName, jid, content, new Date());
 
         PubSubManager pubSubManager = XMPPSession.getInstance().getPubSubManager();
-        LeafNode node = pubSubManager.getNode(PostEntryExtension.COMMENTS_NODE + blogPost.getId());
+        LeafNode node = pubSubManager.getNode(PostEntryExtension.COMMENTS_NODE + "/" + blogPost.getId());
         node.send(new PayloadItem<>(commentExtension));
-
-//        PubSub publishCommentPubSub = PubSub.createPubsubPacket(pubSubServiceJid, IQ.Type.set, commentExtension, null);
-        // send stanza
-//        XMPPSession.getInstance().sendStanza(publishCommentPubSub);
 
         return new BlogPostComment(commentExtension.getId(),
                 blogPost.getId(),

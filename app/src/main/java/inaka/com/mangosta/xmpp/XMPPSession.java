@@ -1128,8 +1128,10 @@ public class XMPPSession {
         try {
             // create node
             ConfigureForm configureForm = new ConfigureForm(DataForm.Type.submit);
+            configureForm.setPersistentItems(true);
             configureForm.setPublishModel(PublishModel.open);
             configureForm.setAccessModel(AccessModel.open);
+
             Node node = pubSubManager.createNode(nodeName, configureForm);
 
             // subscribe to comments
