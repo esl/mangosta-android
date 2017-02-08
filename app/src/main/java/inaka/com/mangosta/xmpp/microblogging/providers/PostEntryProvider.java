@@ -48,7 +48,11 @@ public class PostEntryProvider extends ExtensionElementProvider<PostEntryExtensi
                             }
 
                             if (parser.getName().equals("uri")) {
-                                authorJid = JidCreate.from(parser.nextText().split(":")[1]);
+                                String[] uri = parser.nextText().split(":");
+                                if (uri.length > 1) {
+                                    authorJid = JidCreate.from(uri[1]);
+                                }
+
                             }
                         } else if (authorEventType == XmlPullParser.END_TAG) {
                             if (parser.getDepth() == authorDepth) {

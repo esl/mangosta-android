@@ -96,17 +96,21 @@ public class BlogsListFragment extends Fragment {
             List<PayloadItem<PostEntryExtension>> items = node.getItems();
 
             for (PayloadItem<PostEntryExtension> item : items) {
-                PostEntryExtension postEntryExtension = item.getPayload();
+                try {
+                    PostEntryExtension postEntryExtension = item.getPayload();
 
-                String id = postEntryExtension.getId();
-                String content = postEntryExtension.getTitle();
-                Jid jid = postEntryExtension.getAuthorJid();
-                Date published = postEntryExtension.getPublished();
-                Date updated = postEntryExtension.getUpdated();
+                    String id = postEntryExtension.getId();
+                    String content = postEntryExtension.getTitle();
+                    Jid jid = postEntryExtension.getAuthorJid();
+                    Date published = postEntryExtension.getPublished();
+                    Date updated = postEntryExtension.getUpdated();
 
-                if (jid != null) {
-                    BlogPost blogPost = new BlogPost(id, jid.toString(), null, content, published, updated);
-                    RealmManager.getInstance().saveBlogPost(blogPost);
+                    if (jid != null) {
+                        BlogPost blogPost = new BlogPost(id, jid.toString(), null, content, published, updated);
+                        RealmManager.getInstance().saveBlogPost(blogPost);
+                    }
+                } catch (ClassCastException e) {
+                    e.printStackTrace();
                 }
             }
 
