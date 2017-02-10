@@ -554,14 +554,14 @@ public class XMPPSession {
 
         try {
             pubSubManager.getNode(postsNode).subscribe(myJIDString);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 
         // TODO: comments node not working on server yet, add this later
 //        try {
 //            pubSubManager.getNode(commentsNode).subscribe(myJIDString);
-//        } catch (Exception e) {
+//        } catch (Throwable e) {
 //            e.printStackTrace();
 //        }
 

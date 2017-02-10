@@ -3,6 +3,7 @@ package inaka.com.mangosta.activities;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,7 +13,9 @@ import com.astuetz.PagerSlidingTabStrip;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
+import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class UserProfileActivity extends BaseActivity {
@@ -37,6 +40,8 @@ public class UserProfileActivity extends BaseActivity {
 
     public final static String USER_PARAMETER = "user";
 
+    private User mUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,13 +53,27 @@ public class UserProfileActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         Bundle bundle = getIntent().getExtras();
-        User user = bundle.getParcelable(USER_PARAMETER);
+        mUser = bundle.getParcelable(USER_PARAMETER);
 
-        if (user != null) {
-            setTitle(user.getLogin());
-            textLoginUserProfile.setText(user.getLogin());
-            textNameUserProfile.setText(XMPPUtils.fromUserNameToJID(user.getLogin()));
+        if (mUser != null) {
+            setTitle(mUser.getLogin());
+            textLoginUserProfile.setText(mUser.getLogin());
+            textNameUserProfile.setText(XMPPUtils.fromUserNameToJID(mUser.getLogin()));
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_user_profile, menu);
+
+        MenuItem actionOpenChat = menu.findItem(R.id.actionOpenChat);
+        if (XMPPUtils.isAutenticatedUser(mUser)) {
+            actionOpenChat.setVisible(false);
+        } else {
+            actionOpenChat.setVisible(true);
+        }
+
+        return true;
     }
 
     @Override
@@ -64,6 +83,14 @@ public class UserProfileActivity extends BaseActivity {
         switch (id) {
             case android.R.id.home:
                 finish();
+                break;
+
+            case R.id.actionOpenChat:
+                if (mUser != null) {
+                    String chatJid = XMPPUtils.fromUserNameToJID(mUser.getLogin());
+                    RoomsListManager.getInstance().createCommonChat(chatJid);
+                    NavigateToChat.go(chatJid, XMPPUtils.fromJIDToUserName(chatJid), this);
+                }
                 break;
         }
 
