@@ -137,7 +137,7 @@ public class XMPPSession {
     public static final String SERVICE_NAME = "erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
 
-    public static final int REPLY_TIMEOUT = 15000;
+    public static final int REPLY_TIMEOUT = 5000;
 
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();

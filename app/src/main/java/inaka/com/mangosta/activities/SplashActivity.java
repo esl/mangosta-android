@@ -32,7 +32,7 @@ public class SplashActivity extends FragmentActivity {
     @Bind(R.id.progressLoading)
     ProgressBar progressLoading;
 
-    public static final int WAIT_TIME = 2000;
+    public static final int WAIT_TIME = 1500;
 
     private XMPPSessionService xmppSessionService;
     protected ServiceConnection mServiceConnection = new ServiceConnection() {
