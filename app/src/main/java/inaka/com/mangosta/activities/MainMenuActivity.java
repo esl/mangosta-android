@@ -1,18 +1,27 @@
 package inaka.com.mangosta.activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 
+import org.ice4j.TransportAddress;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
+
+import java.net.SocketException;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -24,10 +33,15 @@ import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.notifications.RosterNotifications;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
+import inaka.com.mangosta.videostream.ProxyRTPServer;
+import inaka.com.mangosta.videostream.VideoStreamBinding;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class MainMenuActivity extends BaseActivity {
+
+    private static final String TURN_ADDRESS = "10.152.1.16";
+    private static final int TURN_PORT = 12100;
 
     @Bind(R.id.slidingTabStrip)
     PagerSlidingTabStrip mSlidingTabStrip;
@@ -41,11 +55,16 @@ public class MainMenuActivity extends BaseActivity {
     @Bind(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
+    @Bind(R.id.createNewVideoStreamFloatingButton)
+    FloatingActionButton createNewVideoStreamFloatingButton;
+
     public boolean mRoomsLoaded = false;
 
     public static String NEW_BLOG_POST = "newBlogPost";
     public static String NEW_ROSTER_REQUEST = "newRosterRequest";
     public static String NEW_ROSTER_REQUEST_SENDER = "newRosterRequestSender";
+    private VideoStreamBinding videoStreamBinding;
+    private ProxyRTPServer proxyRTP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,13 +77,15 @@ public class MainMenuActivity extends BaseActivity {
 
         String tabTitles[] = new String[]{
                 getResources().getString(R.string.title_tab_chat),
-                getResources().getString(R.string.title_tab_social)};
+                getResources().getString(R.string.title_tab_social),
+                "VideoStream"};
 
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
         mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
         createNewBlogFloatingButton.setIcon(R.mipmap.ic_add_blog);
+        createNewVideoStreamFloatingButton.setIcon(R.drawable.ic_video_stream);
 
         createNewChatFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,6 +100,27 @@ public class MainMenuActivity extends BaseActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(MainMenuActivity.this, CreateBlogActivity.class);
                 MainMenuActivity.this.startActivity(intent);
+            }
+        });
+
+
+        try {
+            proxyRTP = new ProxyRTPServer(6000, TURN_ADDRESS, TURN_PORT);
+            videoStreamBinding = new VideoStreamBinding(proxyRTP, MainMenuActivity.this);
+            proxyRTP.start();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+
+        createNewVideoStreamFloatingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(proxyRTP.isRelayReady()) {
+                    videoStreamBinding.startBinding();
+                    mViewpagerMainMenu.setCurrentItem(2, true);
+                } else {
+                    videoStreamBinding.getUserInterface().showNotReadyError();
+                }
             }
         });
 

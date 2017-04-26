@@ -14,6 +14,7 @@ import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -138,7 +139,11 @@ public class RealmManager {
 
     public Realm getRealm() {
         Realm.init(MangostaApplication.getInstance());
-        return Realm.getDefaultInstance();
+        RealmConfiguration config = new RealmConfiguration.Builder()
+                .deleteRealmIfMigrationNeeded()
+                .build();
+
+        return Realm.getInstance(config);
     }
 
     public RealmResults<ChatMessage> getMessagesForChat(Realm realm, String jid) {

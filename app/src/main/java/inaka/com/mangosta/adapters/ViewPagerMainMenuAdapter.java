@@ -8,13 +8,16 @@ import android.view.ViewGroup;
 
 import inaka.com.mangosta.fragments.BlogsListFragment;
 import inaka.com.mangosta.fragments.ChatsListsFragment;
+import inaka.com.mangosta.fragments.VideoStreamFragment;
+import inaka.com.mangosta.videostream.VideoStreamBinding;
 
 public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
-    private final int PAGE_COUNT = 2;
+    private final int PAGE_COUNT = 3;
 
     public static final int CHATS_FRAGMENT_POSITION = 0;
     public static final int SOCIAL_MEDIA_FRAGMENT_POSITION = 1;
+    public static final int VIDEO_STREAM_FRAGMENT_POSITION = 2;
 
     private FragmentManager mFragmentManager;
 
@@ -22,18 +25,22 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     private BlogsListFragment mSocialMediaFragment;
     private ChatsListsFragment mChatsFragment;
+    private VideoStreamFragment mVideoStreamFragment;
 
     public Fragment mFragmentList[] = new Fragment[]{
             mChatsFragment,
             mSocialMediaFragment,
+            mVideoStreamFragment
     };
 
     private String mChatsFragmentTag;
     private String mSocialMediaFragmentTag;
+    private String mVideoStreamFragmentTag;
 
     private String mFragmentListTags[] = new String[]{
             mChatsFragmentTag,
             mSocialMediaFragmentTag,
+            mVideoStreamFragmentTag,
     };
 
     public ViewPagerMainMenuAdapter(FragmentManager fm, String tabTitles[]) {
@@ -64,6 +71,11 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
                     BlogsListFragment blogsListFragment = new BlogsListFragment();
                     blogsListFragment.loadBlogPosts();
                     mFragmentList[position] = blogsListFragment;
+                    break;
+
+                case VIDEO_STREAM_FRAGMENT_POSITION:
+                    mVideoStreamFragment = new VideoStreamFragment();
+                    mFragmentList[position] = mVideoStreamFragment;
                     break;
             }
 
