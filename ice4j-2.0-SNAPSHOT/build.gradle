@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('ice4j-2.0-SNAPSHOT.jar'))
