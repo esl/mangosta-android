@@ -14,7 +14,7 @@ import java.net.SocketException;
 /**
  * Created by rafalslota on 25/04/2017.
  */
-public class ProxyRTPServer extends Thread {
+public class ProxyRTPServer extends Thread implements NewPeerHandler {
     private static final String TAG = "ProxyRTPServer";
     private final DatagramSocket localSockData;
     private final DatagramSocket localSockControl;
@@ -81,6 +81,12 @@ public class ProxyRTPServer extends Thread {
 
     public Pair<TransportAddress, TransportAddress> getRelayAddrs() {
         return new Pair<>(dataRelay.getRelayAddr(), controlRelay.getRelayAddr());
+    }
+
+    @Override
+    public void onNewPeerDiscovered(String peerAddr) {
+        dataRelay.onNewPeerDiscovered(peerAddr);
+        controlRelay.onNewPeerDiscovered(peerAddr);
     }
 
     private class DataReceiver extends Thread {

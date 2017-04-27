@@ -16,8 +16,10 @@ import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smackx.bytestreams.ibb.InBandBytestreamManager;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import inaka.com.mangosta.R;
 import inaka.com.mangosta.xmpp.XMPPSession;
 
 /**
@@ -27,10 +29,12 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
     private static final String TAG = "VideoStreamBinding";
     private final ProxyRTPServer proxyRTP;
     private final UserInterface userInterface;
+    private final NewPeerHandler newPeerHandler;
 
     public VideoStreamBinding(ProxyRTPServer proxyRTP, Activity activity) {
         this.proxyRTP = proxyRTP;
         this.userInterface = new UserInterface(activity);
+        this.newPeerHandler = proxyRTP;
     }
 
     public boolean startBinding() {
@@ -38,7 +42,7 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
         return false;
     }
 
-    private void sendBinding(String jid, Pair<TransportAddress, TransportAddress> relays) {
+    private void sendBinding(final String jid, Pair<TransportAddress, TransportAddress> relays) {
         userInterface.debugToast("JID: " + jid + " && Data: " + relays.first.getHostAddress() + ":" +
                 relays.first.getPort() + " && Control: " + relays.second.getHostAddress() +
                 ":" + relays.second.getPort());
@@ -51,10 +55,11 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
                         relays.first.getPort() + ";" + relays.second.getHostAddress() +
                         ":" + relays.second.getPort();
                 xmpp.sendStanza(new Message(jid, messageText));
-                xmpp.getXMPPConnection().addSyncStanzaListener(this, new StanzaFilter() {
+                xmpp.getXMPPConnection().addAsyncStanzaListener(this, new StanzaFilter() {
                     @Override
                     public boolean accept(Stanza stanza) {
-                        return stanza.getClass() == Message.class;
+                        return stanza.getClass() == Message.class &&
+                                stanza.getFrom().asBareJid().toString().equalsIgnoreCase(jid);
                     }
                 });
             } catch (SmackException.NotConnectedException | InterruptedException | XmppStringprepException e) {
@@ -76,7 +81,12 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
 
     @Override
     public void processPacket(Stanza stanza) throws SmackException.NotConnectedException, InterruptedException {
-        Log.d(TAG, "stanza received: " + stanza.toString());
+        Message msg = (Message) stanza;
+        Log.d(TAG, "stanza received: " + msg.getType().toString() + " " + msg.getBody() + " " + msg.toString());
+
+        if(msg.getType() == Message.Type.chat) {
+            newPeerHandler.onNewPeerDiscovered(msg.getBody().trim());
+        }
     }
 
     public class UserInterface {
@@ -96,7 +106,7 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
         }
 
         public void showNotReadyError() {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustom);
             builder.setTitle("VideoStream not ready");
             builder.setMessage("TURN data relay is not ready yet. Please try again later.");
 
@@ -111,7 +121,7 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
         }
 
         public void showStreamFromAlert(final BindingConfirmator confirmator) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(userInterface.getActivity());
+            AlertDialog.Builder builder = new AlertDialog.Builder(userInterface.getActivity(), R.style.AlertDialogCustom);
             builder.setTitle("Enter JID to stream from:");
 
             final EditText input = new EditText(userInterface.getActivity());
@@ -126,7 +136,7 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
             builder.setPositiveButton("Stream!", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.cancel();
-                    confirmator.confirmBinding(input.getText().toString());
+                    confirmator.confirmBinding(input.getText().toString().trim());
                 }
             });
 

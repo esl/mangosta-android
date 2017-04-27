@@ -1,23 +1,17 @@
 package inaka.com.mangosta.activities;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
 
-import org.ice4j.TransportAddress;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
@@ -40,7 +34,7 @@ import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class MainMenuActivity extends BaseActivity {
 
-    private static final String TURN_ADDRESS = "10.152.1.16";
+    private static final String TURN_ADDRESS = "217.182.204.9";
     private static final int TURN_PORT = 12100;
 
     @Bind(R.id.slidingTabStrip)
@@ -57,6 +51,9 @@ public class MainMenuActivity extends BaseActivity {
 
     @Bind(R.id.createNewVideoStreamFloatingButton)
     FloatingActionButton createNewVideoStreamFloatingButton;
+
+    @Bind(R.id.multipleActions)
+    FloatingActionsMenu floatingActionsMenu;
 
     public boolean mRoomsLoaded = false;
 
@@ -115,6 +112,7 @@ public class MainMenuActivity extends BaseActivity {
         createNewVideoStreamFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                floatingActionsMenu.collapse();
                 if(proxyRTP.isRelayReady()) {
                     videoStreamBinding.startBinding();
                     mViewpagerMainMenu.setCurrentItem(2, true);
