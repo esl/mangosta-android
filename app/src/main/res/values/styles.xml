@@ -15,6 +15,19 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name="AlertDialogCustom" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="buttonBarPositiveButtonStyle">@style/positiveButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/negativeButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/positiveButton</item>
+    </style>
+
+    <style name="positiveButton">
+        <item name="android:textColor">@color/colorPrimary</item>
+    </style>
+    <style name="negativeButton">
+        <item name="android:textColor">@color/colorPrimary</item>
+    </style>
+
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />

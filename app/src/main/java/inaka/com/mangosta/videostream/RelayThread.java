@@ -28,14 +28,16 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by rafalslota on 26/04/2017.
  */
-public class RelayThread extends Thread implements MessageEventHandler {
+public class RelayThread extends Thread implements MessageEventHandler, NewPeerHandler {
 
     private static final String TAG = "RelayThread";
-    private final DatagramSocket socket;
     private final TransportAddress turnAddr;
     private final StunStack stunStack;
     private final TransportAddress localAddr;
@@ -43,18 +45,18 @@ public class RelayThread extends Thread implements MessageEventHandler {
     private final LongTermCredential credentials;
     private final LongTermCredentialSession turnAuthSession;
 
-    private final static String REALM = "turn1.localhost";
+    private final static String REALM = "ovh";
     private final static String USERNAME = "username";
-    private final static String PASSWORD = "secret";
+    private final static String PASSWORD = "Zd5Pb2O2";
     private boolean running = true;
     private boolean allocated = false;
     private RelayDataHandler dataHandler = null;
     private TransportAddress lastPeerAddr = null;
     private TransportAddress relayAddr = null;
 
-    public RelayThread(String turnHostname, int turnPort, DatagramSocket socket) {
-        this.socket = socket;
+    private List<String> allowedPeers;
 
+    public RelayThread(String turnHostname, int turnPort, DatagramSocket socket) {
         // Init addresses
         turnAddr = new TransportAddress(turnHostname, turnPort, Transport.UDP);
         localAddr = new TransportAddress("::", socket.getLocalPort(), Transport.UDP);
@@ -71,6 +73,11 @@ public class RelayThread extends Thread implements MessageEventHandler {
         turnAuthSession.setNonce("nonce".getBytes());
 
         stunStack.getCredentialsManager().registerAuthority(turnAuthSession);
+
+        allowedPeers = Collections.synchronizedList(new ArrayList<String>());
+        allowedPeers.add("10.152.1.16");
+        allowedPeers.add("31.172.186.58");
+        allowedPeers.add("127.0.0.1");
     }
 
     public RelayThread(String turnHostname, int turnPort) throws SocketException {
@@ -100,16 +107,26 @@ public class RelayThread extends Thread implements MessageEventHandler {
     public void run() {
         while(running) {
             try {
-                Thread.sleep(5000);
-                if(!allocated)
+                Thread.sleep(50);
+                if(!isAllocated()) { // Not allocated -> allocate
                     allocated = allocate(3);
-
-                if(allocated) {
-                    refresh(3);
-                    create_permission("10.152.1.16");
-                    create_permission("127.0.0.1");
                 }
 
+                if(isAllocated()) { // Allocated -> preserve only if refresh works
+                    allocated = refresh(3);
+                }
+
+                if(!isAllocated()) { // Allocation or refresh failed -> retry
+                    continue;
+                }
+
+                if(isAllocated()) { // Still allocated -> refresh / create permissions
+                    for(String peerAddr: allowedPeers) {
+                        create_permission(peerAddr);
+                    }
+                }
+
+                Thread.sleep(5000); // A bit spam-ish, but well... whatever, it's just for the demo
             } catch (InterruptedException e) {
                 running = false;
                 e.printStackTrace();
@@ -128,7 +145,7 @@ public class RelayThread extends Thread implements MessageEventHandler {
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
             Message message = event.getMessage();
 
-            return !handleError(message) || refresh(tries - 1);
+            return handleError(message) == 0 || refresh(tries - 1);
         } catch (StunException | IOException e) {
             e.printStackTrace();
         }
@@ -136,7 +153,7 @@ public class RelayThread extends Thread implements MessageEventHandler {
         return false;
     }
 
-    private boolean handleError(Message message) {
+    private int handleError(Message message) {
         ErrorCodeAttribute e = (ErrorCodeAttribute) message.getAttribute(Attribute.ERROR_CODE);
         if(e != null) {
             Log.w(TAG, "TURN error for request " + message.getName() + ": " + (int) e.getErrorCode());
@@ -144,10 +161,10 @@ public class RelayThread extends Thread implements MessageEventHandler {
             if (nonce != null)
                 turnAuthSession.setNonce(nonce.getNonce());
 
-            return true;
+            return (int) e.getErrorCode();
         } else {
             Log.w(TAG, "TURN request " + message.getName() + " successfully processed");
-            return false;
+            return 0;
         }
     }
 
@@ -163,7 +180,7 @@ public class RelayThread extends Thread implements MessageEventHandler {
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr, tid);
             Message message = event.getMessage();
 
-            return !handleError(message);
+            return handleError(message) == 0;
         } catch (StunException | IOException e) {
             e.printStackTrace();
         }
@@ -182,7 +199,7 @@ public class RelayThread extends Thread implements MessageEventHandler {
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
             Message message = event.getMessage();
 
-            if(handleError(message)) {
+            if(handleError(message) > 0) {
                 return allocate(tries - 1);
             } else {
                 XorRelayedAddressAttribute relayAddrAttr = (XorRelayedAddressAttribute) message.getAttribute(Attribute.XOR_RELAYED_ADDRESS);
@@ -218,5 +235,11 @@ public class RelayThread extends Thread implements MessageEventHandler {
 
     public TransportAddress getRelayAddr() {
         return relayAddr;
+    }
+
+    @Override
+    public void onNewPeerDiscovered(String peerAddr) {
+        Log.d(TAG, "NewPeerDiscovered: " + peerAddr);
+        allowedPeers.add(peerAddr);
     }
 }
