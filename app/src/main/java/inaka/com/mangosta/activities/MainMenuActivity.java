@@ -102,7 +102,7 @@ public class MainMenuActivity extends BaseActivity {
 
 
         try {
-            proxyRTP = new ProxyRTPServer(6000, TURN_ADDRESS, TURN_PORT);
+            proxyRTP = new ProxyRTPServer(4556, TURN_ADDRESS, TURN_PORT);
             videoStreamBinding = new VideoStreamBinding(proxyRTP, MainMenuActivity.this);
             proxyRTP.start();
         } catch (SocketException e) {

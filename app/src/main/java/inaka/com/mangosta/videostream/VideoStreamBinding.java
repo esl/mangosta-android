@@ -16,8 +16,11 @@ import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Stanza;
-import org.jivesoftware.smackx.bytestreams.ibb.InBandBytestreamManager;
 import org.jxmpp.stringprep.XmppStringprepException;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -30,11 +33,13 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
     private final ProxyRTPServer proxyRTP;
     private final UserInterface userInterface;
     private final NewPeerHandler newPeerHandler;
+    private final Set<String> currentPeers;
 
     public VideoStreamBinding(ProxyRTPServer proxyRTP, Activity activity) {
         this.proxyRTP = proxyRTP;
         this.userInterface = new UserInterface(activity);
         this.newPeerHandler = proxyRTP;
+        currentPeers = Collections.synchronizedSet(new HashSet<String>());
     }
 
     public boolean startBinding() {
@@ -47,6 +52,10 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
                 relays.first.getPort() + " && Control: " + relays.second.getHostAddress() +
                 ":" + relays.second.getPort());
 
+        Log.d(TAG, "Sending streamTo: " + relays.first.getHostAddress() + ":" +
+                relays.first.getPort() + " && Control: " + relays.second.getHostAddress() +
+                ":" + relays.second.getPort());
+
 
         if(!XMPPSession.isInstanceNull() && XMPPSession.getInstance().isConnectedAndAuthenticated()) {
             XMPPSession xmpp = XMPPSession.getInstance();
@@ -54,6 +63,12 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
                 String messageText = relays.first.getHostAddress() + ":" +
                         relays.first.getPort() + ";" + relays.second.getHostAddress() +
                         ":" + relays.second.getPort();
+
+                for(String oldPeer: currentPeers) {
+                    Log.d(TAG, "Sending STOP to: " + oldPeer);
+                    xmpp.sendStanza(new Message(oldPeer, "stop"));
+                }
+
                 xmpp.sendStanza(new Message(jid, messageText));
                 xmpp.getXMPPConnection().addAsyncStanzaListener(this, new StanzaFilter() {
                     @Override
@@ -84,8 +99,10 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
         Message msg = (Message) stanza;
         Log.d(TAG, "stanza received: " + msg.getType().toString() + " " + msg.getBody() + " " + msg.toString());
 
-        if(msg.getType() == Message.Type.chat) {
-            newPeerHandler.onNewPeerDiscovered(msg.getBody().trim());
+        if(msg.getType() == Message.Type.normal) {
+            String peer = msg.getBody().trim();
+            newPeerHandler.onNewPeerDiscovered(peer);
+            currentPeers.add(stanza.getFrom().toString());
         }
     }
 
@@ -125,12 +142,14 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
             builder.setTitle("Enter JID to stream from:");
 
             final EditText input = new EditText(userInterface.getActivity());
-            input.setText("mypi@erlang-solutions.com");
+            input.setText("streamer@erlang-solutions.com");
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.MATCH_PARENT);
             input.setLayoutParams(lp);
             builder.setView(input);
+
+//            builder.setSingleChoiceItems()
 
 
             builder.setPositiveButton("Stream!", new DialogInterface.OnClickListener() {
