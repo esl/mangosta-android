@@ -25,8 +25,8 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
     private final DataReceiver controlReceiver;
 
     public ProxyRTPServer(int serverBasePort, String turnAddr, int turnPort) throws SocketException {
-        localSockData = new DatagramSocket(serverBasePort);
-        localSockControl = new DatagramSocket(serverBasePort + 1);
+        localSockData = new DatagramSocket(0);
+        localSockControl = new DatagramSocket(0);
 
         dataRelay = new RelayThread(turnAddr, turnPort);
         dataRelay.onData(new RelayDataHandler() {
@@ -65,12 +65,11 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
             localSockControl.connect(new InetSocketAddress("127.0.0.1", 5007));
 
             dataRelay.start();
-            Thread.sleep(500);
             controlRelay.start();
 
             dataReceiver.start();
             controlReceiver.start();
-        } catch (SocketException | InterruptedException e) {
+        } catch (SocketException e) {
             e.printStackTrace();
         }
     }
