@@ -97,7 +97,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
         stunStack.addSocket(new IceUdpSocketWrapper(this.socket));
         stunStack.addIndicationListener(this.localAddr, this);
 
-        Log.d(TAG, "New relay local socket created at: " + newSocket.getPort());
+        Log.d(TAG, "New relay local socket created at: " + newSocket.getLocalPort());
     }
 
     public boolean send(String peerAddr, int peerPort, byte[] data) {
