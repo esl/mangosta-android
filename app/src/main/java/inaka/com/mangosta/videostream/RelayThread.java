@@ -2,6 +2,8 @@ package inaka.com.mangosta.videostream;
 
 import android.util.Log;
 
+import com.squareup.okhttp.internal.framed.ErrorCode;
+
 import org.ice4j.StunException;
 import org.ice4j.StunMessageEvent;
 import org.ice4j.Transport;
@@ -31,6 +33,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by rafalslota on 26/04/2017.
@@ -40,7 +43,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
     private static final String TAG = "RelayThread";
     private final TransportAddress turnAddr;
     private final StunStack stunStack;
-    private final TransportAddress localAddr;
+    private TransportAddress localAddr;
     private final BlockingRequestSender turnClient;
     private final LongTermCredential credentials;
     private final LongTermCredentialSession turnAuthSession;
@@ -55,16 +58,16 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
     private TransportAddress relayAddr = null;
 
     private List<String> allowedPeers;
+    private DatagramSocket socket;
 
-    public RelayThread(String turnHostname, int turnPort, DatagramSocket socket) {
+    public RelayThread(String turnHostname, int turnPort) throws SocketException {
         // Init addresses
         turnAddr = new TransportAddress(turnHostname, turnPort, Transport.UDP);
-        localAddr = new TransportAddress("::", socket.getLocalPort(), Transport.UDP);
 
         // Init stun stack
         stunStack = new StunStack();
-        stunStack.addSocket(new IceUdpSocketWrapper(socket));
-        stunStack.addIndicationListener(localAddr, this);
+
+        setupSocket();
 
         turnClient = new BlockingRequestSender(stunStack, localAddr);
 
@@ -75,13 +78,23 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
         stunStack.getCredentialsManager().registerAuthority(turnAuthSession);
 
         allowedPeers = Collections.synchronizedList(new ArrayList<String>());
-        allowedPeers.add("10.152.1.16");
-        allowedPeers.add("31.172.186.58");
-        allowedPeers.add("127.0.0.1");
     }
 
-    public RelayThread(String turnHostname, int turnPort) throws SocketException {
-        this(turnHostname, turnPort, new DatagramSocket(new InetSocketAddress("0.0.0.0", 0)));
+    private void setupSocket() throws SocketException {
+        DatagramSocket newSocket = new DatagramSocket(new InetSocketAddress("0.0.0.0", 0));
+        TransportAddress newLocalAddr = new TransportAddress("::", newSocket.getLocalPort(), Transport.UDP);
+
+        if(this.localAddr != null) {
+            stunStack.removeSocket(this.localAddr);
+            stunStack.removeIndicationListener(this.localAddr, null);
+        }
+
+        this.socket = newSocket;
+        this.localAddr = newLocalAddr;
+        stunStack.addSocket(new IceUdpSocketWrapper(this.socket));
+        stunStack.addIndicationListener(this.localAddr, this);
+
+        Log.d(TAG, "New relay local socket created at: " + newSocket.getLocalPort());
     }
 
     public boolean send(String peerAddr, int peerPort, byte[] data) {
@@ -126,7 +139,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
                     }
                 }
 
-                Thread.sleep(5000); // A bit spam-ish, but well... whatever, it's just for the demo
+                Thread.sleep(5000 + new Random().nextInt(5000)); // A bit spam-ish, but well... whatever, it's just for the demo
             } catch (InterruptedException e) {
                 running = false;
                 e.printStackTrace();
@@ -199,7 +212,12 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
             Message message = event.getMessage();
 
-            if(handleError(message) > 0) {
+            int errorCode = handleError(message);
+            if(errorCode > 0) {
+                if(errorCode == ErrorCodeAttribute.ALLOCATION_MISMATCH) {
+                    setupSocket();
+                }
+
                 return allocate(tries - 1);
             } else {
                 XorRelayedAddressAttribute relayAddrAttr = (XorRelayedAddressAttribute) message.getAttribute(Attribute.XOR_RELAYED_ADDRESS);
