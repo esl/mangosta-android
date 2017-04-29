@@ -8,6 +8,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import org.ice4j.TransportAddress;
@@ -138,24 +139,22 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
         }
 
         public void showStreamFromAlert(final BindingConfirmator confirmator) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(userInterface.getActivity(), R.style.AlertDialogCustom);
+            final AlertDialog.Builder builder = new AlertDialog.Builder(userInterface.getActivity(), R.style.AlertDialogCustom);
             builder.setTitle("Enter JID to stream from:");
 
-            final EditText input = new EditText(userInterface.getActivity());
-            input.setText("streamer@erlang-solutions.com");
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT);
-            input.setLayoutParams(lp);
-            builder.setView(input);
-
-//            builder.setSingleChoiceItems()
-
+            String[] items = {"streamer@erlang-solutions.com", "camera@erlang-solutions.com"};
+            builder.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                }
+            });
 
             builder.setPositiveButton("Stream!", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.cancel();
-                    confirmator.confirmBinding(input.getText().toString().trim());
+                    ListView lw = ((AlertDialog)dialog).getListView();
+                    String input = (String) lw.getAdapter().getItem(lw.getCheckedItemPosition());
+                    confirmator.confirmBinding(input.toLowerCase().trim());
                 }
             });
 

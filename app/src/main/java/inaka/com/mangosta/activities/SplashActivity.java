@@ -23,6 +23,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.fragments.LoginDialogFragment;
+import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -75,6 +76,11 @@ public class SplashActivity extends FragmentActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+//                Preferences.getInstance().deleteAll();
+//                RealmManager.getInstance().deleteAll();
+//                if(!XMPPSession.isInstanceNull())
+//                    XMPPSession.getInstance().logoff();
+
                 if (Preferences.getInstance().isLoggedIn()) {
                     xmppReloginAndStart();
                 } else {
@@ -123,6 +129,13 @@ public class SplashActivity extends FragmentActivity {
                 XMPPSession.getInstance().getXMPPConnection().disconnect();
                 XMPPSession.clearInstance();
                 Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
+                Preferences.getInstance().deleteAll();
+                RealmManager.getInstance().deleteAll();
+                if(!XMPPSession.isInstanceNull())
+                    XMPPSession.getInstance().logoff();
+
+                createLoginDialog();
+                progressLoading.setVisibility(View.INVISIBLE);
             }
         });
     }
