@@ -75,9 +75,6 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
         stunStack.getCredentialsManager().registerAuthority(turnAuthSession);
 
         allowedPeers = Collections.synchronizedList(new ArrayList<String>());
-        allowedPeers.add("10.152.1.16");
-        allowedPeers.add("31.172.186.58");
-        allowedPeers.add("127.0.0.1");
     }
 
     public RelayThread(String turnHostname, int turnPort) throws SocketException {

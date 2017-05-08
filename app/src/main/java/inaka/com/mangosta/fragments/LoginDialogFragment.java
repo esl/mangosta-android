@@ -53,8 +53,8 @@ public class LoginDialogFragment extends DialogFragment {
 
         toolbar.setTitle(getString(R.string.title_login));
 
-        String userName = "test.user";
-        String password = "9xpW9mmUenFgMjay";
+        String userName = "phone";
+        String password = "1234";
 
         loginUserNameEditText.setText(userName);
         loginUserNameEditText.setSelection(userName.length());
