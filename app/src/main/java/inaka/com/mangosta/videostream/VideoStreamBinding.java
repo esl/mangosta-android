@@ -110,6 +110,7 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
     public class UserInterface {
 
         private final Activity activity;
+        private String lastJID = "movie@erlang-solutions.com";
 
         public UserInterface(Activity activity) {
             this.activity = activity;
@@ -142,19 +143,20 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
             final AlertDialog.Builder builder = new AlertDialog.Builder(userInterface.getActivity(), R.style.AlertDialogCustom);
             builder.setTitle("Enter JID to stream from:");
 
-            String[] items = {"streamer@erlang-solutions.com", "camera@erlang-solutions.com"};
-            builder.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                }
-            });
+            final EditText input = new EditText(userInterface.getActivity());
+            input.setText(lastJID);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT);
+            input.setLayoutParams(lp);
+            builder.setView(input);
 
             builder.setPositiveButton("Stream!", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.cancel();
-                    ListView lw = ((AlertDialog)dialog).getListView();
-                    String input = (String) lw.getAdapter().getItem(lw.getCheckedItemPosition());
-                    confirmator.confirmBinding(input.toLowerCase().trim());
+                    String jid = input.getText().toString().trim();
+                    lastJID = jid;
+                    confirmator.confirmBinding(jid);
                 }
             });
 
