@@ -1,6 +1,7 @@
 package inaka.com.mangosta.models;
 
 import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by rafalslota on 22/05/2017.
@@ -12,6 +13,9 @@ public class IceConfiguration extends RealmObject {
     private static final String DEFAULT_TURN_REALM = "localhost";
     private static final String DEFAULT_TURN_USERNAME = "username";
     private static final String DEFAULT_TURN_PASSWORD = "secret";
+
+    @PrimaryKey
+    private int turnServerId = 1;
 
     private String turnAddress;
     private int turnPort;
