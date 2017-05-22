@@ -10,6 +10,7 @@ import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.BlogPostComment;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
+import inaka.com.mangosta.models.IceConfiguration;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -23,7 +24,7 @@ public class RealmManager {
     private static RealmManager mInstance;
     private static boolean mIsTesting = false;
 
-    public static RealmManager getInstance() {
+    public synchronized static RealmManager getInstance() {
         if (mInstance == null) {
             mInstance = new RealmManager();
         }
@@ -47,6 +48,31 @@ public class RealmManager {
         realm.commitTransaction();
 
         realm.close();
+    }
+
+    public void saveIceConfiguration(IceConfiguration conf) {
+        Realm realm = getRealm();
+
+        realm.beginTransaction();
+        realm.copyToRealmOrUpdate(conf);
+        realm.commitTransaction();
+
+        realm.close();
+    }
+
+    public IceConfiguration getIceConfiguration() {
+        Realm realm = getRealm();
+        IceConfiguration iceConfiguration =
+                realm.where(IceConfiguration.class)
+                        .findFirst();
+        realm.close();
+
+        if (iceConfiguration == null) {
+            iceConfiguration = IceConfiguration.defaultConfiguration();
+            saveIceConfiguration(iceConfiguration);
+        }
+
+        return iceConfiguration;
     }
 
     public void saveChat(Chat chat) {

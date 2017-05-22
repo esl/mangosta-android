@@ -102,7 +102,10 @@ public class MainMenuActivity extends BaseActivity {
 
 
         try {
-            proxyRTP = new ProxyRTPServer(4556, TURN_ADDRESS, TURN_PORT);
+            String turnAddress = RealmManager.getInstance().getIceConfiguration().getTurnAddress();
+            int turnPort = RealmManager.getInstance().getIceConfiguration().getTurnPort();
+
+            proxyRTP = new ProxyRTPServer(4556, turnAddress, turnPort);
             videoStreamBinding = new VideoStreamBinding(proxyRTP, MainMenuActivity.this);
             proxyRTP.start();
         } catch (SocketException e) {

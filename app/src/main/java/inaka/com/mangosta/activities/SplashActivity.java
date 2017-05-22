@@ -130,7 +130,6 @@ public class SplashActivity extends FragmentActivity {
                 XMPPSession.clearInstance();
                 Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
                 Preferences.getInstance().deleteAll();
-                RealmManager.getInstance().deleteAll();
                 if(!XMPPSession.isInstanceNull())
                     XMPPSession.getInstance().logoff();
 

@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import inaka.com.mangosta.realm.RealmManager;
+
 /**
  * Created by rafalslota on 26/04/2017.
  */
@@ -51,6 +53,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
     private final static String REALM = "ovh";
     private final static String USERNAME = "username";
     private final static String PASSWORD = "Zd5Pb2O2";
+
     private boolean running = true;
     private boolean allocated = false;
     private RelayDataHandler dataHandler = null;
@@ -71,8 +74,12 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
 
         turnClient = new BlockingRequestSender(stunStack, localAddr);
 
-        credentials = new LongTermCredential(USERNAME, PASSWORD);
-        turnAuthSession = new LongTermCredentialSession(credentials, REALM.getBytes());
+        String turnUsername = RealmManager.getInstance().getIceConfiguration().getTurnUsername();
+        String turnPassword = RealmManager.getInstance().getIceConfiguration().getTurnPassword();
+        credentials = new LongTermCredential(turnUsername, turnPassword);
+
+        String turnRealm = RealmManager.getInstance().getIceConfiguration().getTurnRealm();
+        turnAuthSession = new LongTermCredentialSession(credentials, turnRealm.getBytes());
         turnAuthSession.setNonce("nonce".getBytes());
 
         stunStack.getCredentialsManager().registerAuthority(turnAuthSession);
