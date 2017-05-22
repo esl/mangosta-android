@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,11 +32,14 @@ import inaka.com.mangosta.videostream.ProxyRTPServer;
 import inaka.com.mangosta.videostream.VideoStreamBinding;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.realm.RealmChangeListener;
+import io.realm.RealmModel;
 
 public class MainMenuActivity extends BaseActivity {
 
     private static final String TURN_ADDRESS = "217.182.204.9";
     private static final int TURN_PORT = 12100;
+    private static final String TAG = "MainMenuActivity";
 
     @Bind(R.id.slidingTabStrip)
     PagerSlidingTabStrip mSlidingTabStrip;
@@ -100,12 +104,22 @@ public class MainMenuActivity extends BaseActivity {
             }
         });
 
+        RealmManager.getInstance().getIceConfiguration().addChangeListener(new RealmChangeListener<RealmModel>() {
+            @Override
+            public void onChange(RealmModel element) {
+                try {
+                    proxyRTP.interrupt();
+                    proxyRTP = new ProxyRTPServer(4556);
+                    proxyRTP.start();
+                    Log.i(TAG, "Restarting ProxyRTP...");
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         try {
-            String turnAddress = RealmManager.getInstance().getIceConfiguration().getTurnAddress();
-            int turnPort = RealmManager.getInstance().getIceConfiguration().getTurnPort();
-
-            proxyRTP = new ProxyRTPServer(4556, turnAddress, turnPort);
+            proxyRTP = new ProxyRTPServer(4556);
             videoStreamBinding = new VideoStreamBinding(proxyRTP, MainMenuActivity.this);
             proxyRTP.start();
         } catch (SocketException e) {
@@ -203,6 +217,12 @@ public class MainMenuActivity extends BaseActivity {
 
             case R.id.actionAbout: {
                 Intent intent = new Intent(MainMenuActivity.this, AboutActivity.class);
+                MainMenuActivity.this.startActivity(intent);
+                return true;
+            }
+
+            case R.id.actionConfigureIce: {
+                Intent intent = new Intent(MainMenuActivity.this, ConfigureIceActivity.class);
                 MainMenuActivity.this.startActivity(intent);
                 return true;
             }

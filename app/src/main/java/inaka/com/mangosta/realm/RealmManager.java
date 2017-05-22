@@ -65,14 +65,15 @@ public class RealmManager {
         IceConfiguration iceConfiguration =
                 realm.where(IceConfiguration.class)
                         .findFirst();
-        realm.close();
 
         if (iceConfiguration == null) {
             iceConfiguration = IceConfiguration.defaultConfiguration();
             saveIceConfiguration(iceConfiguration);
-        }
+            return getIceConfiguration();
 
-        return iceConfiguration;
+        } else {
+            return iceConfiguration;
+        }
     }
 
     public void saveChat(Chat chat) {

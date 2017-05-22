@@ -1,8 +1,7 @@
 package inaka.com.mangosta.videostream;
 
+import android.os.Looper;
 import android.util.Log;
-
-import com.squareup.okhttp.internal.framed.ErrorCode;
 
 import org.ice4j.StunException;
 import org.ice4j.StunMessageEvent;
@@ -18,13 +17,8 @@ import org.ice4j.message.Indication;
 import org.ice4j.message.Message;
 import org.ice4j.message.MessageFactory;
 import org.ice4j.message.Request;
-import org.ice4j.security.LongTermCredential;
-import org.ice4j.security.LongTermCredentialSession;
-import org.ice4j.socket.IceUdpSocketWrapper;
 import org.ice4j.stack.MessageEventHandler;
-import org.ice4j.stack.StunStack;
 import org.ice4j.stack.TransactionID;
-import org.ice4j.stunclient.BlockingRequestSender;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
@@ -43,12 +37,6 @@ import inaka.com.mangosta.realm.RealmManager;
 public class RelayThread extends Thread implements MessageEventHandler, NewPeerHandler {
 
     private static final String TAG = "RelayThread";
-    private final TransportAddress turnAddr;
-    private final StunStack stunStack;
-    private TransportAddress localAddr;
-    private final BlockingRequestSender turnClient;
-    private final LongTermCredential credentials;
-    private final LongTermCredentialSession turnAuthSession;
 
     private final static String REALM = "ovh";
     private final static String USERNAME = "username";
@@ -61,47 +49,9 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
     private TransportAddress relayAddr = null;
 
     private List<String> allowedPeers;
-    private DatagramSocket socket;
+    private IceClient iceClient;
 
-    public RelayThread(String turnHostname, int turnPort) throws SocketException {
-        // Init addresses
-        turnAddr = new TransportAddress(turnHostname, turnPort, Transport.UDP);
-
-        // Init stun stack
-        stunStack = new StunStack();
-
-        setupSocket();
-
-        turnClient = new BlockingRequestSender(stunStack, localAddr);
-
-        String turnUsername = RealmManager.getInstance().getIceConfiguration().getTurnUsername();
-        String turnPassword = RealmManager.getInstance().getIceConfiguration().getTurnPassword();
-        credentials = new LongTermCredential(turnUsername, turnPassword);
-
-        String turnRealm = RealmManager.getInstance().getIceConfiguration().getTurnRealm();
-        turnAuthSession = new LongTermCredentialSession(credentials, turnRealm.getBytes());
-        turnAuthSession.setNonce("nonce".getBytes());
-
-        stunStack.getCredentialsManager().registerAuthority(turnAuthSession);
-
-        allowedPeers = Collections.synchronizedList(new ArrayList<String>());
-    }
-
-    private void setupSocket() throws SocketException {
-        DatagramSocket newSocket = new DatagramSocket(new InetSocketAddress("0.0.0.0", 0));
-        TransportAddress newLocalAddr = new TransportAddress("::", newSocket.getLocalPort(), Transport.UDP);
-
-        if(this.localAddr != null) {
-            stunStack.removeSocket(this.localAddr);
-            stunStack.removeIndicationListener(this.localAddr, null);
-        }
-
-        this.socket = newSocket;
-        this.localAddr = newLocalAddr;
-        stunStack.addSocket(new IceUdpSocketWrapper(this.socket));
-        stunStack.addIndicationListener(this.localAddr, this);
-
-        Log.d(TAG, "New relay local socket created at: " + newSocket.getLocalPort());
+    public RelayThread() throws SocketException {
     }
 
     public boolean send(String peerAddr, int peerPort, byte[] data) {
@@ -110,7 +60,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
         Indication sendIndication = MessageFactory.createSendIndication(peer, data, tid.getBytes());
         try {
             sendIndication.setTransactionID(tid.getBytes());
-            stunStack.sendIndication(sendIndication, turnAddr, localAddr);
+            iceClient.sendIndication(sendIndication);
 
             return true;
         } catch (StunException e) {
@@ -125,9 +75,16 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
 
     @Override
     public void run() {
+
+        try {
+            initIce();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+
         while(running) {
             try {
-                Thread.sleep(50);
+                Thread.sleep(1000);
                 if(!isAllocated()) { // Not allocated -> allocate
                     allocated = allocate(3);
                 }
@@ -145,12 +102,36 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
                         create_permission(peerAddr);
                     }
                 }
+            } catch (IllegalArgumentException | InterruptedException e) {
+                e.printStackTrace();
+            }
 
+            try {
                 Thread.sleep(5000 + new Random().nextInt(5000)); // A bit spam-ish, but well... whatever, it's just for the demo
             } catch (InterruptedException e) {
                 running = false;
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void initIce() throws SocketException {
+        this.iceClient = new IceClient(RealmManager.getInstance().getIceConfiguration(), this);
+        allowedPeers = Collections.synchronizedList(new ArrayList<String>());
+    }
+
+    private int handleError(Message message) {
+        ErrorCodeAttribute e = (ErrorCodeAttribute) message.getAttribute(Attribute.ERROR_CODE);
+        if(e != null) {
+            Log.w(TAG, "TURN error for request " + message.getName() + ": " + ErrorCodeAttribute.getDefaultReasonPhrase(e.getErrorCode()));
+            NonceAttribute nonce = (NonceAttribute) message.getAttribute(Attribute.NONCE);
+            if (nonce != null)
+                iceClient.getAuthSession().setNonce(nonce.getNonce());
+
+            return (int) e.getErrorCode();
+        } else {
+            Log.w(TAG, "TURN request " + message.getName() + " successfully processed");
+            return 0;
         }
     }
 
@@ -160,12 +141,10 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
 
         try {
             Request request = MessageFactory.createRefreshRequest();
-            turnAuthSession.addAttributes(request);
-
-            StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
+            StunMessageEvent event = iceClient.sendRequestAndWaitForResponse(request);
             if(event == null)
                 return refresh(tries - 1);
-            
+
             Message message = event.getMessage();
 
             return handleError(message) == 0 || refresh(tries - 1);
@@ -176,22 +155,6 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
         return false;
     }
 
-    private int handleError(Message message) {
-        ErrorCodeAttribute e = (ErrorCodeAttribute) message.getAttribute(Attribute.ERROR_CODE);
-        if(e != null) {
-            Log.w(TAG, "TURN error for request " + message.getName() + ": " + (int) e.getErrorCode());
-            NonceAttribute nonce = (NonceAttribute) message.getAttribute(Attribute.NONCE);
-            if (nonce != null)
-                turnAuthSession.setNonce(nonce.getNonce());
-
-            return (int) e.getErrorCode();
-        } else {
-            Log.w(TAG, "TURN request " + message.getName() + " successfully processed");
-            return 0;
-        }
-    }
-
-
     private boolean create_permission(String peerAddr) {
 
         try {
@@ -199,8 +162,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
             TransactionID tid = TransactionID.createNewTransactionID();
             Request request = MessageFactory.createCreatePermissionRequest(fromAddr, tid.getBytes());
 
-            turnAuthSession.addAttributes(request);
-            StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr, tid);
+            StunMessageEvent event = iceClient.sendRequestAndWaitForResponse(request, tid);
             if(event == null)
                 return false;
 
@@ -220,9 +182,8 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
 
         try {
             Request request = MessageFactory.createAllocateRequest((byte) 17, false);
-            turnAuthSession.addAttributes(request);
 
-            StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
+            StunMessageEvent event = iceClient.sendRequestAndWaitForResponse(request);
             if(event == null)
                 return allocate(tries - 1);
 
@@ -231,7 +192,7 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
             int errorCode = handleError(message);
             if(errorCode > 0) {
                 if(errorCode == ErrorCodeAttribute.ALLOCATION_MISMATCH) {
-                    setupSocket();
+                    iceClient.setupSocket();
                 }
 
                 return allocate(tries - 1);
