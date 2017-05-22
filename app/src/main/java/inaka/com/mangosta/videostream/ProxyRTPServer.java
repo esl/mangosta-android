@@ -6,6 +6,7 @@ import android.util.Pair;
 import org.ice4j.TransportAddress;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -23,12 +24,13 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
     private final RelayThread controlRelay;
     private final DataReceiver dataReceiver;
     private final DataReceiver controlReceiver;
+    private boolean running = true;
 
-    public ProxyRTPServer(int serverBasePort, String turnAddr, int turnPort) throws SocketException {
+    public ProxyRTPServer(int serverBasePort) throws SocketException {
         localSockData = new DatagramSocket(0);
         localSockControl = new DatagramSocket(0);
 
-        dataRelay = new RelayThread(turnAddr, turnPort);
+        dataRelay = new RelayThread();
         dataRelay.onData(new RelayDataHandler() {
             @Override
             public void handleData(String peerAddr, int peerPort, byte[] data) {
@@ -41,7 +43,7 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
             }
         });
 
-        controlRelay = new RelayThread(turnAddr, turnPort);
+        controlRelay = new RelayThread();
         controlRelay.onData(new RelayDataHandler() {
             @Override
             public void handleData(String peerAddr, int peerPort, byte[] data) {
@@ -88,9 +90,18 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
         controlRelay.onNewPeerDiscovered(peerAddr);
     }
 
+    public void shutdown() {
+        dataRelay.shutdown();
+        controlRelay.shutdown();
+        dataReceiver.shutdown();
+        controlReceiver.shutdown();
+        running = false;
+    }
+
     private class DataReceiver extends Thread {
         private final DatagramSocket socket;
         private final RelayThread relay;
+        private boolean running = true;
 
         public DataReceiver(DatagramSocket socket, RelayThread relay) {
             this.socket = socket;
@@ -100,7 +111,7 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
         @Override
         public void run() {
             byte[] buf = new byte[1024*1024];
-            while (true) {
+            while (running) {
                 DatagramPacket p = new DatagramPacket(buf, buf.length);
                 try {
                     socket.receive(p);
@@ -116,10 +127,20 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
                     System.arraycopy(buf, p.getOffset(), sendBuf, 0, p.getLength());
 
                     relay.send(peerAddr.getHostAddress(), peerAddr.getPort(), sendBuf);
+                } catch (InterruptedIOException e) {
+                    dataRelay.interrupt();
+                    controlRelay.interrupt();
+
+                    running = false;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+        public void shutdown() {
+            running = false;
+            interrupt();
         }
     }
 }

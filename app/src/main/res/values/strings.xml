@@ -114,4 +114,12 @@
     <string name="source_code">Source code:</string>
     <string name="mongooseim_platform">MongooseIM platform:</string>
     <string name="title_button_create_videostream">New video stream</string>
+    <string name="configure_ice">Configure ICE</string>
+    <string name="test_connection">Test connection</string>
+    <string name="turn_password">TURN password:</string>
+    <string name="turn_username">TURN username:</string>
+    <string name="turn_realm">TURN Realm:</string>
+    <string name="turn_server_port">TURN Server port:</string>
+    <string name="turn_server_address">TURN Server address:</string>
+    <string name="save_configuration">Save</string>
 </resources>
