@@ -110,7 +110,7 @@ public class VideoStreamBinding implements BindingConfirmator, StanzaListener {
     public class UserInterface {
 
         private final Activity activity;
-        private String lastJID = "movie@erlang-solutions.com";
+        private String lastJID = "camera@erlang-solutions.com";
 
         public UserInterface(Activity activity) {
             this.activity = activity;
