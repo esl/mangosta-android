@@ -24,6 +24,7 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.fragments.ChatsListsFragment;
 import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.models.IceConfiguration;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.notifications.RosterNotifications;
 import inaka.com.mangosta.realm.RealmManager;
@@ -32,6 +33,7 @@ import inaka.com.mangosta.videostream.ProxyRTPServer;
 import inaka.com.mangosta.videostream.VideoStreamBinding;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmModel;
 
@@ -40,6 +42,7 @@ public class MainMenuActivity extends BaseActivity {
     private static final String TURN_ADDRESS = "217.182.204.9";
     private static final int TURN_PORT = 12100;
     private static final String TAG = "MainMenuActivity";
+    private static final int CONFIGURE_ICE_REQUEST_CODE = 19;
 
     @Bind(R.id.slidingTabStrip)
     PagerSlidingTabStrip mSlidingTabStrip;
@@ -104,27 +107,7 @@ public class MainMenuActivity extends BaseActivity {
             }
         });
 
-        RealmManager.getInstance().getIceConfiguration().addChangeListener(new RealmChangeListener<RealmModel>() {
-            @Override
-            public void onChange(RealmModel element) {
-                try {
-                    proxyRTP.interrupt();
-                    proxyRTP = new ProxyRTPServer(4556);
-                    proxyRTP.start();
-                    Log.i(TAG, "Restarting ProxyRTP...");
-                } catch (SocketException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        try {
-            proxyRTP = new ProxyRTPServer(4556);
-            videoStreamBinding = new VideoStreamBinding(proxyRTP, MainMenuActivity.this);
-            proxyRTP.start();
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
+        restartProxyRTP();
 
         createNewVideoStreamFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,6 +124,19 @@ public class MainMenuActivity extends BaseActivity {
 
         manageCallFromBlogPostNotification();
         manageCallFromRosterRequestNotification();
+    }
+
+    private void restartProxyRTP() {
+        try {
+            if(proxyRTP != null)
+                proxyRTP.shutdown();
+
+            proxyRTP = new ProxyRTPServer(4556);
+            proxyRTP.start();
+            Log.i(TAG, "Restarting ProxyRTP...");
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
     }
 
     private void manageCallFromRosterRequestNotification() {
@@ -223,7 +219,7 @@ public class MainMenuActivity extends BaseActivity {
 
             case R.id.actionConfigureIce: {
                 Intent intent = new Intent(MainMenuActivity.this, ConfigureIceActivity.class);
-                MainMenuActivity.this.startActivity(intent);
+                startActivityForResult(intent, CONFIGURE_ICE_REQUEST_CODE);
                 return true;
             }
 
@@ -231,6 +227,20 @@ public class MainMenuActivity extends BaseActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case CONFIGURE_ICE_REQUEST_CODE:
+                if(resultCode == RESULT_OK) {
+                    restartProxyRTP();
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
 
     private void goToMyProfile() {
         Intent userOptionsActivityIntent = new Intent(this, UserProfileActivity.class);

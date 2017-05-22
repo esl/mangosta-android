@@ -64,8 +64,6 @@ public class IceClient implements ResponseCollector {
         // Init addresses
         serverAddr = new TransportAddress(conf.getTurnAddress(), conf.getTurnPort(), Transport.UDP);
 
-        Log.e("OMG", conf.getTurnRealm() + " " + conf.getTurnRealm().length());
-        Log.e("OMG", conf.getTurnUsername() + " " + conf.getTurnUsername().length());
         credentials = new LongTermCredential(conf.getTurnUsername(), conf.getTurnPassword());
 
         if(authSession != null)

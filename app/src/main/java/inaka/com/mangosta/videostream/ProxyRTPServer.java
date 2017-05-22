@@ -90,9 +90,18 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
         controlRelay.onNewPeerDiscovered(peerAddr);
     }
 
+    public void shutdown() {
+        dataRelay.shutdown();
+        controlRelay.shutdown();
+        dataReceiver.shutdown();
+        controlReceiver.shutdown();
+        running = false;
+    }
+
     private class DataReceiver extends Thread {
         private final DatagramSocket socket;
         private final RelayThread relay;
+        private boolean running = true;
 
         public DataReceiver(DatagramSocket socket, RelayThread relay) {
             this.socket = socket;
@@ -127,6 +136,11 @@ public class ProxyRTPServer extends Thread implements NewPeerHandler {
                     e.printStackTrace();
                 }
             }
+        }
+
+        public void shutdown() {
+            running = false;
+            interrupt();
         }
     }
 }

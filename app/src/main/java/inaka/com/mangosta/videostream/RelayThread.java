@@ -38,10 +38,6 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
 
     private static final String TAG = "RelayThread";
 
-    private final static String REALM = "ovh";
-    private final static String USERNAME = "username";
-    private final static String PASSWORD = "Zd5Pb2O2";
-
     private boolean running = true;
     private boolean allocated = false;
     private RelayDataHandler dataHandler = null;
@@ -113,6 +109,11 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
                 e.printStackTrace();
             }
         }
+    }
+
+    public void shutdown() {
+        running = false;
+        interrupt();
     }
 
     private void initIce() throws SocketException {
