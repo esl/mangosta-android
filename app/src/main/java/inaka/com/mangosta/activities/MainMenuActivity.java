@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,8 +24,8 @@ import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
 import inaka.com.mangosta.fragments.ChatsListsFragment;
+import inaka.com.mangosta.fragments.VideoStreamFragment;
 import inaka.com.mangosta.models.Event;
-import inaka.com.mangosta.models.IceConfiguration;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.notifications.RosterNotifications;
 import inaka.com.mangosta.realm.RealmManager;
@@ -33,15 +34,10 @@ import inaka.com.mangosta.videostream.ProxyRTPServer;
 import inaka.com.mangosta.videostream.VideoStreamBinding;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import io.realm.Realm;
-import io.realm.RealmChangeListener;
-import io.realm.RealmModel;
 
 public class MainMenuActivity extends BaseActivity {
 
-    private static final String TURN_ADDRESS = "217.182.204.9";
-    private static final int TURN_PORT = 12100;
-    private static final String TAG = "MainMenuActivity";
+    private static final String TAG = MainMenuActivity.class.toString();
     private static final int CONFIGURE_ICE_REQUEST_CODE = 19;
 
     @Bind(R.id.slidingTabStrip)
@@ -126,13 +122,18 @@ public class MainMenuActivity extends BaseActivity {
         manageCallFromRosterRequestNotification();
     }
 
+    public ProxyRTPServer getProxyRTP() {
+        return proxyRTP;
+    }
+
     private void restartProxyRTP() {
         try {
             if(proxyRTP != null)
                 proxyRTP.shutdown();
 
-            proxyRTP = new ProxyRTPServer(4556);
+            proxyRTP = new ProxyRTPServer();
             proxyRTP.start();
+            videoStreamBinding = new VideoStreamBinding(proxyRTP, MainMenuActivity.this);
             Log.i(TAG, "Restarting ProxyRTP...");
         } catch (SocketException e) {
             e.printStackTrace();

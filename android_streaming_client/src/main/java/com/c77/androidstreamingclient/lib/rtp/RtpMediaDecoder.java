@@ -24,6 +24,7 @@ package com.c77.androidstreamingclient.lib.rtp;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.util.Pair;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -83,14 +84,17 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
     private Log log = LogFactory.getLog(RtpMediaDecoder.class);
     // If this stream is set, use it to trace packet arrival data
     private OutputStream traceOutputStream = null;
+    private Pair<Integer, Integer> serverPort;
 
     /**
      * Creates an RTP decoder indicating where to play the video
      *
      * @param surfaceView view where video will be displayed
+     * @param configuration
+     * @param serverPort
      */
     public RtpMediaDecoder(SurfaceView surfaceView) {
-        this(surfaceView, null);
+        this(surfaceView, null, new Pair<>(4556, 4557));
     }
 
     /**
@@ -111,8 +115,9 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
      *  FRAMES_WINDOW_TIME=1000: Window size in milliseconds for the time-window buffer
      *
      */
-    public RtpMediaDecoder(SurfaceView surfaceView, Properties properties) {
+    public RtpMediaDecoder(SurfaceView surfaceView, Properties properties,  Pair<Integer, Integer> serverPort) {
         configuration = (properties != null) ? properties : new Properties();
+        this.serverPort = serverPort;
 
         // Read configuration
         DEBUGGING = Boolean.parseBoolean(configuration.getProperty(DEBUGGING_PROPERTY, "false"));
@@ -139,7 +144,7 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
      * Starts decoder, including the underlying RTP session
      */
     public void start() {
-        rtpStartClient();
+        rtpStartClient(serverPort);
     }
 
     /**
@@ -147,7 +152,7 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
      */
     public void restart() {
         rtpStopClient();
-        rtpStartClient();
+        rtpStartClient(serverPort);
     }
 
     /**
@@ -158,19 +163,26 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
         if (decoder != null) {
             try {
                 decoder.stop();
+                decoder.reset();
+
             } catch (Exception e) {
                 log.error("Encountered error while trying to stop decoder", e);
             }
             decoder.release();
             decoder = null;
+            if(playerThread != null) {
+                playerThread.interrupt();
+                playerThread = null;
+            }
         }
     }
 
     /**
      * Starts the RTP session
+     * @param serverPort
      */
-    private void rtpStartClient() {
-        rtpSessionThread = new RTPClientThread();
+    private void rtpStartClient(Pair<Integer, Integer> serverPort) {
+        rtpSessionThread = new RTPClientThread(serverPort);
         rtpSessionThread.start();
     }
 
@@ -178,7 +190,8 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
      * Stops the RTP session
      */
     private void rtpStopClient() {
-        rtpSessionThread.interrupt();
+        if(rtpSessionThread != null)
+            rtpSessionThread.interrupt();
     }
 
     /**
@@ -311,6 +324,10 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
         return bufferType;
     }
 
+    public void setServerPort(Pair<Integer,Integer> serverPort) {
+        this.serverPort = serverPort;
+    }
+
     /**
      * Creates the Android API decoder, configures it and starts it.
      */
@@ -363,12 +380,19 @@ public class RtpMediaDecoder implements Decoder, SurfaceHolder.Callback {
      * according to an heuristic) is chosen according to a configuration parameter.
      */
     private class RTPClientThread extends Thread {
+        private final Pair<Integer, Integer> serverPort;
         private SingleParticipantSession session;
+
+        public RTPClientThread(Pair<Integer, Integer> serverPort) {
+            this.serverPort = serverPort;
+        }
+
 
         @Override
         public void run() {
             RtpParticipant participant = RtpParticipant.createReceiver("0.0.0.0", DATA_STREAMING_PORT, DATA_STREAMING_PORT + 1);
-            RtpParticipant remoteParticipant = RtpParticipant.createReceiver("127.0.0.1", 4556, 4557);
+            RtpParticipant remoteParticipant = RtpParticipant.createReceiver("127.0.0.1", serverPort.first, serverPort.second);
+            log.warn("Streaming from " + serverPort.first + "/" + serverPort.second);
             session = new SingleParticipantSession("1", 96, participant, remoteParticipant);
             // listen to ssrc changes, in order to be able to auto-magically "reconnect",
             // i.e. if video publisher is closed and re-opened.

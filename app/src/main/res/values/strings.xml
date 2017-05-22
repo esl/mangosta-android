@@ -122,4 +122,6 @@
     <string name="turn_server_port">TURN Server port:</string>
     <string name="turn_server_address">TURN Server address:</string>
     <string name="save_configuration">Save</string>
+    <string name="connecting">Connecting...</string>
+    <string name="reset">Reset</string>
 </resources>

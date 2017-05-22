@@ -241,7 +241,7 @@ public class RtpMediaExtractor implements RtpSessionDataListener, MediaExtractor
                 currentFrame = decoder.getSampleBuffer();
                 currentFrame.getBuffer().clear();
 
-            } catch (RtpPlayerException e) {
+            } catch (Exception e) {
                 // TODO: Proper error handling
                 currentFrameHasError = true;
                 e.printStackTrace();

@@ -21,162 +21,176 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <LinearLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/content_"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/complete_white"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
+        android:orientation="vertical"
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:weightSum="1"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        tools:context="inaka.com.mangosta.activities.ConfigureIceActivity"
-        android:orientation="vertical">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/content_"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/complete_white"
+            android:gravity="center_vertical"
             android:orientation="vertical"
-            android:background="@drawable/layout_border">
+            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:weightSum="1"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            tools:context="inaka.com.mangosta.activities.ConfigureIceActivity">
 
-            <TextView
-                android:id="@+id/textView1"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/turn_server_address" />
+                android:background="@drawable/layout_border"
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/turnAddress"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/textView1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/turn_server_address" />
+
+                <EditText
+                    android:id="@+id/turnAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:ems="10"
+                    android:inputType="text" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:inputType="text" />
-        </LinearLayout>
+                android:background="@drawable/layout_border"
+                android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/layout_border">
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/turn_server_port" />
 
-            <TextView
-                android:id="@+id/textView2"
-                android:layout_width="wrap_content"
+                <EditText
+                    android:id="@+id/turnPort"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:ems="10"
+                    android:inputType="numberDecimal" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/turn_server_port" />
+                android:background="@drawable/layout_border"
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/turnPort"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/textView5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/turn_realm" />
+
+                <EditText
+                    android:id="@+id/turnRealm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:ems="10"
+                    android:inputType="text" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:inputType="numberDecimal" />
+                android:background="@drawable/layout_border"
+                android:orientation="vertical">
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/textView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/turn_username" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/layout_border">
+                <EditText
+                    android:id="@+id/turnUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:ems="10"
+                    android:inputType="text" />
 
-            <TextView
-                android:id="@+id/textView5"
-                android:layout_width="wrap_content"
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/turn_realm" />
+                android:background="@drawable/layout_border"
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/turnRealm"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:inputType="text" />
+                <TextView
+                    android:id="@+id/textView4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/turn_password" />
 
-        </LinearLayout>
+                <EditText
+                    android:id="@+id/turnPassword"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:ems="10"
+                    android:inputType="text" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/layout_border">
-
-            <TextView
-                android:id="@+id/textView3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/turn_username" />
-
-            <EditText
-                android:id="@+id/turnUsername"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:inputType="text" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/layout_border">
-
-            <TextView
-                android:id="@+id/textView4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/turn_password" />
-
-            <EditText
-                android:id="@+id/turnPassword"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:inputType="text" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/layout_border"
-            android:orientation="horizontal">
+            </LinearLayout>
 
             <Button
                 android:id="@+id/buttonTestConnection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_gravity="right"
                 android:text="@string/test_connection" />
 
-            <Button
-                android:id="@+id/buttonSaveConfiguration"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/save_configuration" />
+                android:layout_gravity="right"
+                android:orientation="horizontal">
 
+                <Button
+                    android:id="@+id/buttonResetConfiguration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reset" />
+
+                <Button
+                    android:id="@+id/buttonSaveConfiguration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/save_configuration" />
+
+
+            </LinearLayout>
         </LinearLayout>
-
-
-
-    </LinearLayout>
-
+    </ScrollView>
 
 </android.support.design.widget.CoordinatorLayout>
