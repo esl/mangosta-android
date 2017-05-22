@@ -163,6 +163,9 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
             turnAuthSession.addAttributes(request);
 
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
+            if(event == null)
+                return refresh(tries - 1);
+            
             Message message = event.getMessage();
 
             return handleError(message) == 0 || refresh(tries - 1);
@@ -198,6 +201,9 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
 
             turnAuthSession.addAttributes(request);
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr, tid);
+            if(event == null)
+                return false;
+
             Message message = event.getMessage();
 
             return handleError(message) == 0;
@@ -217,6 +223,9 @@ public class RelayThread extends Thread implements MessageEventHandler, NewPeerH
             turnAuthSession.addAttributes(request);
 
             StunMessageEvent event = turnClient.sendRequestAndWaitForResponse(request, turnAddr);
+            if(event == null)
+                return allocate(tries - 1);
+
             Message message = event.getMessage();
 
             int errorCode = handleError(message);
