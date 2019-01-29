@@ -1,15 +1,15 @@
 package inaka.com.mangosta.models;
 
 
-import android.support.test.espresso.NoMatchingViewException;
+import androidx.test.espresso.NoMatchingViewException;
 import android.view.View;
 
 import org.hamcrest.Matcher;
 
 import java.util.List;
 
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.contrib.RecyclerViewActions.scrollToPosition;
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.contrib.RecyclerViewActions.scrollToPosition;
 
 public class RecyclerViewInteraction<A> {
 

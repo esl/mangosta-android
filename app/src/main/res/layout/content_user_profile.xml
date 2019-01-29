@@ -50,22 +50,22 @@
 
     </LinearLayout>
 
-    <com.astuetz.PagerSlidingTabStrip
-        android:id="@+id/slidingTabStrip"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@android:color/white"
-        android:textColor="@color/colorPrimary"
-        app:pstsDividerColor="@color/colorPrimary"
-        app:pstsIndicatorColor="@color/colorPrimary"
-        app:pstsShouldExpand="true"
-        app:pstsTabPaddingLeftRight="8dp"
-        app:pstsTextAllCaps="true"
-        app:pstsUnderlineColor="@color/colorPrimary" />
-
-    <android.support.v4.view.ViewPager
+    <androidx.viewpager.widget.ViewPager
         android:id="@+id/viewpagerProfile"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="@color/blue_light_background">
+
+        <com.google.android.material.tabs.TabLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            app:tabBackground="@color/white"
+            app:tabTextColor="@color/colorPrimary"
+            app:tabSelectedTextColor="@color/colorPrimary"
+            app:tabIndicatorColor="@color/colorPrimary"
+            app:tabIndicatorHeight="6dp"/>
+
+    </androidx.viewpager.widget.ViewPager>
 
 </LinearLayout>

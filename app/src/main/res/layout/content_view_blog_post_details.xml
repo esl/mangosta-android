@@ -11,7 +11,7 @@
     tools:context="inaka.com.mangosta.activities.BlogPostDetailsActivity"
     tools:showIn="@layout/activity_view_blog_post_details">
 
-    <android.support.v4.widget.NestedScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -67,7 +67,7 @@
 
             </RelativeLayout>
 
-            <android.support.v7.widget.RecyclerView
+            <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerviewComments"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -79,7 +79,7 @@
 
         </LinearLayout>
 
-    </android.support.v4.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
         android:layout_width="fill_parent"

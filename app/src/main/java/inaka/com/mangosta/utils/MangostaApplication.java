@@ -3,7 +3,7 @@ package inaka.com.mangosta.utils;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.support.multidex.MultiDex;
+import androidx.multidex.MultiDex;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;

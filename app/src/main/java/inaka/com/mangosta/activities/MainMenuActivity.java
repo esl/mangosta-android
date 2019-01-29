@@ -2,19 +2,19 @@ package inaka.com.mangosta.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.view.ViewPager;
-import android.support.v7.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.astuetz.PagerSlidingTabStrip;
 import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
@@ -29,16 +29,16 @@ import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class MainMenuActivity extends BaseActivity {
 
-    @Bind(R.id.slidingTabStrip)
-    PagerSlidingTabStrip mSlidingTabStrip;
+    @BindView(R.id.slidingTabStrip)
+    TabLayout mSlidingTabStrip;
 
-    @Bind(R.id.viewpagerMainMenu)
+    @BindView(R.id.viewpagerMainMenu)
     ViewPager mViewpagerMainMenu;
 
-    @Bind(R.id.createNewChatFloatingButton)
+    @BindView(R.id.createNewChatFloatingButton)
     FloatingActionButton createNewChatFloatingButton;
 
-    @Bind(R.id.createNewBlogFloatingButton)
+    @BindView(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
     public boolean mRoomsLoaded = false;
@@ -54,14 +54,13 @@ public class MainMenuActivity extends BaseActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ButterKnife.bind(this);
+        unbinder = ButterKnife.bind(this);
 
         String tabTitles[] = new String[]{
                 getResources().getString(R.string.title_tab_chat),
                 getResources().getString(R.string.title_tab_social)};
 
         mViewpagerMainMenu.setAdapter(new ViewPagerMainMenuAdapter(getSupportFragmentManager(), tabTitles));
-        mSlidingTabStrip.setViewPager(mViewpagerMainMenu);
 
         createNewChatFloatingButton.setIcon(R.mipmap.ic_action_create_new_chat_light);
         createNewBlogFloatingButton.setIcon(R.mipmap.ic_add_blog);

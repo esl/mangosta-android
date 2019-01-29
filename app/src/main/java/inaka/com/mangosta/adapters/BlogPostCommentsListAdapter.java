@@ -2,7 +2,7 @@ package inaka.com.mangosta.adapters;
 
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.BlogPostComment;
@@ -35,13 +35,13 @@ public class BlogPostCommentsListAdapter extends RecyclerView.Adapter<BlogPostCo
 
     public static class CommentViewHolder extends BlogPostCommentsListAdapter.ViewHolder {
 
-        @Bind(R.id.textUserName)
+        @BindView(R.id.textUserName)
         TextView textUserName;
 
-        @Bind(R.id.textCommentCreatedAt)
+        @BindView(R.id.textCommentCreatedAt)
         TextView textCommentCreatedAt;
 
-        @Bind(R.id.textCommentBody)
+        @BindView(R.id.textCommentBody)
         TextView textCommentBody;
 
         private Context mContext;

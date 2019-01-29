@@ -3,8 +3,8 @@ package inaka.com.mangosta.fragments;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.widget.Toolbar;
+import androidx.fragment.app.DialogFragment;
+import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +16,7 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.SplashActivity;
@@ -28,22 +28,22 @@ public class LoginDialogFragment extends DialogFragment {
         return new LoginDialogFragment();
     }
 
-    @Bind(R.id.loginUserNameEditText)
+    @BindView(R.id.loginUserNameEditText)
     EditText loginUserNameEditText;
 
-    @Bind(R.id.loginJidCompletionEditText)
+    @BindView(R.id.loginJidCompletionEditText)
     EditText loginJidCompletionEditText;
 
-    @Bind(R.id.loginPasswordEditText)
+    @BindView(R.id.loginPasswordEditText)
     EditText loginPasswordEditText;
 
-    @Bind(R.id.loginServerEditText)
+    @BindView(R.id.loginServerEditText)
     EditText loginServerEditText;
 
-    @Bind(R.id.loginButton)
+    @BindView(R.id.loginButton)
     Button loginButton;
 
-    @Bind(R.id.toolbar)
+    @BindView(R.id.toolbar)
     Toolbar toolbar;
 
     @Override

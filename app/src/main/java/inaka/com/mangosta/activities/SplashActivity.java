@@ -8,9 +8,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -19,8 +19,9 @@ import com.nanotasks.BackgroundWork;
 import com.nanotasks.Completion;
 import com.nanotasks.Tasks;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.Unbinder;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.fragments.LoginDialogFragment;
 import inaka.com.mangosta.services.XMPPSessionService;
@@ -29,8 +30,10 @@ import inaka.com.mangosta.xmpp.XMPPSession;
 
 public class SplashActivity extends FragmentActivity {
 
-    @Bind(R.id.progressLoading)
+    @BindView(R.id.progressLoading)
     ProgressBar progressLoading;
+
+    private Unbinder unbinder;
 
     public static final int WAIT_TIME = 1500;
 
@@ -62,7 +65,7 @@ public class SplashActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        ButterKnife.bind(this);
+        unbinder = ButterKnife.bind(this);
 
         if (Build.VERSION.SDK_INT >= 23) {
             progressLoading.getIndeterminateDrawable().setColorFilter(this.getColor(R.color.colorPrimary),
@@ -102,6 +105,14 @@ public class SplashActivity extends FragmentActivity {
             xmppSessionService = null;
         }
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (unbinder != null) {
+            unbinder.unbind();
+        }
     }
 
     private void xmppReloginAndStart() {

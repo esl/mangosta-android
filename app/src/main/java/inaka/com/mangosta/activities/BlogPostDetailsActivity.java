@@ -2,9 +2,9 @@ package inaka.com.mangosta.activities;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.BlogPostCommentsListAdapter;
@@ -36,25 +36,25 @@ import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 
 public class BlogPostDetailsActivity extends BaseActivity {
 
-    @Bind(R.id.toolbar)
+    @BindView(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.textBlogPostOwnerName)
+    @BindView(R.id.textBlogPostOwnerName)
     TextView textBlogPostOwnerName;
 
-    @Bind(R.id.textBlogPostDate)
+    @BindView(R.id.textBlogPostDate)
     TextView textBlogPostDate;
 
-    @Bind(R.id.textBlogPostTitle)
+    @BindView(R.id.textBlogPostTitle)
     TextView textBlogPostTitle;
 
-    @Bind(R.id.recyclerviewComments)
+    @BindView(R.id.recyclerviewComments)
     RecyclerView recyclerviewComments;
 
-    @Bind(R.id.textNewComment)
+    @BindView(R.id.textNewComment)
     EditText textNewComment;
 
-    @Bind(R.id.buttonSendComment)
+    @BindView(R.id.buttonSendComment)
     ImageButton buttonSendComment;
 
     BlogPost mBlogPost;
@@ -68,7 +68,7 @@ public class BlogPostDetailsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_blog_post_details);
 
-        ButterKnife.bind(this);
+        unbinder = ButterKnife.bind(this);
 
         Bundle bundle = getIntent().getExtras();
         mBlogPost = bundle.getParcelable(BLOG_POST_PARAMETER);

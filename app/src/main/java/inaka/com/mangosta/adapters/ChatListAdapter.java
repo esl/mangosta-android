@@ -1,7 +1,7 @@
 package inaka.com.mangosta.adapters;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Chat;
@@ -64,19 +64,19 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     public static class ChatViewHolder extends ChatListAdapter.ViewHolder
             implements ItemTouchHelperViewHolder {
 
-        @Bind(R.id.chatNameTextView)
+        @BindView(R.id.chatNameTextView)
         TextView chatNameTextView;
 
-        @Bind(R.id.chatMessageTextView)
+        @BindView(R.id.chatMessageTextView)
         TextView chatMessageTextView;
 
-        @Bind(R.id.chatImageView)
+        @BindView(R.id.chatImageView)
         ImageView chatImageView;
 
-        @Bind(R.id.connectionStatusImageView)
+        @BindView(R.id.connectionStatusImageView)
         ImageView connectionStatusImageView;
 
-        @Bind(R.id.unreadMessageIndicatorTextView)
+        @BindView(R.id.unreadMessageIndicatorTextView)
         TextView unreadMessageIndicatorTextView;
 
         private Context mContext;

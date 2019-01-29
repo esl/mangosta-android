@@ -2,7 +2,7 @@ package inaka.com.mangosta.adapters;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +12,7 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
@@ -52,7 +52,7 @@ public class StickersAdapter extends RecyclerView.Adapter<StickersAdapter.Sticke
 
     public static class StickerViewHolder extends StickersAdapter.ViewHolder {
 
-        @Bind(R.id.stickerImageView)
+        @BindView(R.id.stickerImageView)
         ImageView stickerImageView;
 
         private Context mContext;

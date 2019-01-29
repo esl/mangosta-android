@@ -4,7 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Chat;
@@ -217,22 +217,22 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     public static class MessageViewHolder extends ChatMessagesAdapter.ViewHolder {
 
-        @Bind(R.id.messageSenderTextView)
+        @BindView(R.id.messageSenderTextView)
         TextView messageSenderTextView;
 
-        @Bind(R.id.messageCreatedAtTextView)
+        @BindView(R.id.messageCreatedAtTextView)
         TextView messageCreatedAtTextView;
 
-        @Bind(R.id.messageContentTextView)
+        @BindView(R.id.messageContentTextView)
         TextView messageContentTextView;
 
-        @Bind(R.id.messageLayout)
+        @BindView(R.id.messageLayout)
         LinearLayout messageLayout;
 
-        @Bind(R.id.messageMainLayout)
+        @BindView(R.id.messageMainLayout)
         LinearLayout messageMainLayout;
 
-        @Bind(R.id.imageEditMessage)
+        @BindView(R.id.imageEditMessage)
         ImageView imageEditMessage;
 
         private Context mContext;
@@ -355,7 +355,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     public static class MeMessageViewHolder extends ChatMessagesAdapter.ViewHolder {
 
-        @Bind(R.id.meMessageContentTextView)
+        @BindView(R.id.meMessageContentTextView)
         TextView meMessageContentTextView;
 
         private MeMessageViewHolder(View view) {
@@ -374,19 +374,19 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     public static class StickerMessageViewHolder extends ChatMessagesAdapter.ViewHolder {
 
-        @Bind(R.id.stickerSenderTextView)
+        @BindView(R.id.stickerSenderTextView)
         TextView stickerSenderTextView;
 
-        @Bind(R.id.stickerCreatedAtTextView)
+        @BindView(R.id.stickerCreatedAtTextView)
         TextView stickerCreatedAtTextView;
 
-        @Bind(R.id.stickerImageView)
+        @BindView(R.id.stickerImageView)
         ImageView stickerImageView;
 
-        @Bind(R.id.stickerLayout)
+        @BindView(R.id.stickerLayout)
         LinearLayout stickerLayout;
 
-        @Bind(R.id.stickerMainLayout)
+        @BindView(R.id.stickerMainLayout)
         LinearLayout stickerMainLayout;
 
         private Context mContext;
@@ -442,7 +442,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     public static class UnreadMessagesViewHolder extends ChatMessagesAdapter.ViewHolder {
 
-        @Bind(R.id.unreadMessagesContentTextView)
+        @BindView(R.id.unreadMessagesContentTextView)
         TextView unreadMessagesContentTextView;
 
         private Context mContext;

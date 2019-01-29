@@ -8,8 +8,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 
 import org.jivesoftware.smack.packet.Presence;
@@ -18,6 +18,7 @@ import org.jxmpp.jid.Jid;
 import java.util.Locale;
 
 import butterknife.ButterKnife;
+import butterknife.Unbinder;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
@@ -34,6 +35,8 @@ public class BaseActivity extends AppCompatActivity {
     private Realm mRealm;
     public static int mSessionDepth = 0;
     private boolean mIsRegistered;
+
+    protected Unbinder unbinder;
 
     private XMPPSessionService myService;
     protected ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -62,7 +65,9 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        ButterKnife.unbind(this);
+        if (unbinder != null) {
+            unbinder.unbind();
+        }
         EventBus.getDefault().unregister(this);
 
         if (mRealm != null && !Preferences.isTesting()) {

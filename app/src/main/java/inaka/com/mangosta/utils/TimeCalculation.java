@@ -1,7 +1,7 @@
 package inaka.com.mangosta.utils;
 
 import android.content.Context;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

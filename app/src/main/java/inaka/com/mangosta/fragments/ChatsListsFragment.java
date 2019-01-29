@@ -4,9 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
@@ -45,25 +45,25 @@ import rx.functions.Action1;
 
 public class ChatsListsFragment extends BaseFragment {
 
-    @Bind(R.id.groupChatsRecyclerView)
+    @BindView(R.id.groupChatsRecyclerView)
     RecyclerView groupChatsRecyclerView;
 
-    @Bind(R.id.oneToOneChatsRecyclerView)
+    @BindView(R.id.oneToOneChatsRecyclerView)
     RecyclerView oneToOneChatsRecyclerView;
 
-    @Bind(R.id.expandGroupChatsImage)
+    @BindView(R.id.expandGroupChatsImage)
     ImageView expandGroupChatsImage;
 
-    @Bind(R.id.expandOneToOneChatsImage)
+    @BindView(R.id.expandOneToOneChatsImage)
     ImageView expandOneToOneChatsImage;
 
-    @Bind(R.id.expandGroupChatsLayout)
+    @BindView(R.id.expandGroupChatsLayout)
     LinearLayout expandGroupChatsLayout;
 
-    @Bind(R.id.expandOneToOneChatsLayout)
+    @BindView(R.id.expandOneToOneChatsLayout)
     LinearLayout expandOneToOneChatsLayout;
 
-    @Bind(R.id.chatsLoading)
+    @BindView(R.id.chatsLoading)
     ProgressBar chatsLoading;
 
     private RoomManager mRoomManager;

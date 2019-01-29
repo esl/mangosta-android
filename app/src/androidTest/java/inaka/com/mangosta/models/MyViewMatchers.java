@@ -2,8 +2,8 @@ package inaka.com.mangosta.models;
 
 import android.content.res.Resources;
 import android.os.IBinder;
-import android.support.test.espresso.Root;
-import android.support.v7.widget.RecyclerView;
+import androidx.test.espresso.Root;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.view.WindowManager;
 

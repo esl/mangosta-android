@@ -3,7 +3,7 @@ package inaka.com.mangosta.activities;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -18,7 +18,7 @@ import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jxmpp.jid.Jid;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
@@ -27,13 +27,13 @@ import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 
 public class CreateBlogActivity extends BaseActivity {
 
-    @Bind(R.id.toolbar)
+    @BindView(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.createBlogFloatingButton)
+    @BindView(R.id.createBlogFloatingButton)
     FloatingActionButton createBlogFloatingButton;
 
-    @Bind(R.id.createBlogText)
+    @BindView(R.id.createBlogText)
     EditText createBlogText;
 
     @Override
@@ -41,7 +41,7 @@ public class CreateBlogActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_blog);
 
-        ButterKnife.bind(this);
+        unbinder = ButterKnife.bind(this);
 
         setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);

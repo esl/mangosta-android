@@ -3,7 +3,7 @@ package inaka.com.mangosta.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -11,23 +11,23 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.BuildConfig;
 import inaka.com.mangosta.R;
 
 public class AboutActivity extends BaseActivity {
 
-    @Bind(R.id.aboutVersionNumberTextView)
+    @BindView(R.id.aboutVersionNumberTextView)
     TextView aboutVersionNumberTextView;
 
-    @Bind(R.id.mangostaLinkButton)
+    @BindView(R.id.mangostaLinkButton)
     Button mangostaLinkButton;
 
-    @Bind(R.id.mongooseimLinkButton)
+    @BindView(R.id.mongooseimLinkButton)
     Button mongooseimLinkButton;
 
-    @Bind(R.id.toolbar)
+    @BindView(R.id.toolbar)
     Toolbar toolbar;
 
     @Override
@@ -35,7 +35,7 @@ public class AboutActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
 
-        ButterKnife.bind(this);
+        unbinder = ButterKnife.bind(this);
 
         setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);

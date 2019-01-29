@@ -5,9 +5,9 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
@@ -41,25 +41,25 @@ import inaka.com.mangosta.xmpp.XMPPUtils;
 
 public class BlockUsersActivity extends BaseActivity {
 
-    @Bind(R.id.toolbar)
+    @BindView(R.id.toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.blockSearchUserButton)
+    @BindView(R.id.blockSearchUserButton)
     ImageButton blockSearchUserButton;
 
-    @Bind(R.id.blockSearchUserEditText)
+    @BindView(R.id.blockSearchUserEditText)
     EditText blockSearchUserEditText;
 
-    @Bind(R.id.blockSearchUserProgressBar)
+    @BindView(R.id.blockSearchUserProgressBar)
     ProgressBar blockSearchUserProgressBar;
 
-    @Bind(R.id.blockSearchResultRecyclerView)
+    @BindView(R.id.blockSearchResultRecyclerView)
     RecyclerView blockSearchResultRecyclerView;
 
-    @Bind(R.id.blockedUsersRecyclerView)
+    @BindView(R.id.blockedUsersRecyclerView)
     RecyclerView blockedUsersRecyclerView;
 
-    @Bind(R.id.blockedUsersUnblockAllButton)
+    @BindView(R.id.blockedUsersUnblockAllButton)
     Button blockedUsersUnblockAllButton;
 
     private List<User> mSearchUsers;
@@ -73,7 +73,7 @@ public class BlockUsersActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_block_users);
 
-        ButterKnife.bind(this);
+        unbinder = ButterKnife.bind(this);
 
         setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);

@@ -3,7 +3,7 @@ package inaka.com.mangosta.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.BlogPostDetailsActivity;
@@ -49,13 +49,13 @@ public class BlogPostsListAdapter extends RecyclerView.Adapter<BlogPostsListAdap
 
     public static class BlogPostViewHolder extends BlogPostsListAdapter.ViewHolder {
 
-        @Bind(R.id.blogPostOwnerTextView)
+        @BindView(R.id.blogPostOwnerTextView)
         TextView blogPostOwnerTextView;
 
-        @Bind(R.id.blogPostDateTextView)
+        @BindView(R.id.blogPostDateTextView)
         TextView blogPostDateTextView;
 
-        @Bind(R.id.blogPostContentTextView)
+        @BindView(R.id.blogPostContentTextView)
         TextView blogPostContentTextView;
 
         private Context mContext;
@@ -93,7 +93,7 @@ public class BlogPostsListAdapter extends RecyclerView.Adapter<BlogPostsListAdap
 
     public static class ProgressViewHolder extends BlogPostsListAdapter.ViewHolder {
 
-        @Bind(R.id.progressLoadingItem)
+        @BindView(R.id.progressLoadingItem)
         ProgressBar progressBar;
 
         public ProgressViewHolder(View view) {
