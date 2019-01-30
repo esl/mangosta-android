@@ -1,4 +1,4 @@
-package inaka.com.mangosta.interfaces;
+package inaka.com.mangosta.network;
 
 import java.util.List;
 

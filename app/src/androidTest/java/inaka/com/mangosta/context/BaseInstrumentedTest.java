@@ -26,7 +26,7 @@ import java.util.UUID;
 
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomsListManager;
-import inaka.com.mangosta.interfaces.MongooseService;
+import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
@@ -39,7 +39,7 @@ import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.realm.Realm;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.mock.BehaviorDelegate;
 import retrofit2.mock.MockRetrofit;
 import retrofit2.mock.NetworkBehavior;
@@ -228,7 +228,7 @@ public class BaseInstrumentedTest {
 
     private void mockRestApi() {
         Retrofit retrofit = new Retrofit.Builder()
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .baseUrl(MongooseAPI.BASE_URL).build();
 
         MockRetrofit mockRetrofit = new MockRetrofit.Builder(retrofit).networkBehavior(behavior).build();

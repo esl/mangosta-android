@@ -8,6 +8,8 @@ import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -15,10 +17,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
 
 import org.jivesoftware.smack.packet.Presence;
 import org.jxmpp.jid.Jid;
@@ -41,8 +39,13 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class ManageContactsActivity extends BaseActivity {
+    private static final String TAG = ManageContactsActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -120,37 +123,31 @@ public class ManageContactsActivity extends BaseActivity {
     }
 
     private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(ManageContactsActivity.this, new BackgroundWork<Boolean>() {
-            @Override
-            public Boolean doInBackground() throws Exception {
-                return XMPPSession.getInstance().userExists(user);
-            }
-        }, new Completion<Boolean>() {
-            @Override
-            public void onSuccess(Context context, Boolean userExists) {
-                if (userExists) {
-                    obtainUser(user, true);
-                } else {
-                    showNotFoundDialog(user);
-                }
-                if (manageContactsSearchUserButton != null && manageContactsSearchUserProgressBar != null) {
-                    manageContactsSearchUserProgressBar.setVisibility(View.GONE);
-                    manageContactsSearchUserButton.setVisibility(View.VISIBLE);
-                }
-            }
+        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(user));
 
-            @Override
-            public void onError(Context context, Exception e) {
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
-                }
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userExists -> {
+                    if (userExists) {
+                        obtainUser(user, true);
+                    } else {
+                        showNotFoundDialog(user);
+                    }
+                    if (manageContactsSearchUserButton != null && manageContactsSearchUserProgressBar != null) {
+                        manageContactsSearchUserProgressBar.setVisibility(View.GONE);
+                        manageContactsSearchUserButton.setVisibility(View.VISIBLE);
+                    }
+                }, error -> {
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(getApplicationContext(), getString(R.string.error), Toast.LENGTH_SHORT).show();
+                    }
 
-                if (manageContactsSearchUserButton != null && manageContactsSearchUserProgressBar != null) {
-                    manageContactsSearchUserProgressBar.setVisibility(View.GONE);
-                    manageContactsSearchUserButton.setVisibility(View.VISIBLE);
-                }
-            }
-        });
+                    if (manageContactsSearchUserButton != null && manageContactsSearchUserProgressBar != null) {
+                        manageContactsSearchUserProgressBar.setVisibility(View.GONE);
+                        manageContactsSearchUserButton.setVisibility(View.VISIBLE);
+                    }
+                }));
     }
 
     private void showNotFoundDialog(String user) {
@@ -267,102 +264,90 @@ public class ManageContactsActivity extends BaseActivity {
     private void addContact(final User user) {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                RosterManager.getInstance().addContact(user);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (manageContactsUsersRemoveAllContactsButton != null) {
-                    mContacts.add(user);
-                    mContactsAdapter.notifyDataSetChanged();
-                    manageContactsUsersRemoveAllContactsButton.setVisibility(View.VISIBLE);
-                    mSearchUsers.clear();
-                    mSearchAdapter.notifyDataSetChanged();
-                }
-
-                new Event(Event.Type.CONTACTS_CHANGED).post();
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            RosterManager.getInstance().addContact(user);
+            return null;
         });
 
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (manageContactsUsersRemoveAllContactsButton != null) {
+                        mContacts.add(user);
+                        mContactsAdapter.notifyDataSetChanged();
+                        manageContactsUsersRemoveAllContactsButton.setVisibility(View.VISIBLE);
+                        mSearchUsers.clear();
+                        mSearchAdapter.notifyDataSetChanged();
+                    }
+
+                    new Event(Event.Type.CONTACTS_CHANGED).post();
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    }
+
+                    Log.d(TAG, "addContact error", error);
+                }));
     }
 
     private void removeContact(final User user) {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                RosterManager.getInstance().removeContact(user);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (mContacts != null && mContactsAdapter != null && manageContactsUsersRemoveAllContactsButton != null) {
-                    mContacts.remove(user);
-                    mContactsAdapter.notifyDataSetChanged();
-                    if (mContacts.size() == 0) {
-                        manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
-                    }
-                }
-
-                new Event(Event.Type.CONTACTS_CHANGED).post();
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageContactsActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            RosterManager.getInstance().removeContact(user);
+            return null;
         });
 
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                            if (progress != null) {
+                                progress.dismiss();
+                            }
+
+                            if (mContacts != null && mContactsAdapter != null && manageContactsUsersRemoveAllContactsButton != null) {
+                                mContacts.remove(user);
+                                mContactsAdapter.notifyDataSetChanged();
+                                if (mContacts.size() == 0) {
+                                    manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
+                                }
+                            }
+
+                            new Event(Event.Type.CONTACTS_CHANGED).post();
+                        }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(ManageContactsActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    Log.d(TAG, "removeContact error", error);
+                }));
     }
 
     private void getContacts() {
-
         final ProgressDialog progress = ProgressDialog.show(ManageContactsActivity.this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(ManageContactsActivity.this, new BackgroundWork<HashMap<Jid, Presence.Type>>() {
-            @Override
-            public HashMap<Jid, Presence.Type> doInBackground() throws Exception {
-                return RosterManager.getInstance().getContacts();
-            }
-        }, new Completion<HashMap<Jid, Presence.Type>>() {
-            @Override
-            public void onSuccess(Context context, HashMap<Jid, Presence.Type> buddies) {
-                if (buddies != null) {
+        Single<HashMap<Jid, Presence.Type>> task = Single.fromCallable(() -> {
+            return RosterManager.getInstance().getContacts();
+        });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(buddies -> {
                     for (Map.Entry pair : buddies.entrySet()) {
                         obtainUser(XMPPUtils.fromJIDToUserName(pair.getKey().toString()), false);
                     }
@@ -372,62 +357,52 @@ public class ManageContactsActivity extends BaseActivity {
                     if (buddies.size() > 0 && manageContactsUsersRemoveAllContactsButton != null) {
                         manageContactsUsersRemoveAllContactsButton.setVisibility(View.VISIBLE);
                     }
-                }
-            }
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
 
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    }
 
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
-        });
+                    Log.d(TAG, "getContacts error", error);
+                }));
     }
 
     private void removeAllContacts() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                RosterManager.getInstance().removeAllContacts();
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-                if (mContacts != null && mContactsAdapter != null && manageContactsUsersRemoveAllContactsButton != null) {
-                    mContacts.clear();
-                    mContactsAdapter.notifyDataSetChanged();
-                    manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
-                }
-
-                new Event(Event.Type.CONTACTS_CHANGED).post();
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            RosterManager.getInstance().removeAllContacts();
+            return null;
         });
 
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+                    if (mContacts != null && mContactsAdapter != null && manageContactsUsersRemoveAllContactsButton != null) {
+                        mContacts.clear();
+                        mContactsAdapter.notifyDataSetChanged();
+                        manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
+                    }
+
+                    new Event(Event.Type.CONTACTS_CHANGED).post();
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(ManageContactsActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    }
+
+                    Log.d(TAG, "removeAllContacts error", error);
+                }));
     }
 
     @Override

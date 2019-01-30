@@ -6,14 +6,13 @@ import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +27,12 @@ import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class ChatMembersActivity extends BaseActivity {
+    private static final String TAG = ChatMembersActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -94,25 +97,22 @@ public class ChatMembersActivity extends BaseActivity {
         mMembers.clear();
         progressLoading.setVisibility(View.VISIBLE);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                List<String> jids = RoomManager.getInstance(null).loadMUCLightMembers(roomJid);
-                for (String jid : jids) {
-                    obtainUser(XMPPUtils.fromJIDToUserName(jid));
-                }
-                return null;
+        Completable task = Completable.fromCallable(() -> {
+            List<String> jids = RoomManager.getInstance(null).loadMUCLightMembers(roomJid);
+            for (String jid : jids) {
+                obtainUser(XMPPUtils.fromJIDToUserName(jid));
             }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                e.printStackTrace();
-            }
+            return null;
         });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    //nothing
+                }, error -> {
+                    Log.d(TAG, "loadMembers error", error);
+                }));
     }
 
     private void obtainUser(final String userName) {

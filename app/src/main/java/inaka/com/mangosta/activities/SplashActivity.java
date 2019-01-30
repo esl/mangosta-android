@@ -15,10 +15,6 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
@@ -27,6 +23,10 @@ import inaka.com.mangosta.fragments.LoginDialogFragment;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class SplashActivity extends FragmentActivity {
 
@@ -116,27 +116,22 @@ public class SplashActivity extends FragmentActivity {
     }
 
     private void xmppReloginAndStart() {
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                xmppSessionService.relogin();
-                Thread.sleep(XMPPSession.REPLY_TIMEOUT);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                startApplication();
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                XMPPSession.getInstance().getXMPPConnection().disconnect();
-                XMPPSession.clearInstance();
-                Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            xmppSessionService.relogin();
+            Thread.sleep(XMPPSession.REPLY_TIMEOUT);
+            return null;
         });
-    }
+
+        Disposable d = task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::startApplication, error -> {
+                    XMPPSession.getInstance().getXMPPConnection().disconnect();
+                    XMPPSession.clearInstance();
+                    Toast.makeText(getApplicationContext(),
+                            getString(R.string.error_login), Toast.LENGTH_SHORT).show();
+                });
+        }
 
     private void createLoginDialog() {
         if (!isFinishing() && !isDestroyed()) {

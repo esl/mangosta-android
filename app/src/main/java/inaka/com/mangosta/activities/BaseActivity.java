@@ -17,7 +17,6 @@ import org.jxmpp.jid.Jid;
 
 import java.util.Locale;
 
-import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
@@ -28,15 +27,18 @@ import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.realm.Realm;
 
 public class BaseActivity extends AppCompatActivity {
 
     private Realm mRealm;
     public static int mSessionDepth = 0;
-    private boolean mIsRegistered;
 
     protected Unbinder unbinder;
+
+    private CompositeDisposable disposables;
 
     private XMPPSessionService myService;
     protected ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -61,6 +63,7 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mRealm = RealmManager.getInstance().getRealm();
+        disposables = new CompositeDisposable();
     }
 
     @Override
@@ -74,6 +77,7 @@ public class BaseActivity extends AppCompatActivity {
             mRealm.close();
         }
         clearReferences();
+        disposables.dispose();
         super.onDestroy();
     }
 
@@ -83,8 +87,6 @@ public class BaseActivity extends AppCompatActivity {
             bindService();
         }
         super.onResume();
-        MangostaApplication.bus.register(this);
-        setIsRegistered(true);
         MangostaApplication.getInstance().setCurrentActivity(this);
     }
 
@@ -97,12 +99,6 @@ public class BaseActivity extends AppCompatActivity {
 
         clearReferences();
         super.onPause();
-
-        if (isRegistered()) {
-            MangostaApplication.bus.unregister(this);
-            setIsRegistered(false);
-        }
-
     }
 
     @Override
@@ -128,11 +124,6 @@ public class BaseActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        if (isRegistered()) {
-            MangostaApplication.bus.unregister(this);
-            setIsRegistered(false);
-        }
-
         if (mSessionDepth > 0) {
             mSessionDepth--;
         }
@@ -155,14 +146,6 @@ public class BaseActivity extends AppCompatActivity {
             mRealm = RealmManager.getInstance().getRealm();
         }
         return mRealm;
-    }
-
-    private void setIsRegistered(boolean registered) {
-        mIsRegistered = registered;
-    }
-
-    private boolean isRegistered() {
-        return mIsRegistered;
     }
 
     private void clearReferences() {
@@ -222,6 +205,10 @@ public class BaseActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    protected void addDisposable(Disposable disposable) {
+        disposables.add(disposable);
     }
 
 }

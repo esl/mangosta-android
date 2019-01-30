@@ -8,6 +8,8 @@ import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -15,10 +17,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
 
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -38,8 +36,13 @@ import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class BlockUsersActivity extends BaseActivity {
+    private static final String TAG = BlockUsersActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -114,34 +117,29 @@ public class BlockUsersActivity extends BaseActivity {
     }
 
     private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(BlockUsersActivity.this, new BackgroundWork<Boolean>() {
-            @Override
-            public Boolean doInBackground() throws Exception {
-                return XMPPSession.getInstance().userExists(user);
-            }
-        }, new Completion<Boolean>() {
-            @Override
-            public void onSuccess(Context context, Boolean userExists) {
-                if (userExists) {
-                    obtainUser(user, true);
-                } else {
-                    showNotFoundDialog(user);
-                }
-                if (blockSearchUserButton != null && blockSearchUserProgressBar != null) {
-                    blockSearchUserProgressBar.setVisibility(View.GONE);
-                    blockSearchUserButton.setVisibility(View.VISIBLE);
-                }
-            }
+        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(user));
 
-            @Override
-            public void onError(Context context, Exception e) {
-                Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
-                if (blockSearchUserButton != null && blockSearchUserProgressBar != null) {
-                    blockSearchUserProgressBar.setVisibility(View.GONE);
-                    blockSearchUserButton.setVisibility(View.VISIBLE);
-                }
-            }
-        });
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userExists -> {
+                    if (userExists) {
+                        obtainUser(user, true);
+                    } else {
+                        showNotFoundDialog(user);
+                    }
+                    if (blockSearchUserButton != null && blockSearchUserProgressBar != null) {
+                        blockSearchUserProgressBar.setVisibility(View.GONE);
+                        blockSearchUserButton.setVisibility(View.VISIBLE);
+                    }
+                }, error -> {
+                    Toast.makeText(getApplicationContext(),
+                            getString(R.string.error), Toast.LENGTH_SHORT).show();
+                    if (blockSearchUserButton != null && blockSearchUserProgressBar != null) {
+                        blockSearchUserProgressBar.setVisibility(View.GONE);
+                        blockSearchUserButton.setVisibility(View.VISIBLE);
+                    }
+                }));
     }
 
     private void showNotFoundDialog(String user) {
@@ -245,101 +243,91 @@ public class BlockUsersActivity extends BaseActivity {
     private void blockUser(final User user) {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
-                List<Jid> jids = new ArrayList<>();
-                jids.add(jid);
-                XMPPSession.getInstance().blockContacts(jids);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-                if (blockedUsersUnblockAllButton != null) {
-                    mBlockedUsers.add(user);
-                    mBlockedAdapter.notifyDataSetChanged();
-                    blockedUsersUnblockAllButton.setVisibility(View.VISIBLE);
-                    mSearchUsers.clear();
-                    mSearchAdapter.notifyDataSetChanged();
-                }
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            List<Jid> jids = new ArrayList<>();
+            jids.add(jid);
+            XMPPSession.getInstance().blockContacts(jids);
+            return null;
         });
 
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+                    if (blockedUsersUnblockAllButton != null) {
+                        mBlockedUsers.add(user);
+                        mBlockedAdapter.notifyDataSetChanged();
+                        blockedUsersUnblockAllButton.setVisibility(View.VISIBLE);
+                        mSearchUsers.clear();
+                        mSearchAdapter.notifyDataSetChanged();
+                    }
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    }
+
+                    Log.d(TAG, "blockUser error", error);
+                }));
     }
 
     private void unblockUser(final User user) {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
-                List<Jid> jids = new ArrayList<>();
-                jids.add(jid);
-                XMPPSession.getInstance().unblockContacts(jids);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-                if (mBlockedUsers != null && mBlockedAdapter != null && blockedUsersUnblockAllButton != null) {
-                    mBlockedUsers.remove(user);
-                    mBlockedAdapter.notifyDataSetChanged();
-                    if (mBlockedUsers.size() == 0) {
-                        blockedUsersUnblockAllButton.setVisibility(View.INVISIBLE);
-                    }
-                }
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(BlockUsersActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            List<Jid> jids = new ArrayList<>();
+            jids.add(jid);
+            XMPPSession.getInstance().unblockContacts(jids);
+            return null;
         });
 
-    }
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+                    if (mBlockedUsers != null && mBlockedAdapter != null && blockedUsersUnblockAllButton != null) {
+                        mBlockedUsers.remove(user);
+                        mBlockedAdapter.notifyDataSetChanged();
+                        if (mBlockedUsers.size() == 0) {
+                            blockedUsersUnblockAllButton.setVisibility(View.INVISIBLE);
+                        }
+                    }
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(BlockUsersActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    Log.d(TAG, "unblockUser error", error);
+
+                }));
+        }
 
     private void getBlockedUsers() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<List<Jid>>() {
-            @Override
-            public List<Jid> doInBackground() throws Exception {
-                return XMPPSession.getInstance().getBlockList();
-            }
-        }, new Completion<List<Jid>>() {
-            @Override
-            public void onSuccess(Context context, List<Jid> jids) {
-                if (jids != null) {
+        Single<List<Jid>> task = Single.fromCallable(() -> {
+            return XMPPSession.getInstance().getBlockList();
+        });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(jids -> {
                     for (Jid jid : jids) {
                         obtainUser(XMPPUtils.fromJIDToUserName(jid.toString()), false);
                     }
@@ -349,61 +337,50 @@ public class BlockUsersActivity extends BaseActivity {
                     if (jids.size() > 0 && blockedUsersUnblockAllButton != null) {
                         blockedUsersUnblockAllButton.setVisibility(View.VISIBLE);
                     }
-                }
-            }
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
 
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    }
 
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
-        });
-
+                    Log.d(TAG, "getBlockedUsers error", error);
+                }));
     }
 
     private void unblockAll() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                XMPPSession.getInstance().unblockAll();
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-                if (mBlockedUsers != null && mBlockedAdapter != null && blockedUsersUnblockAllButton != null) {
-                    mBlockedUsers.clear();
-                    mBlockedAdapter.notifyDataSetChanged();
-                    blockedUsersUnblockAllButton.setVisibility(View.INVISIBLE);
-                }
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                if (progress != null) {
-                    progress.dismiss();
-                }
-
-                if (!Preferences.isTesting()) {
-                    Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                }
-
-                e.printStackTrace();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            XMPPSession.getInstance().unblockAll();
+            return null;
         });
 
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+                    if (mBlockedUsers != null && mBlockedAdapter != null && blockedUsersUnblockAllButton != null) {
+                        mBlockedUsers.clear();
+                        mBlockedAdapter.notifyDataSetChanged();
+                        blockedUsersUnblockAllButton.setVisibility(View.INVISIBLE);
+                    }
+                }, error -> {
+                    if (progress != null) {
+                        progress.dismiss();
+                    }
+
+                    if (!Preferences.isTesting()) {
+                        Toast.makeText(BlockUsersActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    }
+
+                    Log.d(TAG, "unblockAll error", error);
+                }));
     }
 
 }

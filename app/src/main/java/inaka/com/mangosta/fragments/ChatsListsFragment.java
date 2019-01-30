@@ -14,12 +14,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
-
-import org.jivesoftware.smack.packet.Message;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,8 +34,10 @@ import inaka.com.mangosta.utils.ChatOrderComparator;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import rx.Subscription;
-import rx.functions.Action1;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class ChatsListsFragment extends BaseFragment {
 
@@ -73,8 +69,8 @@ public class ChatsListsFragment extends BaseFragment {
     private ChatListAdapter mGroupChatsAdapter;
     private ChatListAdapter mOneToOneChatsAdapter;
 
-    Subscription mMessageSubscription;
-    Subscription mMessageSentAlertSubscription;
+    Disposable mMessageSubscription;
+    Disposable mMessageSentAlertSubscription;
 
     Activity mContext;
 
@@ -123,23 +119,26 @@ public class ChatsListsFragment extends BaseFragment {
                     }
                 });
 
-        mMessageSubscription = XMPPSession.getInstance().subscribeToMessages(new Action1<Message>() {
-            @Override
-            public void call(Message message) {
-                loadChats();
-            }
-        });
+        mMessageSubscription = XMPPSession.getInstance()
+                .subscribeToMessages(message -> loadChats());
 
-        mMessageSentAlertSubscription = XMPPSession.getInstance().subscribeToMessageSent(new Action1<Message>() {
-            @Override
-            public void call(Message message) {
-                loadChats();
-            }
-        });
+        mMessageSentAlertSubscription = XMPPSession.getInstance()
+                .subscribeToMessageSent(message -> loadChats());
 
         loadChatsBackgroundTask();
 
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (mMessageSubscription != null) {
+            mMessageSubscription.dispose();
+        }
+        if (mMessageSentAlertSubscription != null) {
+            mMessageSentAlertSubscription.dispose();
+        }
     }
 
     private void setExpandLayout(LinearLayout layout, final RecyclerView recyclerView, final ImageView imageView,
@@ -295,34 +294,17 @@ public class ChatsListsFragment extends BaseFragment {
             return;
         }
 
-        Tasks.executeInBackground(mContext, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                mRoomManager.loadRosterContactsChats(); // load 1 to 1 chats from contacts
-                mRoomManager.loadMUCLightRooms(); // load group chats
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object object) {
-                mContext.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadChats();
-                    }
-                });
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                mContext.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadChats();
-                    }
-                });
-            }
+        Completable task = Completable.fromCallable(() -> {
+            mRoomManager.loadRosterContactsChats(); // load 1 to 1 chats from contacts
+            mRoomManager.loadMUCLightRooms(); // load group chats
+            return null;
         });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(ChatsListsFragment.this::loadChats,
+                        error -> loadChats()));
     }
 
     @Override

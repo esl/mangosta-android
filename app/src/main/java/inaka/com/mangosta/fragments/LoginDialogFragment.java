@@ -5,6 +5,8 @@ import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.DialogFragment;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,15 +14,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
+import inaka.com.mangosta.activities.CreateBlogActivity;
 import inaka.com.mangosta.activities.SplashActivity;
+import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class LoginDialogFragment extends DialogFragment {
 
@@ -53,8 +57,8 @@ public class LoginDialogFragment extends DialogFragment {
 
         toolbar.setTitle(getString(R.string.title_login));
 
-        String userName = "test.user";
-        String password = "9xpW9mmUenFgMjay";
+        String userName = XMPPSession.DEFAULT_USER;
+        String password = XMPPSession.DEFAULT_PASS;
 
         loginUserNameEditText.setText(userName);
         loginUserNameEditText.setSelection(userName.length());
@@ -76,29 +80,26 @@ public class LoginDialogFragment extends DialogFragment {
     private void loginAndStart(final String userName, final String password) {
         final ProgressDialog progress = ProgressDialog.show(getActivity(), getString(R.string.loading), null, true);
 
-        Tasks.executeInBackground(getActivity(), new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                XMPPSession.startService(getActivity());
-                ((SplashActivity) getActivity()).getService().login(userName, password);
-                Thread.sleep(XMPPSession.REPLY_TIMEOUT);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                progress.dismiss();
-                ((SplashActivity) getActivity()).startApplication();
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                progress.dismiss();
-                XMPPSession.getInstance().getXMPPConnection().disconnect();
-                XMPPSession.clearInstance();
-                Toast.makeText(context, getString(R.string.error_login), Toast.LENGTH_SHORT).show();
-            }
+        Completable task = Completable.fromCallable(() -> {
+            XMPPSession.startService(getActivity());
+            ((SplashActivity) getActivity()).getService().login(userName, password);
+            Thread.sleep(XMPPSession.REPLY_TIMEOUT);
+            return null;
         });
+
+        Disposable d = task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    progress.dismiss();
+                    ((SplashActivity) getActivity()).startApplication();
+                }, error -> {
+                    progress.dismiss();
+                    XMPPSession.getInstance().getXMPPConnection().disconnect();
+                    XMPPSession.clearInstance();
+                    Toast.makeText(LoginDialogFragment.this.getContext(),
+                            getString(R.string.error_login), Toast.LENGTH_SHORT).show();
+                });
     }
 
 }

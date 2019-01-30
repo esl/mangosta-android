@@ -4,10 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.widget.Toast;
 
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
-
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.ChatManager;
@@ -40,7 +36,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.interfaces.MongooseService;
+import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.MongooseMUCLight;
@@ -60,6 +56,11 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import okio.Buffer;
 import retrofit2.Call;
@@ -434,7 +435,7 @@ public class RoomManager {
                 realm.commitTransaction();
                 realm.close();
 
-                XMPPSession.getInstance().mMongooseMessagePublisher.onNext(message);
+                XMPPSession.getInstance().notifyPublished(message);
             }
         }
 
@@ -459,7 +460,7 @@ public class RoomManager {
                 realm.commitTransaction();
                 realm.close();
 
-                XMPPSession.getInstance().mMongooseMUCLightMessagePublisher.onNext(message);
+                XMPPSession.getInstance().notifyMUCLightPublished(message);
             }
         }
 
@@ -582,27 +583,22 @@ public class RoomManager {
     }
 
     public void sendStickerMessage(final String messageId, final String jid, final String content, final int chatType) {
-        Tasks.executeInBackground(MangostaApplication.getInstance(), new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                Message message = new Message(JidCreate.from(jid), content);
-                BoBHash bobHash = new BoBHash(Base64.encode(content), "base64");
-                message.addExtension(new BoBExtension(bobHash, null, null));
-                message.setStanzaId(messageId);
-                sendXMPPMessageDependingOnType(message, jid, chatType);
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                mListener.onMessageSent(null);
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                mListener.onError(e.getLocalizedMessage());
-            }
+        Completable task = Completable.fromCallable(() -> {
+            Message message = new Message(JidCreate.from(jid), content);
+            BoBHash bobHash = new BoBHash(Base64.encode(content), "base64");
+            message.addExtension(new BoBExtension(bobHash, null, null));
+            message.setStanzaId(messageId);
+            sendXMPPMessageDependingOnType(message, jid, chatType);
+            return null;
         });
+
+        Disposable d = task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> mListener.onMessageSent(null),
+                        error -> mListener.onError(error.getLocalizedMessage())
+                );
     }
 
     private void sendRestMessageDependingOnType(final String content, final String jid, int chatType) {

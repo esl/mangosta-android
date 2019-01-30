@@ -13,7 +13,6 @@ import java.io.IOException;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
-import inaka.com.mangosta.interfaces.MongooseService;
 import inaka.com.mangosta.utils.Preferences;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;

@@ -15,9 +15,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -40,6 +37,9 @@ import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class EditChatMemberActivity extends BaseActivity {
 
@@ -125,30 +125,24 @@ public class EditChatMemberActivity extends BaseActivity {
     }
 
     private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(EditChatMemberActivity.this, new BackgroundWork<Boolean>() {
-            @Override
-            public Boolean doInBackground() throws Exception {
-                return XMPPSession.getInstance().userExists(user);
-            }
-        }, new Completion<Boolean>() {
-            @Override
-            public void onSuccess(Context context, Boolean userExists) {
-                if (userExists) {
-                    searchObtainUser(user);
-                } else {
-                    showInviteDialog(user);
-                }
-                searchUserProgressBar.setVisibility(View.GONE);
-                searchUserButton.setVisibility(View.VISIBLE);
-            }
+        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(user));
 
-            @Override
-            public void onError(Context context, Exception e) {
-                Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
-                searchUserProgressBar.setVisibility(View.GONE);
-                searchUserButton.setVisibility(View.VISIBLE);
-            }
-        });
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userExists -> {
+                    if (userExists) {
+                        searchObtainUser(user);
+                    } else {
+                        showInviteDialog(user);
+                    }
+                    searchUserProgressBar.setVisibility(View.GONE);
+                    searchUserButton.setVisibility(View.VISIBLE);
+                }, error -> {
+                    Toast.makeText(getApplicationContext(), getString(R.string.error), Toast.LENGTH_SHORT).show();
+                    searchUserProgressBar.setVisibility(View.GONE);
+                    searchUserButton.setVisibility(View.VISIBLE);
+                }));
     }
 
     @Override

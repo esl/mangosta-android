@@ -5,9 +5,6 @@ import android.app.Application;
 import android.content.Context;
 import androidx.multidex.MultiDex;
 
-import com.squareup.otto.Bus;
-import com.squareup.otto.ThreadEnforcer;
-
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.xmpp.XMPPSession;
 
@@ -16,7 +13,6 @@ public class MangostaApplication extends Application {
     private static MangostaApplication CONTEXT;
 
     private Activity mCurrentActivity = null;
-    public static Bus bus = new Bus(ThreadEnforcer.MAIN);
 
     @Override
     protected void attachBaseContext(Context base) {

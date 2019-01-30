@@ -121,11 +121,12 @@ import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
 import io.realm.Realm;
-import rx.Subscription;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.subjects.PublishSubject;
 
 public class XMPPSession {
 
@@ -138,13 +139,15 @@ public class XMPPSession {
     public static final String SERVER_NAME = "xmpp.erlang-solutions.com";
     public static final String SERVICE_NAME = "erlang-solutions.com";
     public static final String MUC_LIGHT_SERVICE_NAME = "muclight.erlang-solutions.com";
+    public static final String DEFAULT_USER = "test.user";
+    public static final String DEFAULT_PASS = "9xpW9mmUenFgMjay";
 
     public static final int REPLY_TIMEOUT = 5000;
 
     // received
     private PublishSubject<Message> mMessagePublisher = PublishSubject.create();
-    public PublishSubject<MongooseMessage> mMongooseMessagePublisher = PublishSubject.create();
-    public PublishSubject<MongooseMUCLightMessage> mMongooseMUCLightMessagePublisher = PublishSubject.create();
+    private PublishSubject<MongooseMessage> mMongooseMessagePublisher = PublishSubject.create();
+    private PublishSubject<MongooseMUCLightMessage> mMongooseMUCLightMessagePublisher = PublishSubject.create();
     private PublishSubject<Presence> mPresencePublisher = PublishSubject.create();
     private PublishSubject<ChatConnection> mConnectionPublisher = PublishSubject.create();
     private PublishSubject<String> mArchiveQueryPublisher = PublishSubject.create();
@@ -741,100 +744,89 @@ public class XMPPSession {
     }
 
     // Room Message Subscription
-    public Subscription subscribeRoomToMessages(final String roomJid, final MessageSubscriber subscriber) {
+    public Disposable subscribeRoomToMessages(final String roomJid, final MessageSubscriber subscriber) {
         return mMessagePublisher
-                .filter(
-                        new Func1<Message, Boolean>() {
-                            @Override
-                            public Boolean call(Message message) {
-                                return message.getFrom().toString().startsWith(roomJid);
-                            }
-                        }
-                )
-                .subscribe(
-                        new Action1<Message>() {
-                            @Override
-                            public void call(Message message) {
-                                subscriber.onMessageReceived(message);
-                            }
-                        }
-                );
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .filter(message -> message.getFrom().toString().startsWith(roomJid))
+                .subscribe(subscriber::onMessageReceived);
     }
 
     // All Message Subscription
-    public Subscription subscribeToMessages(Action1<Message> subscriber) {
-        return mMessagePublisher.subscribe(subscriber);
+    public Disposable subscribeToMessages(Consumer<Message> consumer) {
+        return mMessagePublisher
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(consumer);
     }
 
     // Room Mongoose Message Subscription
-    public Subscription subscribeRoomToMongooseMessages(final String roomJid, final MongooseMessageSubscriber subscriber) {
+    public Disposable subscribeRoomToMongooseMessages(final String roomJid, final MongooseMessageSubscriber subscriber) {
         return mMongooseMessagePublisher
-                .filter(
-                        new Func1<MongooseMessage, Boolean>() {
-                            @Override
-                            public Boolean call(MongooseMessage message) {
-                                return message.getFrom().startsWith(roomJid);
-                            }
-                        }
-                )
-                .subscribe(
-                        new Action1<MongooseMessage>() {
-                            @Override
-                            public void call(MongooseMessage message) {
-                                subscriber.onMessageReceived(message);
-                            }
-                        }
-                );
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .filter(message -> message.getFrom().startsWith(roomJid))
+                .subscribe(subscriber::onMessageReceived);
     }
 
     // Room Mongoose MUC Light Message Subscription
-    public Subscription subscribeRoomToMUCLightMongooseMessages(final String roomJid, final MongooseMUCLightMessageSubscriber subscriber) {
+    public Disposable subscribeRoomToMUCLightMongooseMessages(final String roomJid, final MongooseMUCLightMessageSubscriber subscriber) {
         return mMongooseMUCLightMessagePublisher
-                .filter(
-                        new Func1<MongooseMUCLightMessage, Boolean>() {
-                            @Override
-                            public Boolean call(MongooseMUCLightMessage message) {
-                                return message.getFrom().startsWith(roomJid);
-                            }
-                        }
-                )
-                .subscribe(
-                        new Action1<MongooseMUCLightMessage>() {
-                            @Override
-                            public void call(MongooseMUCLightMessage message) {
-                                subscriber.onMessageReceived(message);
-                            }
-                        }
-                );
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .filter(message -> message.getFrom().startsWith(roomJid))
+                .subscribe(subscriber::onMessageReceived);
     }
 
     // Presence Subscription
-    public Subscription subscribeToPresence(Action1<Presence> subscriber) {
-        return mPresencePublisher.subscribe(subscriber);
+    public Disposable subscribeToPresence(Consumer<Presence> consumer) {
+        return mPresencePublisher
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(consumer);
     }
 
     // Connection Subscription
-    public Subscription subscribeToConnection(Action1<ChatConnection> subscriber) {
-        return mConnectionPublisher.subscribe(subscriber);
+    public Disposable subscribeToConnection(Consumer<ChatConnection> consumer) {
+        return mConnectionPublisher
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(consumer);
     }
 
     // Archiver Subscription
-    public Subscription subscribeToArchiveQuery(Action1<String> subscriber) {
-        return mArchiveQueryPublisher.subscribe(subscriber);
+    public Disposable subscribeToArchiveQuery(Consumer<String> consumer) {
+        return mArchiveQueryPublisher.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(consumer);
     }
 
     // Error Publisher
-    public Subscription subscribeToError(Action1<ErrorIQ> subscriber) {
-        return mErrorPublisher.subscribe(subscriber);
+    public Disposable subscribeToError(Consumer<ErrorIQ> consumer) {
+        return mErrorPublisher
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(consumer);
     }
 
     // Message sent alert
-    public Subscription subscribeToMessageSent(Action1<Message> subscriber) {
-        return mMessageSentAlert.subscribe(subscriber);
+    public Disposable subscribeToMessageSent(Consumer<Message> consumer) {
+        return mMessageSentAlert
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(consumer);
     }
 
     public void messageSentAlert(Message message) {
         mMessageSentAlert.onNext(message);
+    }
+
+    public void notifyPublished(MongooseMessage message) {
+        mMongooseMessagePublisher.onNext(message);
+    }
+
+    public void notifyMUCLightPublished(MongooseMUCLightMessage message) {
+        mMongooseMUCLightMessagePublisher.onNext(message);
     }
 
     public interface MessageSubscriber {

@@ -4,15 +4,14 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
 
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
@@ -24,8 +23,13 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class CreateBlogActivity extends BaseActivity {
+
+    public final static String TAG = CreateBlogActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -74,40 +78,37 @@ public class CreateBlogActivity extends BaseActivity {
     private void publishBlogPost() {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.blog_post_publishing), getString(R.string.loading), true);
 
-        Tasks.executeInBackground(this, new BackgroundWork<Object>() {
-            @Override
-            public Object doInBackground() throws Exception {
-                Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
+        Completable task = Completable.fromCallable(() -> {
+            Jid jid = XMPPSession.getInstance().getUser().asEntityBareJid();
 
-                // create stanza
-                PublishPostExtension publishPostExtension = new PublishPostExtension(jid, createBlogText.getText().toString());
-                PubSub publishPostPubSub = PubSub.createPubsubPacket(jid, IQ.Type.set, publishPostExtension, null);
+            // create stanza
+            PublishPostExtension publishPostExtension = new PublishPostExtension(jid, createBlogText.getText().toString());
+            PubSub publishPostPubSub = PubSub.createPubsubPacket(jid, IQ.Type.set, publishPostExtension, null);
 
-                // send stanza
-                XMPPSession.getInstance().sendStanza(publishPostPubSub);
+            // send stanza
+            XMPPSession.getInstance().sendStanza(publishPostPubSub);
 
-                // allow comments
-                XMPPSession.getInstance().createNodeToAllowComments(publishPostExtension.getId());
+            // allow comments
+            XMPPSession.getInstance().createNodeToAllowComments(publishPostExtension.getId());
 
-                return null;
-            }
-        }, new Completion<Object>() {
-            @Override
-            public void onSuccess(Context context, Object result) {
-                progress.dismiss();
-                createBlogText.setText("");
-                Toast.makeText(CreateBlogActivity.this, getString(R.string.blog_post_published), Toast.LENGTH_SHORT).show();
-                new Event(Event.Type.BLOG_POST_CREATED).post();
-                finish();
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                progress.dismiss();
-                Toast.makeText(CreateBlogActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
+            return null;
         });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    progress.dismiss();
+                    createBlogText.setText("");
+                    Toast.makeText(CreateBlogActivity.this, getString(R.string.blog_post_published), Toast.LENGTH_SHORT).show();
+                    new Event(Event.Type.BLOG_POST_CREATED).post();
+                    finish();
+                }, error -> {
+                    progress.dismiss();
+                    Toast.makeText(CreateBlogActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    Log.w(TAG, error);
+                }));
+
     }
 
 }

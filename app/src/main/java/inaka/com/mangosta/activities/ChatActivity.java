@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -22,13 +23,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
-
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.ErrorIQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.XMPPError;
@@ -57,17 +53,14 @@ import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ChatMessagesAdapter;
 import inaka.com.mangosta.adapters.StickersAdapter;
-import inaka.com.mangosta.chat.ChatConnection;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomManagerListener;
 import inaka.com.mangosta.chat.RoomsListManager;
-import inaka.com.mangosta.interfaces.MongooseService;
+import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.MongooseMUCLight;
-import inaka.com.mangosta.models.MongooseMUCLightMessage;
-import inaka.com.mangosta.models.MongooseMessage;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.network.MongooseAPI;
 import inaka.com.mangosta.notifications.MessageNotifications;
@@ -76,16 +69,21 @@ import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import rx.Subscription;
-import rx.functions.Action1;
 
 public class ChatActivity extends BaseActivity {
+
+    private final static String TAG = ChatActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -137,12 +135,12 @@ public class ChatActivity extends BaseActivity {
     private StickersAdapter mStickersAdapter;
     LinearLayoutManager mLayoutManagerStickers;
 
-    private Subscription mMessageSubscription;
-    private Subscription mMongooseMessageSubscription;
-    private Subscription mMongooseMUCLightMessageSubscription;
-    private Subscription mConnectionSubscription;
-    private Subscription mArchiveQuerySubscription;
-    private Subscription mErrorArchiveQuerySubscription;
+    private Disposable mMessageSubscription;
+    private Disposable mMongooseMessageSubscription;
+    private Disposable mMongooseMUCLightMessageSubscription;
+    private Disposable mConnectionSubscription;
+    private Disposable mArchiveQuerySubscription;
+    private Disposable mErrorArchiveQuerySubscription;
 
     boolean mLeaving = false;
     boolean mIsOwner = false;
@@ -305,98 +303,59 @@ public class ChatActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
 
-        mMessageSubscription = XMPPSession.getInstance().subscribeRoomToMessages(mChatJID, new XMPPSession.MessageSubscriber() {
-            @Override
-            public void onMessageReceived(final Message message) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (message.hasExtension(ChatStateExtension.NAMESPACE)) {
-                            ChatStateExtension chatStateExtension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
-                            ChatState chatState = chatStateExtension.getChatState();
+        mMessageSubscription = XMPPSession.getInstance().subscribeRoomToMessages(mChatJID, message -> {
+            if (message.hasExtension(ChatStateExtension.NAMESPACE)) {
+                ChatStateExtension chatStateExtension = (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
+                ChatState chatState = chatStateExtension.getChatState();
 
-                            String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
-                            String userSender = "";
-                            String messageType = message.getType().name();
+                String myUser = XMPPUtils.fromJIDToUserName(XMPPSession.getInstance().getUser().toString());
+                String userSender = "";
+                String messageType = message.getType().name();
 
-                            String[] jidList = message.getFrom().toString().split("/");
+                String[] jidList = message.getFrom().toString().split("/");
 
-                            switch (mChat.getType()) {
+                switch (mChat.getType()) {
 
-                                case Chat.TYPE_1_T0_1:
-                                    userSender = XMPPUtils.fromJIDToUserName(jidList[0]);
-                                    break;
-
-                                case Chat.TYPE_MUC_LIGHT:
-                                    if (jidList.length > 1) {
-                                        userSender = XMPPUtils.fromJIDToUserName(jidList[1]);
-                                    }
-                                    break;
-                            }
-
-                            showTypingStatus(chatState, myUser, userSender, messageType);
-                        } else {
-                            String subject = message.getSubject();
-                            if (subject != null) {
-                                setTitle(subject);
-                            }
-                            refreshMessagesAndScrollToEnd();
-
-                            XMPPError error = message.getError();
-                            showErrorToast(error);
-                        }
-
-                    }
-
-                    private void showErrorToast(XMPPError error) {
-                        if (BlockedErrorExtension.isInside(message)) {
-                            Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
-                        } else if (error != null && error.getCondition().equals(XMPPError.Condition.service_unavailable)) {
-                            Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    private void showTypingStatus(ChatState chatState, String myUser, String userSender, String messageType) {
-                        if (!userSender.equals(myUser) && !messageType.equals("error")) {
-                            if (chatState.equals(ChatState.composing)) { // typing
-                                chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
-                                chatTypingTextView.setVisibility(View.VISIBLE);
-                            } else { // not typing
-                                chatTypingTextView.setVisibility(View.GONE);
-                            }
-                        }
-                    }
-                });
-            }
-
-        });
-
-        mMongooseMessageSubscription = XMPPSession.getInstance().subscribeRoomToMongooseMessages(mChatJID, new XMPPSession.MongooseMessageSubscriber() {
-            @Override
-            public void onMessageReceived(MongooseMessage message) {
-                refreshMessagesAndScrollToEnd();
-            }
-        });
-
-        mMongooseMUCLightMessageSubscription = XMPPSession.getInstance().subscribeRoomToMUCLightMongooseMessages(mChatJID,
-                new XMPPSession.MongooseMUCLightMessageSubscriber() {
-                    @Override
-                    public void onMessageReceived(MongooseMUCLightMessage message) {
-                        refreshMessagesAndScrollToEnd();
-                    }
-                });
-
-        mConnectionSubscription = XMPPSession.getInstance().subscribeToConnection(new Action1<ChatConnection>() {
-            @Override
-            public void call(ChatConnection chatConnection) {
-                switch (chatConnection.getStatus()) {
-                    case Connected:
-                    case Authenticated:
+                    case Chat.TYPE_1_T0_1:
+                        userSender = XMPPUtils.fromJIDToUserName(jidList[0]);
                         break;
-                    case Connecting:
-                    case Disconnected:
+
+                    case Chat.TYPE_MUC_LIGHT:
+                        if (jidList.length > 1) {
+                            userSender = XMPPUtils.fromJIDToUserName(jidList[1]);
+                        }
                         break;
                 }
+
+                showTypingStatus(chatState, myUser, userSender, messageType);
+            } else {
+                String subject = message.getSubject();
+                if (subject != null) {
+                    setTitle(subject);
+                }
+                refreshMessagesAndScrollToEnd();
+
+                showErrorToast(message);
+            }
+        });
+
+        mMongooseMessageSubscription = XMPPSession.getInstance().subscribeRoomToMongooseMessages(mChatJID, message -> {
+            refreshMessagesAndScrollToEnd();
+        });
+
+        mMongooseMUCLightMessageSubscription = XMPPSession.getInstance().subscribeRoomToMUCLightMongooseMessages(mChatJID, message -> {
+            refreshMessagesAndScrollToEnd();
+        });
+
+        mConnectionSubscription = XMPPSession.getInstance().subscribeToConnection(chatConnection -> {
+            Log.d(TAG, "ChatConnection: " + chatConnection.getStatus());
+            switch (chatConnection.getStatus()) {
+                case Connected:
+                case Authenticated:
+                    break;
+                case Connecting:
+                case Disconnected:
+                    break;
             }
         });
 
@@ -517,6 +476,26 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         saveMessageBeingComposed();
+    }
+
+    private void showErrorToast(Message message) {
+        XMPPError error = message.getError();
+        if (BlockedErrorExtension.isInside(message)) {
+            Toast.makeText(ChatActivity.this, getString(R.string.message_to_blocked_user), Toast.LENGTH_SHORT).show();
+        } else if (error != null && error.getCondition().equals(XMPPError.Condition.service_unavailable)) {
+            Toast.makeText(ChatActivity.this, getString(R.string.cant_send_message), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showTypingStatus(ChatState chatState, String myUser, String userSender, String messageType) {
+        if (!userSender.equals(myUser) && !messageType.equals("error")) {
+            if (chatState.equals(ChatState.composing)) { // typing
+                chatTypingTextView.setText(String.format(Locale.getDefault(), getString(R.string.typing), userSender));
+                chatTypingTextView.setVisibility(View.VISIBLE);
+            } else { // not typing
+                chatTypingTextView.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void saveMessageBeingComposed() {
@@ -715,41 +694,7 @@ public class ChatActivity extends BaseActivity {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         final String chatName = roomNameEditText.getText().toString();
-
-                        Tasks.executeInBackground(ChatActivity.this, new BackgroundWork<Object>() {
-                            @Override
-                            public Object doInBackground() throws Exception {
-                                if (!Preferences.isTesting()) {
-                                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                                    multiUserChatLight.changeRoomName(chatName);
-                                }
-                                return null;
-                            }
-                        }, new Completion<Object>() {
-                            @Override
-                            public void onSuccess(Context context, Object result) {
-                                Toast.makeText(ChatActivity.this,
-                                        getString(R.string.room_name_changed),
-                                        Toast.LENGTH_SHORT).show();
-
-                                Realm realm = getRealm();
-                                realm.beginTransaction();
-                                mChat.setName(chatName);
-                                realm.commitTransaction();
-
-                                if (!Preferences.isTesting()) {
-                                    realm.close();
-                                }
-
-                                getSupportActionBar().setTitle(chatName);
-                            }
-
-                            @Override
-                            public void onError(Context context, Exception e) {
-                                Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                                e.printStackTrace();
-                            }
-                        });
+                        renameRoom(chatName);
                         dialog.dismiss();
                     }
                 })
@@ -762,6 +707,39 @@ public class ChatActivity extends BaseActivity {
                 .show();
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
+    }
+
+    private void renameRoom(String chatName) {
+        Completable task = Completable.fromCallable(() -> {
+            if (!Preferences.isTesting()) {
+                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                multiUserChatLight.changeRoomName(chatName);
+            }
+            return null;
+        });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    Toast.makeText(ChatActivity.this,
+                            getString(R.string.room_name_changed),
+                            Toast.LENGTH_SHORT).show();
+
+                    Realm realm = getRealm();
+                    realm.beginTransaction();
+                    mChat.setName(chatName);
+                    realm.commitTransaction();
+
+                    if (!Preferences.isTesting()) {
+                        realm.close();
+                    }
+
+                    getSupportActionBar().setTitle(chatName);
+                }, error -> {
+                    Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "renameRoom error", error);
+                }));
     }
 
     private void changeMUCLightRoomSubject() {
@@ -786,40 +764,7 @@ public class ChatActivity extends BaseActivity {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         final String subject = roomSubjectEditText.getText().toString();
-
-                        Tasks.executeInBackground(ChatActivity.this, new BackgroundWork<Object>() {
-                            @Override
-                            public Object doInBackground() throws Exception {
-                                if (!Preferences.isTesting()) {
-                                    MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                                    multiUserChatLight.changeSubject(subject);
-                                }
-                                return null;
-                            }
-                        }, new Completion<Object>() {
-                            @Override
-                            public void onSuccess(Context context, Object result) {
-                                Toast.makeText(ChatActivity.this,
-                                        getString(R.string.room_subject_changed),
-                                        Toast.LENGTH_SHORT).show();
-
-                                Realm realm = getRealm();
-                                realm.beginTransaction();
-                                mChat.setSubject(subject);
-                                realm.commitTransaction();
-
-                                if (!Preferences.isTesting()) {
-                                    realm.close();
-                                }
-
-                                getSupportActionBar().setSubtitle(subject);
-                            }
-
-                            @Override
-                            public void onError(Context context, Exception e) {
-                                Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        changeRoomSubject(subject);
                         dialog.dismiss();
                     }
                 })
@@ -834,29 +779,61 @@ public class ChatActivity extends BaseActivity {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
     }
 
+    private void changeRoomSubject(String subject) {
+        Completable task = Completable.fromCallable(() -> {
+            if (!Preferences.isTesting()) {
+                MultiUserChatLight multiUserChatLight = XMPPSession.getInstance().getMUCLightManager().getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+                multiUserChatLight.changeSubject(subject);
+            }
+            return null;
+        });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    Toast.makeText(ChatActivity.this,
+                            getString(R.string.room_subject_changed),
+                            Toast.LENGTH_SHORT).show();
+
+                    Realm realm = getRealm();
+                    realm.beginTransaction();
+                    mChat.setSubject(subject);
+                    realm.commitTransaction();
+
+                    if (!Preferences.isTesting()) {
+                        realm.close();
+                    }
+
+                    getSupportActionBar().setSubtitle(subject);
+                }, error -> {
+                    Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+                }));
+    }
+
     private void disconnectRoomFromServer() {
         if (mMessageSubscription != null) {
-            mMessageSubscription.unsubscribe();
+            mMessageSubscription.dispose();
         }
 
         if (mConnectionSubscription != null) {
-            mConnectionSubscription.unsubscribe();
+            mConnectionSubscription.dispose();
         }
 
         if (mArchiveQuerySubscription != null) {
-            mArchiveQuerySubscription.unsubscribe();
+            mArchiveQuerySubscription.dispose();
         }
 
         if (mErrorArchiveQuerySubscription != null) {
-            mErrorArchiveQuerySubscription.unsubscribe();
+            mErrorArchiveQuerySubscription.dispose();
         }
 
         if (mMongooseMessageSubscription != null) {
-            mMongooseMessageSubscription.unsubscribe();
+            mMongooseMessageSubscription.dispose();
         }
 
         if (mMongooseMUCLightMessageSubscription != null) {
-            mMongooseMUCLightMessageSubscription.unsubscribe();
+            mMongooseMUCLightMessageSubscription.dispose();
         }
 
     }
@@ -963,50 +940,27 @@ public class ChatActivity extends BaseActivity {
             }
 
             if (mErrorArchiveQuerySubscription != null) {
-                mErrorArchiveQuerySubscription.unsubscribe();
+                mErrorArchiveQuerySubscription.dispose();
             }
 
             if (mArchiveQuerySubscription != null) {
-                mArchiveQuerySubscription.unsubscribe();
+                mArchiveQuerySubscription.dispose();
             }
 
             return;
         }
 
-        mArchiveQuerySubscription = XMPPSession.getInstance().subscribeToArchiveQuery(new Action1<String>() {
-            @Override
-            public void call(String s) {
-                mArchiveQuerySubscription.unsubscribe();
-
-                if (mErrorArchiveQuerySubscription != null) {
-                    mErrorArchiveQuerySubscription.unsubscribe();
-                }
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (loadMessagesSwipeRefreshLayout != null) {
-                            loadMessagesSwipeRefreshLayout.setRefreshing(false);
-                        }
-                    }
-                });
+        mArchiveQuerySubscription = XMPPSession.getInstance().subscribeToArchiveQuery(s -> {
+            if (loadMessagesSwipeRefreshLayout != null) {
+                loadMessagesSwipeRefreshLayout.setRefreshing(false);
             }
         });
 
-        mErrorArchiveQuerySubscription = XMPPSession.getInstance().subscribeToError(new Action1<ErrorIQ>() {
-            @Override
-            public void call(ErrorIQ errorIQ) {
-                mErrorArchiveQuerySubscription.unsubscribe();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (loadMessagesSwipeRefreshLayout != null) {
-                            loadMessagesSwipeRefreshLayout.setRefreshing(false);
-                        }
-                        Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
-                    }
-                });
+        mErrorArchiveQuerySubscription = XMPPSession.getInstance().subscribeToError(errorIQ -> {
+            if (loadMessagesSwipeRefreshLayout != null) {
+                loadMessagesSwipeRefreshLayout.setRefreshing(false);
             }
+            Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
         });
 
         mRoomManager.loadArchivedMessages(mChatJID, PAGES_TO_LOAD, ITEMS_PER_PAGE);
@@ -1144,7 +1098,7 @@ public class ChatActivity extends BaseActivity {
                 }
             }
         } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException e) {
-            e.printStackTrace();
+            Log.w(TAG, e);
         }
         return false;
     }
@@ -1158,20 +1112,18 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void manageMUCLightAdmins(final Menu menu) {
-        Tasks.executeInBackground(this, new BackgroundWork<HashMap<Jid, MUCLightAffiliation>>() {
-            @Override
-            public HashMap<Jid, MUCLightAffiliation> doInBackground() throws Exception {
-                if (Preferences.isTesting()) {
-                    return null;
-                }
-                MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
-                MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
-                return multiUserChatLight.getAffiliations();
+        Single<HashMap<Jid, MUCLightAffiliation>> task = Single.fromCallable(() -> {
+            if (Preferences.isTesting()) {
+                return null;
             }
-        }, new Completion<HashMap<Jid, MUCLightAffiliation>>() {
-            @Override
-            public void onSuccess(Context context, HashMap<Jid, MUCLightAffiliation> occupants) {
-                if (occupants != null) {
+            MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
+            MultiUserChatLight multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(mChatJID).asEntityBareJidIfPossible());
+            return multiUserChatLight.getAffiliations();
+        });
+
+        addDisposable(task.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(occupants -> {
                     for (Map.Entry<Jid, MUCLightAffiliation> pair : occupants.entrySet()) {
                         Jid key = pair.getKey();
                         if (key != null && key.toString().equals(Preferences.getInstance().getUserXMPPJid())) {
@@ -1180,14 +1132,7 @@ public class ChatActivity extends BaseActivity {
                             destroyItem.setVisible(mIsOwner && mChat.getType() == Chat.TYPE_MUC_LIGHT);
                         }
                     }
-                }
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                e.printStackTrace();
-            }
-        });
+                }, error -> Log.w(TAG, error)));
     }
 
 }

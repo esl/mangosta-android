@@ -16,9 +16,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
-import com.nanotasks.BackgroundWork;
-import com.nanotasks.Completion;
-import com.nanotasks.Tasks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +34,11 @@ import inaka.com.mangosta.models.UserEvent;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class CreateChatActivity extends BaseActivity {
 
@@ -110,34 +112,40 @@ public class CreateChatActivity extends BaseActivity {
                 createChat(mMemberUsers);
             }
         });
-
     }
 
-    private void searchUserBackgroundTask(final String user) {
-        Tasks.executeInBackground(CreateChatActivity.this, new BackgroundWork<String>() {
-            @Override
-            public String doInBackground() throws Exception {
-                if (XMPPSession.getInstance().userExists(user)) {
-                    obtainUser(user);
-                } else {
-                    showInviteDialog(user);
-                }
+    private void searchUserBackgroundTask(final String username) {
+        Maybe<User> task = Maybe.fromCallable(() -> {
+            if (XMPPSession.getInstance().userExists(username)) {
+                User user = new User();
+                user.setLogin(username);
                 return user;
-            }
-        }, new Completion<String>() {
-            @Override
-            public void onSuccess(Context context, String userName) {
-                createChatSearchUserProgressBar.setVisibility(View.GONE);
-                createChatSearchUserButton.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onError(Context context, Exception e) {
-                Toast.makeText(context, getString(R.string.error), Toast.LENGTH_SHORT).show();
-                createChatSearchUserProgressBar.setVisibility(View.GONE);
-                createChatSearchUserButton.setVisibility(View.VISIBLE);
+            } else {
+                return null;
             }
         });
+
+        addDisposable(task
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(user -> {
+                    createChatSearchUserProgressBar.setVisibility(View.GONE);
+                    createChatSearchUserButton.setVisibility(View.VISIBLE);
+
+                    mSearchUsers.clear();
+                    mSearchUsers.add(user);
+                    mSearchAdapter.notifyDataSetChanged();
+                }, error -> {
+                    createChatSearchUserProgressBar.setVisibility(View.GONE);
+                    createChatSearchUserButton.setVisibility(View.VISIBLE);
+                    Toast.makeText(getApplicationContext(),
+                            getString(R.string.error), Toast.LENGTH_SHORT).show();
+                }, () -> {
+                    //user not found
+                    createChatSearchUserProgressBar.setVisibility(View.GONE);
+                    createChatSearchUserButton.setVisibility(View.VISIBLE);
+                    showInviteDialog(username);
+                }));
     }
 
     @Override
@@ -185,21 +193,6 @@ public class CreateChatActivity extends BaseActivity {
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
             }
         });
-    }
-
-    private void obtainUser(final String userName) {
-        User user = new User();
-        user.setLogin(userName);
-
-        mSearchUsers.clear();
-        mSearchUsers.add(user);
-        CreateChatActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mSearchAdapter.notifyDataSetChanged();
-            }
-        });
-
     }
 
     // receives events from EventBus

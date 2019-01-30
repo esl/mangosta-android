@@ -4,7 +4,7 @@ package inaka.com.mangosta.models;
 import java.util.List;
 import java.util.UUID;
 
-import inaka.com.mangosta.interfaces.MongooseService;
+import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.models.requests.AddUserRequest;
 import inaka.com.mangosta.models.requests.CreateMUCLightMessageRequest;
 import inaka.com.mangosta.models.requests.CreateMUCLightRequest;
