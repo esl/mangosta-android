@@ -10,9 +10,6 @@ import org.jivesoftware.smack.util.stringencoder.Base64;
 
 import java.io.IOException;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-
 import inaka.com.mangosta.utils.Preferences;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -24,8 +21,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MongooseAPI {
 
-    public static final int RESPONSE_OK = 204;
-    public static final int NOT_FOUND = 404;
+    private static final boolean ACCEPT_INVALID_CERTIFICATES = false; //for debug testing ONLY!
 
     public static final String BASE_URL = "https://31.172.186.62:5285/api/";
 
@@ -68,14 +64,14 @@ public class MongooseAPI {
         };
 
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+        httpClient.hostnameVerifier(HttpClientBuilder.getTrustAllHostnameVerifier());
+        if (ACCEPT_INVALID_CERTIFICATES) {
+            httpClient.sslSocketFactory(HttpClientBuilder.getUnsafeSSLSocketFactory(),
+                    HttpClientBuilder.getTrustAllCerts());
+        }
+
         httpClient.addInterceptor(logging);
         httpClient.addInterceptor(requestInterceptor);
-        httpClient.hostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        });
 
         Retrofit.Builder builder = new Retrofit.Builder();
         builder.client(httpClient.build());
