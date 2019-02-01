@@ -49,9 +49,8 @@ public class RoomsListManager {
         List<Jid> occupants = new ArrayList<>();
 
         for (User user : users) {
-            String jid = XMPPUtils.fromUserNameToJID(user.getLogin());
             try {
-                occupants.add(JidCreate.from(jid));
+                occupants.add(JidCreate.from(user.getJid()));
             } catch (XmppStringprepException e) {
                 e.printStackTrace();
             }

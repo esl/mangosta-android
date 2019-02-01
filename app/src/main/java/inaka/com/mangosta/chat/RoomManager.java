@@ -174,9 +174,8 @@ public class RoomManager {
     }
 
     public static String createCommonChat(User user) {
-        String jid = XMPPUtils.fromUserNameToJID(user.getLogin());
-        createChatIfNotExists(jid, true);
-        return jid;
+        createChatIfNotExists(user.getJid(), true);
+        return user.getJid();
     }
 
     public static ChatManager getChatManager() {
@@ -187,8 +186,7 @@ public class RoomManager {
         final List<String> occupants = new ArrayList<>();
 
         for (User user : users) {
-            String jid = XMPPUtils.fromUserNameToJID(user.getLogin());
-            occupants.add(jid);
+            occupants.add(user.getJid());
         }
 
         final MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
@@ -596,7 +594,7 @@ public class RoomManager {
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        () -> mListener.onMessageSent(null),
+                        () -> mListener.onMessageSent(chatType),
                         error -> mListener.onError(error.getLocalizedMessage())
                 );
     }
@@ -632,7 +630,7 @@ public class RoomManager {
                 });
             }
         } finally {
-            mListener.onMessageSent(null);
+            mListener.onMessageSent(chatType);
         }
     }
 
@@ -647,7 +645,7 @@ public class RoomManager {
             } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException e) {
                 mListener.onError(e.getLocalizedMessage());
             } finally {
-                mListener.onMessageSent(message);
+                mListener.onMessageSent(chatType);
             }
 
         } else {
@@ -657,7 +655,7 @@ public class RoomManager {
             } catch (InterruptedException | XmppStringprepException | SmackException.NotConnectedException e) {
                 mListener.onError(e.getLocalizedMessage());
             } finally {
-                mListener.onMessageSent(message);
+                mListener.onMessageSent(chatType);
             }
         }
     }
@@ -732,7 +730,7 @@ public class RoomManager {
         try {
             MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(chatJID).asEntityBareJidIfPossible());
 
-            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            Jid jid = JidCreate.from(user.getJid());
 
             HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
             affiliations.put(jid, MUCLightAffiliation.member);
@@ -748,7 +746,7 @@ public class RoomManager {
         try {
             MultiUserChatLight mucLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(chatJID).asEntityBareJidIfPossible());
 
-            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            Jid jid = JidCreate.from(user.getJid());
 
             HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
             affiliations.put(jid, MUCLightAffiliation.none);

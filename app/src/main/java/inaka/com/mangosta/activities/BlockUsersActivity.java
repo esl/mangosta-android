@@ -103,8 +103,8 @@ public class BlockUsersActivity extends BaseActivity {
             public void onClick(View v) {
                 blockSearchUserButton.setVisibility(View.GONE);
                 blockSearchUserProgressBar.setVisibility(View.VISIBLE);
-                String user = blockSearchUserEditText.getText().toString();
-                searchUserBackgroundTask(user);
+                String username = blockSearchUserEditText.getText().toString();
+                searchUserBackgroundTask(username);
             }
         });
 
@@ -116,17 +116,17 @@ public class BlockUsersActivity extends BaseActivity {
         });
     }
 
-    private void searchUserBackgroundTask(final String user) {
-        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(user));
+    private void searchUserBackgroundTask(final String username) {
+        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(username));
 
         addDisposable(task
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(userExists -> {
                     if (userExists) {
-                        obtainUser(user, true);
+                        obtainUser(username, true);
                     } else {
-                        showNotFoundDialog(user);
+                        showNotFoundDialog(username);
                     }
                     if (blockSearchUserButton != null && blockSearchUserProgressBar != null) {
                         blockSearchUserProgressBar.setVisibility(View.GONE);
@@ -158,8 +158,7 @@ public class BlockUsersActivity extends BaseActivity {
     }
 
     private void obtainUser(final String userName, final boolean isSearch) {
-        User user = new User();
-        user.setLogin(userName);
+        User user = new User(XMPPUtils.fromUserNameToJID(userName));
 
         if (mSearchUsers != null && mSearchAdapter != null) {
             if (isSearch) {
@@ -233,7 +232,7 @@ public class BlockUsersActivity extends BaseActivity {
     private boolean userInList(User user, List<User> list) {
         boolean userFound = false;
         for (User anUser : list) {
-            if (anUser.getLogin().equals(user.getLogin())) {
+            if (anUser.getJid().equals(user.getJid())) {
                 userFound = true;
             }
         }
@@ -244,7 +243,7 @@ public class BlockUsersActivity extends BaseActivity {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
         Completable task = Completable.fromCallable(() -> {
-            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            Jid jid = JidCreate.from(user.getJid());
             List<Jid> jids = new ArrayList<>();
             jids.add(jid);
             XMPPSession.getInstance().blockContacts(jids);
@@ -282,7 +281,7 @@ public class BlockUsersActivity extends BaseActivity {
         final ProgressDialog progress = ProgressDialog.show(this, getString(R.string.loading), null, true);
 
         Completable task = Completable.fromCallable(() -> {
-            Jid jid = JidCreate.from(XMPPUtils.fromUserNameToJID(user.getLogin()));
+            Jid jid = JidCreate.from(user.getJid());
             List<Jid> jids = new ArrayList<>();
             jids.add(jid);
             XMPPSession.getInstance().unblockContacts(jids);

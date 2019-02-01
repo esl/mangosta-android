@@ -110,8 +110,8 @@ public class EditChatMemberActivity extends BaseActivity {
             public void onClick(View v) {
                 searchUserButton.setVisibility(View.GONE);
                 searchUserProgressBar.setVisibility(View.VISIBLE);
-                String user = searchUserEditText.getText().toString();
-                searchUserBackgroundTask(user);
+                String username = searchUserEditText.getText().toString();
+                searchUserBackgroundTask(username);
             }
         });
 
@@ -124,17 +124,17 @@ public class EditChatMemberActivity extends BaseActivity {
         }
     }
 
-    private void searchUserBackgroundTask(final String user) {
-        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(user));
+    private void searchUserBackgroundTask(final String username) {
+        Single<Boolean> task = Single.fromCallable(() -> XMPPSession.getInstance().userExists(username));
 
         addDisposable(task
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(userExists -> {
                     if (userExists) {
-                        searchObtainUser(user);
+                        searchObtainUser(username);
                     } else {
-                        showInviteDialog(user);
+                        showInviteDialog(username);
                     }
                     searchUserProgressBar.setVisibility(View.GONE);
                     searchUserButton.setVisibility(View.VISIBLE);
@@ -197,15 +197,13 @@ public class EditChatMemberActivity extends BaseActivity {
     }
 
     private void searchObtainUser(final String userName) {
-        User user = new User();
-        user.setLogin(userName);
+        User user = new User(XMPPUtils.fromUserNameToJID(userName));
         mSearchUsers.add(user);
         mSearchAdapter.notifyDataSetChanged();
     }
 
     private void membersObtainUser(final String userName) {
-        User user = new User();
-        user.setLogin(userName);
+        User user = new User(XMPPUtils.fromUserNameToJID(userName));
         mMemberUsers.add(user);
         mMembersAdapter.notifyDataSetChanged();
     }
@@ -261,7 +259,7 @@ public class EditChatMemberActivity extends BaseActivity {
     private boolean userInList(User user, List<User> list) {
         boolean userFound = false;
         for (User anUser : list) {
-            if (anUser.getLogin().equals(user.getLogin())) {
+            if (anUser.getJid().equals(user.getJid())) {
                 userFound = true;
             }
         }

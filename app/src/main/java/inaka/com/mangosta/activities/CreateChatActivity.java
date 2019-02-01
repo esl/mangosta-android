@@ -101,8 +101,8 @@ public class CreateChatActivity extends BaseActivity {
             public void onClick(View v) {
                 createChatSearchUserButton.setVisibility(View.GONE);
                 createChatSearchUserProgressBar.setVisibility(View.VISIBLE);
-                final String user = createChatSearchUserEditText.getText().toString();
-                searchUserBackgroundTask(user);
+                final String username = createChatSearchUserEditText.getText().toString();
+                searchUserBackgroundTask(username);
             }
         });
 
@@ -117,9 +117,7 @@ public class CreateChatActivity extends BaseActivity {
     private void searchUserBackgroundTask(final String username) {
         Maybe<User> task = Maybe.fromCallable(() -> {
             if (XMPPSession.getInstance().userExists(username)) {
-                User user = new User();
-                user.setLogin(username);
-                return user;
+                return new User(XMPPUtils.fromUserNameToJID(username));
             } else {
                 return null;
             }
@@ -236,7 +234,7 @@ public class CreateChatActivity extends BaseActivity {
     private boolean userInList(User user, List<User> list) {
         boolean userFound = false;
         for (User anUser : list) {
-            if (anUser.getLogin().equals(user.getLogin())) {
+            if (anUser.getJid().equals(user.getJid())) {
                 userFound = true;
             }
         }
@@ -249,7 +247,7 @@ public class CreateChatActivity extends BaseActivity {
             Toast.makeText(this, getString(R.string.add_people_to_create_chat), Toast.LENGTH_LONG).show();
 
         } else if (memberUsers.size() == 1) {   // 1 to 1 chat
-            String chatJid = XMPPUtils.fromUserNameToJID(memberUsers.get(0).getLogin());
+            String chatJid = memberUsers.get(0).getJid();
             RoomsListManager.getInstance().createCommonChat(chatJid);
             NavigateToChat.go(chatJid, XMPPUtils.fromJIDToUserName(chatJid), this);
 

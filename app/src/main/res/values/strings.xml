@@ -43,6 +43,9 @@
     <string name="hint_edit_text">Enter text here</string>
     <string name="hint_enter_comment">Enter comment here</string>
 
+    <string name="update_profile">Update Profile</string>
+    <string name="enter_nickname">Enter Nickname</string>
+
     <string name="error">ERROR</string>
     <string name="loading">Loading &#8230;</string>
     <string name="cancel">Cancel</string>

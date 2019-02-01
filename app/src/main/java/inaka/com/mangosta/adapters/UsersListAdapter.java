@@ -86,7 +86,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
 
         public void bind(final User user, boolean showAdd, boolean showRemove) {
             Picasso.with(mContext).load(R.mipmap.ic_user).noFade().fit().into(imageUserAvatar);
-            textUserLogin.setText(user.getLogin());
+            textUserLogin.setText(XMPPUtils.fromJIDToUserName(user.getJid()));
 
             if (user.getName() != null) {
                 textUserName.setText(user.getName());
@@ -132,7 +132,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
                 }
             });
 
-            if (XMPPUtils.isAutenticatedUser(user) || isUserConnected(user)) {
+            if (XMPPUtils.isAuthenticatedUser(user) || isUserConnected(user)) {
                 imageConnectionStatus.setImageResource(R.mipmap.ic_connected);
             } else {
                 imageConnectionStatus.setImageResource(R.mipmap.ic_disconnected);
@@ -143,13 +143,12 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
     }
 
     private static boolean isUserConnected(User user) {
-        return RosterManager.getInstance().getStatusFromContact(user).equals(Presence.Type.available);
+        return RosterManager.getInstance().getStatusFromContact(user.getJid()).equals(Presence.Type.available);
     }
 
     private static boolean isAuthorizedXMPPUser(User user) {
-        EntityBareJid userJid = XMPPSession.getInstance().getUser();
-        String userName = user.getLogin();
-        return userJid != null && userName != null && userName.equals(XMPPUtils.fromJIDToUserName(userJid.toString()));
+        EntityBareJid loginJid = XMPPSession.getInstance().getUser();
+        return loginJid != null && loginJid.equals(user.getJid());
     }
 
     public static class ProgressViewHolder extends UsersListAdapter.ViewHolder {

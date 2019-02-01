@@ -171,8 +171,9 @@ public class MainMenuActivity extends BaseActivity {
     private void goToMyProfile() {
         Intent userOptionsActivityIntent = new Intent(this, UserProfileActivity.class);
 
-        User user = new User();
-        user.setLogin(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+        String jid = Preferences.getInstance().getUserXMPPJid();
+        String name = Preferences.getInstance().getUserNickname();
+        User user = new User(jid, name);
 
         Bundle bundle = new Bundle();
         bundle.putParcelable(UserProfileActivity.USER_PARAMETER, user);

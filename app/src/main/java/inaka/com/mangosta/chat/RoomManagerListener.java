@@ -38,8 +38,8 @@ public class RoomManagerListener {
 
     }
 
-    public void onMessageSent(Message message) {
-        XMPPSession.getInstance().messageSentAlert(message);
+    public void onMessageSent(int chatType) {
+        XMPPSession.getInstance().messageSentAlert(chatType);
     }
 
     public void onError(final String error) {

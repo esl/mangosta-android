@@ -7,19 +7,25 @@ import org.jivesoftware.smack.packet.Presence;
 
 public class User implements Parcelable {
 
-    public User() {
+    public User(String jid) {
+        setJid(jid);
     }
 
-    private String login;
+    public User(String jid, String name) {
+        setJid(jid);
+        setName(name);
+    }
+
+    private String jid;
     private String name;
     private Presence.Type connectionStatus;
 
-    public String getLogin() {
-        return login;
+    public String getJid() {
+        return jid;
     }
 
-    public void setLogin(String login) {
-        this.login = login;
+    public void setJid(String jid) {
+        this.jid = jid;
     }
 
     public String getName() {
@@ -45,13 +51,13 @@ public class User implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.login);
+        dest.writeString(this.jid);
         dest.writeString(this.name);
         dest.writeInt(this.connectionStatus == null ? -1 : this.connectionStatus.ordinal());
     }
 
     protected User(Parcel in) {
-        this.login = in.readString();
+        this.jid = in.readString();
         this.name = in.readString();
         int tmpConnectionStatus = in.readInt();
         this.connectionStatus = tmpConnectionStatus == -1 ? null : Presence.Type.values()[tmpConnectionStatus];

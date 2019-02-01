@@ -69,6 +69,8 @@ import org.jivesoftware.smackx.pubsub.PublishModel;
 import org.jivesoftware.smackx.search.ReportedData;
 import org.jivesoftware.smackx.search.UserSearch;
 import org.jivesoftware.smackx.search.UserSearchManager;
+import org.jivesoftware.smackx.vcardtemp.VCardManager;
+import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jxmpp.jid.DomainBareJid;
@@ -129,6 +131,7 @@ import io.reactivex.subjects.PublishSubject;
 import io.realm.Realm;
 
 public class XMPPSession {
+    private static final String TAG = XMPPSession.class.getSimpleName();
 
     private static XMPPSession mInstance;
     private XMPPTCPConnection mXMPPConnection;
@@ -154,7 +157,7 @@ public class XMPPSession {
     private PublishSubject<ErrorIQ> mErrorPublisher = PublishSubject.create();
 
     // sent
-    private PublishSubject<Message> mMessageSentAlert = PublishSubject.create();
+    private PublishSubject<Integer> mMessageSentAlert = PublishSubject.create();
 
     private ReconnectionManager mReconnectionManager;
 
@@ -810,15 +813,15 @@ public class XMPPSession {
     }
 
     // Message sent alert
-    public Disposable subscribeToMessageSent(Consumer<Message> consumer) {
+    public Disposable subscribeToMessageSent(Consumer<Integer> consumer) {
         return mMessageSentAlert
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(consumer);
     }
 
-    public void messageSentAlert(Message message) {
-        mMessageSentAlert.onNext(message);
+    public void messageSentAlert(int chatType) {
+        mMessageSentAlert.onNext(chatType);
     }
 
     public void notifyPublished(MongooseMessage message) {
@@ -1184,7 +1187,7 @@ public class XMPPSession {
         return PubSubManager.getPubSubService(getXMPPConnection());
     }
 
-    public boolean userExists(String jid) {
+    public boolean userExists(String login) {
         ProviderManager.addIQProvider("query", "jabber:iq:search", new UserSearch.Provider());
         ProviderManager.addIQProvider("query", "jabber:iq:vjud", new UserSearch.Provider());
         UserSearchManager searchManager = new UserSearchManager(getXMPPConnection());
@@ -1202,7 +1205,7 @@ public class XMPPSession {
                 Form answerForm = searchForm.createAnswerForm();
 
                 try {
-                    answerForm.setAnswer("user", jid);
+                    answerForm.setAnswer("user", login);
                 } catch (IllegalStateException ex) {
                     ex.printStackTrace();
                     return false;
@@ -1258,5 +1261,23 @@ public class XMPPSession {
             InterruptedException, SmackException.NoResponseException {
         getBlockingCommandManager().unblockAll();
     }
+
+    public void saveVCard() {
+        Preferences preferences = Preferences.getInstance();
+        String jid = preferences.getUserXMPPJid();
+        String nickname = preferences.getUserNickname();
+
+        VCardManager vCardManager = VCardManager.getInstanceFor(mXMPPConnection);
+        VCard vCard = new VCard();
+        vCard.setJabberId(jid);
+        vCard.setNickName(nickname);
+        try {
+            vCardManager.saveVCard(vCard);
+            Log.v(TAG, "save vcard success " + jid + " " + nickname);
+        } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | InterruptedException | SmackException.NotConnectedException e) {
+            Log.w(TAG, "save vcard error " + jid, e);
+        }
+    }
+
 
 }

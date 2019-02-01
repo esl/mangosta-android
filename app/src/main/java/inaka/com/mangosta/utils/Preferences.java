@@ -22,6 +22,7 @@ public class Preferences {
      * User XMPP JID
      */
     private final String USER_XMPP_JID = "user_xmpp_jid";
+    private final String USER_XMPP_NICK = "user_xmpp_nick";
     private final String USER_XMPP_PASSWORD = "user_xmpp_password";
 
     /**
@@ -102,6 +103,16 @@ public class Preferences {
     public void setUserXMPPPassword(String password) {
         final SharedPreferences.Editor editor = mPreferences.edit();
         editor.putString(USER_XMPP_PASSWORD, password);
+        editor.apply();
+    }
+
+    public String getUserNickname() {
+        return mPreferences.getString(USER_XMPP_NICK, "");
+    }
+
+    public void setUserNickName(String nickName) {
+        final SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(USER_XMPP_NICK, nickName);
         editor.apply();
     }
 

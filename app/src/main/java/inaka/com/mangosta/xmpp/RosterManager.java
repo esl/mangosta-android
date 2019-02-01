@@ -154,8 +154,7 @@ public class RosterManager {
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
-        String jidString = XMPPUtils.fromUserNameToJID(user.getLogin());
-        removeContact(jidString);
+        removeContact(user.getJid());
     }
 
     public void addContact(String jidString)
@@ -179,19 +178,15 @@ public class RosterManager {
             throws SmackException.NotLoggedInException, InterruptedException,
             SmackException.NotConnectedException, XMPPException.XMPPErrorException,
             SmackException.NoResponseException, XmppStringprepException {
-        addContact(XMPPUtils.fromUserNameToJID(user.getLogin()));
+        addContact(user.getJid());
     }
 
-    public Presence.Type getStatusFromContact(User user) {
-        return getStatusFromContact(user.getLogin());
-    }
-
-    public Presence.Type getStatusFromContact(String name) {
+    public Presence.Type getStatusFromContact(String jid) {
         try {
             HashMap<Jid, Presence.Type> buddies = getContacts();
 
             for (Map.Entry<Jid, Presence.Type> pair : buddies.entrySet()) {
-                if (XMPPUtils.fromJIDToUserName(pair.getKey().toString()).equals(name)) {
+                if (pair.getKey().toString().equals(jid)) {
                     return pair.getValue();
                 }
             }

@@ -644,13 +644,12 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void removeChatGuyFromContacts() {
-        User userNotContact = new User();
-        userNotContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
+        User userNotContact = new User(mChat.getJid());
         try {
             RosterManager.getInstance().removeContact(userNotContact);
             setMenuChatNotContact();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_removed_from_contacts),
-                    userNotContact.getLogin()), Toast.LENGTH_SHORT).show();
+                    XMPPUtils.getDisplayName(userNotContact)), Toast.LENGTH_SHORT).show();
         } catch (SmackException.NotLoggedInException | InterruptedException |
                 SmackException.NotConnectedException | XMPPException.XMPPErrorException |
                 XmppStringprepException | SmackException.NoResponseException e) {
@@ -659,13 +658,12 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void addChatGuyToContacts() {
-        User userContact = new User();
-        userContact.setLogin(XMPPUtils.fromJIDToUserName(mChat.getJid()));
+        User userContact = new User(mChat.getJid());
         try {
             RosterManager.getInstance().addContact(userContact);
             setMenuChatWithContact();
             Toast.makeText(this, String.format(Locale.getDefault(), getString(R.string.user_added_to_contacts),
-                    userContact.getLogin()), Toast.LENGTH_SHORT).show();
+                    XMPPUtils.getDisplayName(userContact)), Toast.LENGTH_SHORT).show();
         } catch (SmackException.NotLoggedInException | InterruptedException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | XmppStringprepException | SmackException.NoResponseException e) {
             e.printStackTrace();
         }
@@ -1022,8 +1020,8 @@ public class ChatActivity extends BaseActivity {
         }
 
         @Override
-        public void onMessageSent(Message message) {
-            super.onMessageSent(message);
+        public void onMessageSent(int chatType) {
+            super.onMessageSent(chatType);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

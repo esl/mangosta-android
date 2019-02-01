@@ -119,8 +119,7 @@ public class ChatMembersActivity extends BaseActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                User user = new User();
-                user.setLogin(userName);
+                User user = new User(XMPPUtils.fromUserNameToJID(userName));
                 mMembers.add(user);
                 mMembersAdapter.notifyDataSetChanged();
 

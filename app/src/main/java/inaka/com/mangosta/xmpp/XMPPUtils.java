@@ -1,5 +1,7 @@
 package inaka.com.mangosta.xmpp;
 
+import android.text.TextUtils;
+
 import org.jxmpp.jid.Jid;
 
 import inaka.com.mangosta.models.Chat;
@@ -52,17 +54,17 @@ public class XMPPUtils {
         return chatName;
     }
 
-    public static boolean isAutenticatedUser(User user) {
-        if (user == null || user.getLogin() == null) {
-            return false;
-        }
-        return user.getLogin().equals(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
+    /** show nickname if defined, or show fallback to localpart of jid */
+    public static String getDisplayName(User user) {
+        return TextUtils.isEmpty(user.getName())?
+                XMPPUtils.fromJIDToUserName(user.getJid()):user.getName();
     }
 
-    public static boolean isAutenticatedUser(String userName) {
-        User user = new User();
-        user.setLogin(userName);
-        return isAutenticatedUser(user);
+    public static boolean isAuthenticatedUser(User user) {
+        if (user == null || user.getJid() == null) {
+            return false;
+        }
+        return user.getJid().equals(Preferences.getInstance().getUserXMPPJid());
     }
 
     public static boolean isAutenticatedJid(Jid jid) {
