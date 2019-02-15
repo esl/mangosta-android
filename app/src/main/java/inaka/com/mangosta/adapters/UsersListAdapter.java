@@ -21,13 +21,17 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.models.UserEvent;
+import inaka.com.mangosta.models.event.UserEvent;
 import inaka.com.mangosta.utils.NavigateToUserProfile;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
 
 public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.ViewHolder> {
+
+    private PublishSubject<UserEvent> userEventSubject = PublishSubject.create();
 
     private List<User> mUsers;
     private Context mContext;
@@ -42,6 +46,10 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
         this.mShowRemove = showRemove;
     }
 
+    public Observable<UserEvent> getEventObservable() {
+        return userEventSubject;
+    }
+
     public boolean isLoading() {
         return mIsLoading;
     }
@@ -50,14 +58,14 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
         this.mIsLoading = isLoading;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
         public ViewHolder(View view) {
             super(view);
         }
     }
 
-    public static class UserViewHolder extends UsersListAdapter.ViewHolder {
+    public class UserViewHolder extends UsersListAdapter.ViewHolder {
         @BindView(R.id.imageUserAvatar)
         ImageView imageUserAvatar;
 
@@ -114,14 +122,14 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
             addUserButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    new UserEvent(UserEvent.Type.ADD_USER, user).post();
+                    userEventSubject.onNext(new UserEvent(UserEvent.Type.ADD_USER, user));
                 }
             });
 
             removeUserButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    new UserEvent(UserEvent.Type.REMOVE_USER, user).post();
+                    userEventSubject.onNext(new UserEvent(UserEvent.Type.REMOVE_USER, user));
                 }
             });
 
@@ -151,7 +159,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<UsersListAdapter.View
         return loginJid != null && loginJid.equals(user.getJid());
     }
 
-    public static class ProgressViewHolder extends UsersListAdapter.ViewHolder {
+    public class ProgressViewHolder extends UsersListAdapter.ViewHolder {
 
         @BindView(R.id.progressLoadingItem)
         ProgressBar progressBar;

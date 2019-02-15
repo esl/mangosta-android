@@ -4,25 +4,29 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
+import org.jivesoftware.smack.packet.Presence;
 import org.jxmpp.jid.Jid;
 
 import java.util.Locale;
 
+import androidx.appcompat.app.AlertDialog;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.MainMenuActivity;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
+import inaka.com.mangosta.xmpp.RosterManager;
+import inaka.com.mangosta.xmpp.XMPPSession;
 
 public class RosterNotifications {
 
     public static void rosterRequestNotification(Jid sender) {
         // show notification only if the app is closed
         if (!MangostaApplication.getInstance().isClosed()) {
-            new Event(Event.Type.PRESENCE_SUBSCRIPTION_REQUEST, sender).post();
+            answerSubscriptionRequest(sender);
             return;
         }
 
@@ -44,6 +48,41 @@ public class RosterNotifications {
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(sender.toString(), NotificationsControl.ROSTER_NOTIFICATION, mNotifyBuilder.build());
     }
+
+    public static void answerSubscriptionRequest(final Jid jid) {
+        Context context = XMPPSessionService.CONTEXT;
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setCancelable(false);
+        builder.setMessage(String.format(Locale.getDefault(), context.getString(R.string.roster_subscription_request), jid.toString()));
+
+        builder.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    Presence subscribed = new Presence(Presence.Type.subscribed);
+                    subscribed.setTo(jid);
+                    XMPPSession.getInstance().sendStanza(subscribed);
+
+                    if (!RosterManager.getInstance().isContact(jid)) {
+                        RosterManager.getInstance().addContact(jid.toString());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNegativeButton(R.string.decline, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(context.getResources().getColor(R.color.colorPrimary));
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(context.getResources().getColor(R.color.colorPrimary));
+    }
+
 
     private static PendingIntent preparePendingIntent(Context context, String requestSender) {
         Intent intent = new Intent(context, MainMenuActivity.class);

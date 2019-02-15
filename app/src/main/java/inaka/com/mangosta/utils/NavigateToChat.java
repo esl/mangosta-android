@@ -11,7 +11,6 @@ public class NavigateToChat {
         Intent intent = new Intent(currentActivity, ChatActivity.class);
         intent.putExtra(ChatActivity.CHAT_JID_PARAMETER, chatJid);
         intent.putExtra(ChatActivity.CHAT_NAME_PARAMETER, chatName);
-        intent.putExtra(ChatActivity.IS_NEW_CHAT_PARAMETER, true);
         currentActivity.startActivity(intent);
         currentActivity.finish();
     }

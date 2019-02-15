@@ -2,7 +2,6 @@ package inaka.com.mangosta.activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,12 +28,11 @@ import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
-import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.models.UserEvent;
+import inaka.com.mangosta.models.event.UserEvent;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -67,6 +65,8 @@ public class ManageContactsActivity extends BaseActivity {
 
     @BindView(R.id.manageContactsUsersRemoveAllContactsButton)
     Button manageContactsUsersRemoveAllContactsButton;
+
+    private RoomManager roomManager = RoomManager.getInstance();
 
     private List<User> mSearchUsers;
     private List<User> mContacts;
@@ -101,6 +101,9 @@ public class ManageContactsActivity extends BaseActivity {
         mSearchAdapter = new UsersListAdapter(this, mSearchUsers, true, false);
         mContactsAdapter = new UsersListAdapter(this, mContacts, false, true);
 
+        addDisposable(mSearchAdapter.getEventObservable().subscribe(this::onUserEvent));
+        addDisposable(mContactsAdapter.getEventObservable().subscribe(this::onUserEvent));
+
         manageContactsUsersRecyclerView.setAdapter(mContactsAdapter);
         manageContactsSearchResultRecyclerView.setAdapter(mSearchAdapter);
 
@@ -120,6 +123,13 @@ public class ManageContactsActivity extends BaseActivity {
                 removeAllContacts();
             }
         });
+
+        addDisposable(RosterManager.getInstance().getRosterChangeObservable()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rosterEvent -> {
+                    mContacts.clear();
+                    getContacts();
+                }));
     }
 
     private void searchUserBackgroundTask(final String username) {
@@ -183,9 +193,6 @@ public class ManageContactsActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!EventBus.getDefault().isRegistered(this)) {
-            EventBus.getDefault().register(this);
-        }
         mContacts.clear();
         getContacts();
     }
@@ -196,7 +203,6 @@ public class ManageContactsActivity extends BaseActivity {
 
         switch (id) {
             case android.R.id.home:
-                new Event(Event.Type.CONTACTS_CHANGED).post();
                 finish();
                 break;
         }
@@ -204,8 +210,7 @@ public class ManageContactsActivity extends BaseActivity {
         return true;
     }
 
-    // receives events from EventBus
-    public void onEvent(UserEvent userEvent) {
+    private void onUserEvent(UserEvent userEvent) {
         User user = userEvent.getUser();
 
         switch (userEvent.getType()) {
@@ -218,34 +223,6 @@ public class ManageContactsActivity extends BaseActivity {
 
             case REMOVE_USER:
                 removeContact(user);
-                break;
-        }
-    }
-
-    @Override
-    public void onEvent(Event event) {
-        super.onEvent(event);
-        switch (event.getType()) {
-            case PRESENCE_RECEIVED:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSearchAdapter.notifyDataSetChanged();
-                        mContactsAdapter.notifyDataSetChanged();
-                    }
-                });
-                break;
-
-            case ROSTER_CHANGED:
-                synchronized (LOCK_1) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mContacts.clear();
-                            getContacts();
-                        }
-                    });
-                }
                 break;
         }
     }
@@ -284,7 +261,8 @@ public class ManageContactsActivity extends BaseActivity {
                         mSearchAdapter.notifyDataSetChanged();
                     }
 
-                    new Event(Event.Type.CONTACTS_CHANGED).post();
+                    roomManager.loadAllChats();
+
                 }, error -> {
                     if (progress != null) {
                         progress.dismiss();
@@ -322,7 +300,7 @@ public class ManageContactsActivity extends BaseActivity {
                                 }
                             }
 
-                            new Event(Event.Type.CONTACTS_CHANGED).post();
+                            roomManager.loadAllChats();
                         }, error -> {
                     if (progress != null) {
                         progress.dismiss();
@@ -390,7 +368,7 @@ public class ManageContactsActivity extends BaseActivity {
                         manageContactsUsersRemoveAllContactsButton.setVisibility(View.INVISIBLE);
                     }
 
-                    new Event(Event.Type.CONTACTS_CHANGED).post();
+                    roomManager.loadAllChats();
                 }, error -> {
                     if (progress != null) {
                         progress.dismiss();
@@ -406,7 +384,6 @@ public class ManageContactsActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        new Event(Event.Type.CONTACTS_CHANGED).post();
         super.onBackPressed();
     }
 

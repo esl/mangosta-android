@@ -1,12 +1,13 @@
 package inaka.com.mangosta.activities;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -23,24 +24,22 @@ import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.chat.RoomManager;
-import inaka.com.mangosta.chat.RoomsListManager;
-import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.chat.RoomManagerListener;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.models.UserEvent;
+import inaka.com.mangosta.models.event.UserEvent;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
 public class CreateChatActivity extends BaseActivity {
+
+    private static final String TAG = CreateChatActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -92,6 +91,9 @@ public class CreateChatActivity extends BaseActivity {
 
         mSearchAdapter = new UsersListAdapter(this, mSearchUsers, true, false);
         mMembersAdapter = new UsersListAdapter(this, mMemberUsers, false, true);
+
+        addDisposable(mSearchAdapter.getEventObservable().subscribe(this::onUserEvent));
+        addDisposable(mMembersAdapter.getEventObservable().subscribe(this::onUserEvent));
 
         createChatMembersRecyclerView.setAdapter(mMembersAdapter);
         createChatSearchResultRecyclerView.setAdapter(mSearchAdapter);
@@ -149,9 +151,6 @@ public class CreateChatActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!EventBus.getDefault().isRegistered(this)) {
-            EventBus.getDefault().register(this);
-        }
     }
 
     @Override
@@ -193,8 +192,7 @@ public class CreateChatActivity extends BaseActivity {
         });
     }
 
-    // receives events from EventBus
-    public void onEvent(UserEvent userEvent) {
+    private void onUserEvent(UserEvent userEvent) {
         User user = userEvent.getUser();
 
         switch (userEvent.getType()) {
@@ -211,22 +209,6 @@ public class CreateChatActivity extends BaseActivity {
             case REMOVE_USER:
                 mMemberUsers.remove(user);
                 mMembersAdapter.notifyDataSetChanged();
-                break;
-        }
-    }
-
-    @Override
-    public void onEvent(Event event) {
-        super.onEvent(event);
-        switch (event.getType()) {
-            case PRESENCE_RECEIVED:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSearchAdapter.notifyDataSetChanged();
-                        mMembersAdapter.notifyDataSetChanged();
-                    }
-                });
                 break;
         }
     }
@@ -248,7 +230,9 @@ public class CreateChatActivity extends BaseActivity {
 
         } else if (memberUsers.size() == 1) {   // 1 to 1 chat
             String chatJid = memberUsers.get(0).getJid();
-            RoomsListManager.getInstance().createCommonChat(chatJid);
+            addDisposable(RoomManager.getInstance().createChat(chatJid)
+                    .subscribe(() -> {},
+                            error -> Log.d(TAG, "query error", error)));
             NavigateToChat.go(chatJid, XMPPUtils.fromJIDToUserName(chatJid), this);
 
         } else {    // muc or muc light
@@ -278,8 +262,9 @@ public class CreateChatActivity extends BaseActivity {
                 .setView(linearLayout)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        String chatName = roomNameEditText.getText().toString();
-                        RoomManager.createMUCLightAndGo(memberUsers, chatName, CreateChatActivity.this);
+                        String roomName = roomNameEditText.getText().toString();
+                        RoomManager.createMUCLight(memberUsers, roomName, CreateChatActivity.this,
+                                new RoomManagerCreationListener());
                     }
                 })
                 .show();
@@ -288,4 +273,11 @@ public class CreateChatActivity extends BaseActivity {
 
     }
 
+
+    private class RoomManagerCreationListener extends RoomManagerListener {
+
+        public void onRoomCreated(String roomJid, String roomName) {
+            NavigateToChat.go(roomJid, roomName, CreateChatActivity.this);
+        }
+    }
 }

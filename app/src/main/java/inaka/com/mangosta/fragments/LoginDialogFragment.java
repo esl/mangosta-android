@@ -1,12 +1,10 @@
 package inaka.com.mangosta.fragments;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.DialogFragment;
 import androidx.appcompat.widget.Toolbar;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +15,7 @@ import android.widget.Toast;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.activities.CreateBlogActivity;
 import inaka.com.mangosta.activities.SplashActivity;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.reactivex.Completable;
 import io.reactivex.android.schedulers.AndroidSchedulers;

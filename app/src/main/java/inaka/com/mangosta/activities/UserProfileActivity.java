@@ -18,7 +18,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.chat.RoomsListManager;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
@@ -108,7 +108,7 @@ public class UserProfileActivity extends BaseActivity {
 
             case R.id.actionOpenChat:
                 if (mUser != null) {
-                    RoomsListManager.getInstance().createCommonChat(mUser.getJid());
+                    RoomManager.getInstance().createChatIfNotExists(mUser.getJid());
                     NavigateToChat.go(mUser.getJid(), XMPPUtils.fromJIDToUserName(mUser.getJid()), this);
                 }
                 break;

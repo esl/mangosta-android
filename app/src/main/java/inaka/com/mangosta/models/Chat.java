@@ -2,15 +2,18 @@ package inaka.com.mangosta.models;
 
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
-public class Chat extends RealmObject {
+@Entity
+public class Chat {
 
     public static final int TYPE_1_T0_1 = 0;
     public static final int TYPE_MUC_LIGHT = 1;
 
     @PrimaryKey
+    @NonNull
     private String jid;
     private String name;
     private String subject;
@@ -23,13 +26,6 @@ public class Chat extends RealmObject {
     private int sortPosition;
     private int unreadMessagesCount;
     private String messageBeingComposed;
-
-    public Chat() {
-    }
-
-    public Chat(String jid) {
-        this.jid = jid;
-    }
 
     public String getJid() {
         return jid;
@@ -65,6 +61,10 @@ public class Chat extends RealmObject {
 
     public int getType() {
         return type;
+    }
+
+    public boolean isMucLight() {
+        return (type == TYPE_MUC_LIGHT);
     }
 
     public void setType(int type) {
@@ -119,8 +119,8 @@ public class Chat extends RealmObject {
         this.unreadMessagesCount++;
     }
 
-    public void resetUnreadMessageCount() {
-        this.unreadMessagesCount = 0;
+    public void setUnreadMessagesCount(int unreadMessagesCount) {
+        this.unreadMessagesCount = unreadMessagesCount;
     }
 
     public String getMessageBeingComposed() {

@@ -1,14 +1,9 @@
 package inaka.com.mangosta.activities;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.app.AlertDialog;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.Toolbar;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -31,7 +26,6 @@ import org.jivesoftware.smack.packet.XMPPError;
 import org.jivesoftware.smackx.blocking.element.BlockedErrorExtension;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
-import org.jivesoftware.smackx.muc.Affiliate;
 import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
 import org.jivesoftware.smackx.muclight.MultiUserChatLight;
 import org.jivesoftware.smackx.muclight.MultiUserChatLightManager;
@@ -42,12 +36,16 @@ import org.jxmpp.stringprep.XmppStringprepException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
@@ -55,16 +53,16 @@ import inaka.com.mangosta.adapters.ChatMessagesAdapter;
 import inaka.com.mangosta.adapters.StickersAdapter;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomManagerListener;
-import inaka.com.mangosta.chat.RoomsListManager;
-import inaka.com.mangosta.network.MongooseService;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.MongooseMUCLight;
 import inaka.com.mangosta.models.User;
+import inaka.com.mangosta.models.event.SendEvent;
 import inaka.com.mangosta.network.MongooseAPI;
+import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.notifications.MessageNotifications;
-import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -74,9 +72,6 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import io.realm.Realm;
-import io.realm.RealmChangeListener;
-import io.realm.RealmResults;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -113,17 +108,16 @@ public class ChatActivity extends BaseActivity {
     ImageButton scrollDownImageButton;
 
     private RoomManager mRoomManager;
+    private RoomManagerListener mRoomManagerListener;
     private String mChatJID;
 
     public static String CHAT_JID_PARAMETER = "chatJid";
     public static String CHAT_NAME_PARAMETER = "chatName";
-    public static String IS_NEW_CHAT_PARAMETER = "isNew";
 
-    Chat mChat;
+    private Chat mChat;
 
-    private RealmResults<ChatMessage> mMessages;
     private ChatMessagesAdapter mMessagesAdapter;
-    LinearLayoutManager mLayoutManagerMessages;
+    private LinearLayoutManager mLayoutManagerMessages;
 
     private String[] mStickersNameList = {
             "base",
@@ -133,20 +127,22 @@ public class ChatActivity extends BaseActivity {
             "snif"
     };
     private StickersAdapter mStickersAdapter;
-    LinearLayoutManager mLayoutManagerStickers;
+    private LinearLayoutManager mLayoutManagerStickers;
 
     private Disposable mMessageSubscription;
     private Disposable mMongooseMessageSubscription;
     private Disposable mMongooseMUCLightMessageSubscription;
     private Disposable mConnectionSubscription;
     private Disposable mArchiveQuerySubscription;
+    private Disposable mPresenceSubscription;
     private Disposable mErrorArchiveQuerySubscription;
+
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
     boolean mLeaving = false;
     boolean mIsOwner = false;
 
-    Timer mPauseComposeTimer = new Timer();
-    private int mMessagesCount;
+    private Timer mPauseComposeTimer = new Timer();
     private Menu mMenu;
 
     final private int VISIBLE_BEFORE_LOAD = 10;
@@ -166,32 +162,10 @@ public class ChatActivity extends BaseActivity {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
 
         mChatJID = getIntent().getStringExtra(CHAT_JID_PARAMETER);
-        String chatName = getIntent().getStringExtra(CHAT_NAME_PARAMETER);
-        boolean isNewChat = getIntent().getBooleanExtra(IS_NEW_CHAT_PARAMETER, false);
+        final String chatName = getIntent().getStringExtra(CHAT_NAME_PARAMETER);
 
-        mChat = getChatFromRealm();
-
-        if (isNewChat) {
-            RoomsListManager.getInstance().manageNewChat(mChat, getRealm(), chatName, mChatJID);
-            mChat = getChatFromRealm();
-        }
-
-        if (!mChat.isShow()) {
-            RoomsListManager.getInstance().setShowChat(getRealm(), mChat);
-        }
-
-        getSupportActionBar().setTitle(chatName);
-        if (mChat.getSubject() != null) {
-            getSupportActionBar().setSubtitle(mChat.getSubject());
-        }
-
-        if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
-            manageRoomNameAndSubject();
-        } else {
-            setOneToOneChatConnectionStatus();
-        }
-
-        mRoomManager = RoomManager.getInstance(new RoomManagerChatListener(ChatActivity.this));
+        mRoomManager = RoomManager.getInstance();
+        mRoomManagerListener = new RoomManagerChatListener();
 
         mLayoutManagerMessages = new LinearLayoutManager(this);
         mLayoutManagerMessages.setStackFromEnd(true);
@@ -199,22 +173,12 @@ public class ChatActivity extends BaseActivity {
         chatMessagesRecyclerView.setHasFixedSize(true);
         chatMessagesRecyclerView.setLayoutManager(mLayoutManagerMessages);
 
-        if (!RealmManager.isTesting()) {
-            mMessages = RealmManager.getInstance().getMessagesForChat(getRealm(), mChatJID);
-            mMessages.addChangeListener(mRealmChangeListener);
-        }
-
-        List<ChatMessage> messages = ((mMessages == null) ? new ArrayList<ChatMessage>() : mMessages);
-        mMessagesAdapter = new ChatMessagesAdapter(this, messages, mChat);
-
-        chatMessagesRecyclerView.setAdapter(mMessagesAdapter);
-
-        chatSendMessageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View button) {
-                sendTextMessage();
-            }
-        });
+        addDisposable(database.chatDao().findByJid(mChatJID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(chat -> initChat(chat, chatName),
+                        error -> Log.w(TAG, "error loading chat " + mChatJID, error),
+                        () -> Log.w(TAG, "no chat found for " + mChatJID)));
 
         loadMessagesSwipeRefreshLayout.setColorSchemeResources(
                 android.R.color.holo_blue_bright,
@@ -237,13 +201,15 @@ public class ChatActivity extends BaseActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                if (charSequence.length() > 0) { // compose message
-                    mPauseComposeTimer.cancel();
-                    mRoomManager.updateTypingStatus(ChatState.composing, mChatJID, mChat.getType());
-                    schedulePauseTimer();
-                } else { // delete or send message
-                    mPauseComposeTimer.cancel();
-                    mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.getType());
+                if (mChat != null) {
+                    if (charSequence.length() > 0) { // compose message
+                        mPauseComposeTimer.cancel();
+                        mRoomManager.updateTypingStatus(ChatState.composing, mChatJID, mChat.isMucLight(), mRoomManagerListener);
+                        schedulePauseTimer();
+                    } else { // delete or send message
+                        mPauseComposeTimer.cancel();
+                        mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.isMucLight(), mRoomManagerListener);
+                    }
                 }
             }
 
@@ -269,6 +235,14 @@ public class ChatActivity extends BaseActivity {
         stickersRecyclerView.setLayoutManager(mLayoutManagerStickers);
 
         mStickersAdapter = new StickersAdapter(this, Arrays.asList(mStickersNameList));
+
+        addDisposable(mStickersAdapter.getStickerSentObservable()
+                .subscribe(event -> {
+                    cancelMessageNotificationsForChat();
+                    if (SendEvent.Type.SEND_STICKER.equals(event.getType())) {
+                        sendStickerMessage(event.getImageName());
+                    }
+                }));
 
         stickersRecyclerView.setAdapter(mStickersAdapter);
 
@@ -296,9 +270,73 @@ public class ChatActivity extends BaseActivity {
                 return false;
             }
         });
-
     }
 
+    private void initChat(Chat chat, String chatName) {
+        mChat = chat;
+
+        getSupportActionBar().setTitle(chatName);
+        if (mChat.getSubject() != null) {
+            getSupportActionBar().setSubtitle(mChat.getSubject());
+        }
+
+        if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
+            manageRoomNameAndSubject();
+        } else {
+            setOneToOneChatConnectionStatus();
+        }
+
+        mMessagesAdapter = new ChatMessagesAdapter(this, new ArrayList<>(), mChat);
+        chatMessagesRecyclerView.setAdapter(mMessagesAdapter);
+
+        chatSendMessageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View button) {
+                sendTextMessage();
+            }
+        });
+
+        getMessageBeingComposed();
+
+        setMenuItemsVisibility();
+
+        final ChatMessage headerChatMessage = new ChatMessage();
+        headerChatMessage.setType(ChatMessage.TYPE_HEADER);
+        headerChatMessage.setMessageId("dummy");
+
+        addDisposable(database.chatMessageDao().findByChatId(mChatJID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(messages -> {
+                    int unreadMessages = mChat.getUnreadMessagesCount();
+                    if (unreadMessages > 0) {
+                        messages.add(messages.size() - unreadMessages, headerChatMessage);
+                    }
+                    mMessagesAdapter.updateList(messages);
+                }));
+    }
+
+    private void setMenuItemsVisibility() {
+        //set menu items
+        if (mMenu != null && mChat != null) {
+            mMenu.findItem(R.id.actionChatMembers).setVisible(mChat.getType() != Chat.TYPE_1_T0_1);
+
+            // can change room name or subject only if it is a MUC Light
+            mMenu.findItem(R.id.actionChangeRoomName).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
+            mMenu.findItem(R.id.actionChangeSubject).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
+
+            mMenu.findItem(R.id.actionDestroyChat).setVisible(false);
+            setDestroyButtonVisibility(mMenu);
+
+            mMenu.findItem(R.id.actionAddToContacts).setVisible(false);
+            mMenu.findItem(R.id.actionRemoveFromContacts).setVisible(false);
+            if (mChat.getType() == Chat.TYPE_1_T0_1) {
+                mMenu.findItem(R.id.actionLeaveChat).setTitle(getString(R.string.action_delete_chat));
+                manageLeaveAndContactMenuItems();
+            }
+        }
+
+    }
     @Override
     protected void onResume() {
         super.onResume();
@@ -333,18 +371,18 @@ public class ChatActivity extends BaseActivity {
                 if (subject != null) {
                     setTitle(subject);
                 }
-                refreshMessagesAndScrollToEnd();
+                scrollToEnd();
 
                 showErrorToast(message);
             }
         });
 
         mMongooseMessageSubscription = XMPPSession.getInstance().subscribeRoomToMongooseMessages(mChatJID, message -> {
-            refreshMessagesAndScrollToEnd();
+            scrollToEnd();
         });
 
         mMongooseMUCLightMessageSubscription = XMPPSession.getInstance().subscribeRoomToMUCLightMongooseMessages(mChatJID, message -> {
-            refreshMessagesAndScrollToEnd();
+            scrollToEnd();
         });
 
         mConnectionSubscription = XMPPSession.getInstance().subscribeToConnection(chatConnection -> {
@@ -359,7 +397,11 @@ public class ChatActivity extends BaseActivity {
             }
         });
 
-        getMessageBeingComposed();
+        mPresenceSubscription = XMPPSession.getInstance().subscribeToPresence(presence -> {
+            if (mChat != null && mChat.getType() == Chat.TYPE_1_T0_1) {
+                setOneToOneChatConnectionStatus();
+            }
+        });
     }
 
     @Override
@@ -371,35 +413,16 @@ public class ChatActivity extends BaseActivity {
         cancelMessageNotificationsForChat();
         mMessagesAdapter.notifyDataSetChanged();
 
-        mChat = getChatFromRealm();
-        if (mChat != null) {
-            sendInactiveTypingStatus();
-        }
+        sendInactiveTypingStatus();
 
-        disconnectRoomFromServer();
+        disposeConnectionSubscriptions();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_chat, menu);
         mMenu = menu;
-
-        menu.findItem(R.id.actionChatMembers).setVisible(mChat.getType() != Chat.TYPE_1_T0_1);
-
-        // can change room name or subject only if it is a MUC Light
-        menu.findItem(R.id.actionChangeRoomName).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
-        menu.findItem(R.id.actionChangeSubject).setVisible(mChat.getType() == Chat.TYPE_MUC_LIGHT);
-
-        menu.findItem(R.id.actionDestroyChat).setVisible(false);
-        setDestroyButtonVisibility(menu);
-
-        menu.findItem(R.id.actionAddToContacts).setVisible(false);
-        menu.findItem(R.id.actionRemoveFromContacts).setVisible(false);
-        if (mChat.getType() == Chat.TYPE_1_T0_1) {
-            menu.findItem(R.id.actionLeaveChat).setTitle(getString(R.string.action_delete_chat));
-            manageLeaveAndContactMenuItems();
-        }
-
+        setMenuItemsVisibility();
         return true;
     }
 
@@ -411,7 +434,6 @@ public class ChatActivity extends BaseActivity {
         switch (id) {
             case android.R.id.home:
 
-                mChat = getChatFromRealm();
                 sendInactiveTypingStatus();
 
                 if (mSessionDepth == 1) {
@@ -422,11 +444,9 @@ public class ChatActivity extends BaseActivity {
                     finish();
                 }
 
-                new Event(Event.Type.GO_BACK_FROM_CHAT).post();
                 break;
 
             case R.id.actionChatMembers:
-                mChat = getChatFromRealm();
                 Intent chatMembersIntent = new Intent(ChatActivity.this, ChatMembersActivity.class);
                 chatMembersIntent.putExtra(ChatMembersActivity.ROOM_JID_PARAMETER, mChatJID);
                 chatMembersIntent.putExtra(ChatMembersActivity.IS_ADMIN_PARAMETER, mIsOwner);
@@ -442,12 +462,16 @@ public class ChatActivity extends BaseActivity {
                 break;
 
             case R.id.actionLeaveChat:
-                mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.getType());
+                if (mChat != null) {
+                    mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.isMucLight(), mRoomManagerListener);
+                }
                 leaveChat();
                 break;
 
             case R.id.actionDestroyChat:
-                mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.getType());
+                if (mChat != null) {
+                    mRoomManager.updateTypingStatus(ChatState.gone, mChatJID, mChat.isMucLight(), mRoomManagerListener);
+                }
                 destroyChat();
                 break;
 
@@ -469,7 +493,6 @@ public class ChatActivity extends BaseActivity {
         saveMessageBeingComposed();
         sendInactiveTypingStatus();
         cancelMessageNotificationsForChat();
-        new Event(Event.Type.GO_BACK_FROM_CHAT).post();
     }
 
     @Override
@@ -500,41 +523,34 @@ public class ChatActivity extends BaseActivity {
 
     private void saveMessageBeingComposed() {
         if (!Preferences.isTesting()) {
-            mChat = getChatFromRealm();
 
             if (mChat != null && chatSendMessageEditText != null) {
                 String message = chatSendMessageEditText.getText().toString();
 
-                Realm realm = getRealm();
-                realm.beginTransaction();
-                mChat.setMessageBeingComposed(message);
-                realm.commitTransaction();
+                addDisposable(Completable.fromAction(() -> database.chatDao().updateMessageBeingComposed(mChatJID, message))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe());
             }
         }
     }
 
     private void getMessageBeingComposed() {
         if (!Preferences.isTesting()) {
-            mChat = getChatFromRealm();
             String message = mChat.getMessageBeingComposed();
-            if (message != null && message.length() > 0) {
+            if (!TextUtils.isEmpty(message)) {
                 chatSendMessageEditText.setText(message);
             }
         }
     }
 
-    private Chat getChatFromRealm() {
-        return RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
-    }
-
     private void cancelMessageNotificationsForChat() {
         if (!Preferences.isTesting()) {
             MessageNotifications.cancelChatNotifications(this, mChatJID);
-            Realm realm = RealmManager.getInstance().getRealm();
-            mChat = RealmManager.getInstance().getChatFromRealm(realm, mChatJID);
-            realm.beginTransaction();
-            mChat.resetUnreadMessageCount();
-            realm.commitTransaction();
+            addDisposable(Single.fromCallable(() -> database.chatDao().resetUnreadMessageCount(mChatJID))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(result -> mChat.setUnreadMessagesCount(0)));
         }
     }
 
@@ -585,7 +601,6 @@ public class ChatActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mChat = getChatFromRealm();
                         sendInactiveTypingStatus();
                     }
                 });
@@ -604,21 +619,16 @@ public class ChatActivity extends BaseActivity {
                     MongooseMUCLight mongooseMUCLight = response.body();
 
                     if (mongooseMUCLight != null) {
-                        Realm realm = getRealm();
-                        realm.beginTransaction();
-
-                        mChat = RealmManager.getInstance().getChatFromRealm(getRealm(), mChatJID);
                         mChat.setName(mongooseMUCLight.getName());
                         mChat.setSubject(mongooseMUCLight.getSubject());
-
-                        realm.copyToRealmOrUpdate(mChat);
-                        realm.commitTransaction();
+                        Completable.fromAction(() -> database.chatDao().update(mChat))
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe();
 
                         if (mChat.getSubject() != null) {
                             getSupportActionBar().setSubtitle(mChat.getSubject());
                         }
-
-                        realm.close();
                     }
 
                 }
@@ -632,10 +642,12 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void sendInactiveTypingStatus() {
-        if (wasComposingMessage()) {
-            mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.getType());
-        } else {
-            mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.getType());
+        if (mChat != null) {
+            if (wasComposingMessage()) {
+                mRoomManager.updateTypingStatus(ChatState.paused, mChatJID, mChat.isMucLight(), mRoomManagerListener);
+            } else {
+                mRoomManager.updateTypingStatus(ChatState.inactive, mChatJID, mChat.isMucLight(), mRoomManagerListener);
+            }
         }
     }
 
@@ -717,21 +729,17 @@ public class ChatActivity extends BaseActivity {
         });
 
         addDisposable(task
-                .subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Toast.makeText(ChatActivity.this,
                             getString(R.string.room_name_changed),
                             Toast.LENGTH_SHORT).show();
 
-                    Realm realm = getRealm();
-                    realm.beginTransaction();
-                    mChat.setName(chatName);
-                    realm.commitTransaction();
-
-                    if (!Preferences.isTesting()) {
-                        realm.close();
-                    }
+                    Completable.fromAction(() -> database.chatDao().updateName(mChatJID, chatName))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe();
 
                     getSupportActionBar().setTitle(chatName);
                 }, error -> {
@@ -787,21 +795,17 @@ public class ChatActivity extends BaseActivity {
         });
 
         addDisposable(task
-                .subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Toast.makeText(ChatActivity.this,
                             getString(R.string.room_subject_changed),
                             Toast.LENGTH_SHORT).show();
 
-                    Realm realm = getRealm();
-                    realm.beginTransaction();
-                    mChat.setSubject(subject);
-                    realm.commitTransaction();
-
-                    if (!Preferences.isTesting()) {
-                        realm.close();
-                    }
+                    addDisposable(Completable.fromAction(() -> database.chatDao().updateSubject(mChatJID, subject))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe());
 
                     getSupportActionBar().setSubtitle(subject);
                 }, error -> {
@@ -809,31 +813,27 @@ public class ChatActivity extends BaseActivity {
                 }));
     }
 
-    private void disconnectRoomFromServer() {
-        if (mMessageSubscription != null) {
+    private void disposeConnectionSubscriptions() {
+        if (mMessageSubscription != null)
             mMessageSubscription.dispose();
-        }
 
-        if (mConnectionSubscription != null) {
+        if (mConnectionSubscription != null)
             mConnectionSubscription.dispose();
-        }
 
-        if (mArchiveQuerySubscription != null) {
+        if (mArchiveQuerySubscription != null)
             mArchiveQuerySubscription.dispose();
-        }
 
-        if (mErrorArchiveQuerySubscription != null) {
+        if (mErrorArchiveQuerySubscription != null)
             mErrorArchiveQuerySubscription.dispose();
-        }
 
-        if (mMongooseMessageSubscription != null) {
+        if (mMongooseMessageSubscription != null)
             mMongooseMessageSubscription.dispose();
-        }
 
-        if (mMongooseMUCLightMessageSubscription != null) {
+        if (mMongooseMUCLightMessageSubscription != null)
             mMongooseMUCLightMessageSubscription.dispose();
-        }
 
+        if (mPresenceSubscription != null)
+            mPresenceSubscription.dispose();
     }
 
     private void sendTextMessage() {
@@ -843,12 +843,18 @@ public class ChatActivity extends BaseActivity {
             String content = chatSendMessageEditText.getText().toString().trim().replaceAll("\n\n+", "\n\n");
 
             if (!TextUtils.isEmpty(content)) {
-                mChat = getChatFromRealm();
-                mRoomManager.sendTextMessage(mChatJID, content, mChat.getType());
+                mRoomManager.sendTextMessage(mChatJID, mChat.isMucLight(), content, mRoomManagerListener);
                 chatSendMessageEditText.setText("");
-                refreshMessagesAndScrollToEnd();
+                scrollToEnd();
             }
         }
+    }
+
+    private void sendStickerMessage(String imageName) {
+        mRoomManager.sendStickerMessage(mChatJID, mChat.isMucLight(),
+                imageName, mRoomManagerListener);
+        stickersRecyclerView.setVisibility(View.GONE);
+        scrollToEnd();
     }
 
     private void leaveChat() {
@@ -868,20 +874,14 @@ public class ChatActivity extends BaseActivity {
             public void onClick(DialogInterface dialog, int which) {
                 mLeaving = true;
 
-                Realm realm = getRealm();
-                Chat chat = realm.where(Chat.class).equalTo("jid", mChatJID).findFirst();
-
-                switch (chat.getType()) {
-
+                switch (mChat.getType()) {
                     case Chat.TYPE_MUC_LIGHT:
-                        realm.close();
-                        disconnectRoomFromServer();
-                        mRoomManager.leaveMUCLight(mChatJID);
+                        disposeConnectionSubscriptions();
+                        mRoomManager.leaveMUCLight(mChatJID, mRoomManagerListener);
                         break;
 
                     case Chat.TYPE_1_T0_1:
-                        realm.close();
-                        mRoomManager.leave1to1Chat(mChatJID);
+                        mRoomManager.leave1to1Chat(mChatJID, mRoomManagerListener);
                         break;
                 }
 
@@ -908,10 +908,9 @@ public class ChatActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mLeaving = true;
-                mChat = getChatFromRealm();
                 if (mChat.getType() == Chat.TYPE_MUC_LIGHT) {
-                    disconnectRoomFromServer();
-                    mRoomManager.destroyMUCLight(mChatJID);
+                    disposeConnectionSubscriptions();
+                    mRoomManager.destroyMUCLight(mChatJID, mRoomManagerListener);
                     finish();
                 }
             }
@@ -929,9 +928,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void loadArchivedMessages() {
-        mChat = getChatFromRealm();
-
-        if (mChat == null || !mChat.isValid()) {
+        if (mChat == null) {
 
             if (loadMessagesSwipeRefreshLayout != null) {
                 loadMessagesSwipeRefreshLayout.setRefreshing(false);
@@ -961,18 +958,13 @@ public class ChatActivity extends BaseActivity {
             Toast.makeText(ChatActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
         });
 
-        mRoomManager.loadArchivedMessages(mChatJID, PAGES_TO_LOAD, ITEMS_PER_PAGE);
-    }
-
-    private void refreshMessages() {
-        XMPPSession.getInstance().deleteMessagesToDelete();
-        mMessagesAdapter.notifyDataSetChanged();
+        mRoomManager.loadArchivedMessages(mChat, PAGES_TO_LOAD, ITEMS_PER_PAGE);
     }
 
     private void scrollToEnd() {
         if (mMessagesAdapter != null) {
             if (!isMessagesListScrolledToBottom() && chatMessagesRecyclerView != null) {
-                chatMessagesRecyclerView.scrollToPosition(mMessagesAdapter.getItemCount() - 1);
+                chatMessagesRecyclerView.smoothScrollToPosition(mMessagesAdapter.getItemCount() - 1);
             }
         }
     }
@@ -980,91 +972,6 @@ public class ChatActivity extends BaseActivity {
     private boolean isMessagesListScrolledToBottom() {
         int lastPosition = mLayoutManagerMessages.findLastVisibleItemPosition();
         return !(lastPosition <= mMessagesAdapter.getItemCount() - 2);
-    }
-
-    private void refreshMessagesAndScrollToEnd() {
-        refreshMessages();
-        scrollToEnd();
-    }
-
-    RealmChangeListener<RealmResults<ChatMessage>> mRealmChangeListener = new RealmChangeListener<RealmResults<ChatMessage>>() {
-        @Override
-        public void onChange(RealmResults<ChatMessage> messages) {
-            if (mMessagesAdapter != null) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!XMPPSession.isInstanceNull() && XMPPSession.getInstance().isConnectedAndAuthenticated()) {
-                            if (mMessages.size() == 0 && !mLeaving) {
-                                loadArchivedMessages();
-                            }
-                        }
-
-                        if (mMessagesCount != mMessages.size()) {
-                            refreshMessagesAndScrollToEnd();
-                            mMessagesCount = mMessages.size();
-                        } else {
-                            refreshMessages();
-                        }
-
-                    }
-                });
-            }
-        }
-    };
-
-    private class RoomManagerChatListener extends RoomManagerListener {
-
-        public RoomManagerChatListener(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onMessageSent(int chatType) {
-            super.onMessageSent(chatType);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    refreshMessagesAndScrollToEnd();
-                }
-            });
-        }
-
-        @Override
-        public void onRoomMembersLoaded(final List<Affiliate> members) {
-            super.onRoomMembersLoaded(members);
-        }
-    }
-
-    // receives events from EventBus
-    public void onEvent(Event event) {
-        super.onEvent(event);
-        switch (event.getType()) {
-            case STICKER_SENT:
-                cancelMessageNotificationsForChat();
-                stickerSent(event.getImageName());
-                break;
-
-            case PRESENCE_RECEIVED:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mChat != null && mChat.getType() == Chat.TYPE_1_T0_1) {
-                            setOneToOneChatConnectionStatus();
-                        }
-                    }
-                });
-                break;
-        }
-    }
-
-    private void stickerSent(String imageName) {
-        String messageId = RealmManager.getInstance()
-                .saveMessageLocally(mChat, mChatJID, imageName, ChatMessage.TYPE_STICKER);
-        mChat = getChatFromRealm();
-        mRoomManager.sendStickerMessage(messageId, mChatJID, imageName, mChat.getType());
-        stickersRecyclerView.setVisibility(View.GONE);
-        refreshMessagesAndScrollToEnd();
     }
 
     private void manageLeaveAndContactMenuItems() {
@@ -1133,6 +1040,11 @@ public class ChatActivity extends BaseActivity {
                 }, error -> Log.w(TAG, error)));
     }
 
+    private class RoomManagerChatListener extends RoomManagerListener {
+        @Override
+        public void onMessageSent(int chatType) {
+            new Handler().postDelayed(() -> scrollToEnd(), 500L);
+        }
+    }
 }
-
 

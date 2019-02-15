@@ -3,8 +3,13 @@ package inaka.com.mangosta.utils;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+
+import com.facebook.stetho.Stetho;
+
 import androidx.multidex.MultiDex;
 
+import androidx.room.Room;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.xmpp.XMPPSession;
 
@@ -13,6 +18,7 @@ public class MangostaApplication extends Application {
     private static MangostaApplication CONTEXT;
 
     private Activity mCurrentActivity = null;
+    private MangostaDatabase database;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -24,10 +30,19 @@ public class MangostaApplication extends Application {
     public void onCreate() {
         super.onCreate();
         CONTEXT = this;
+
+        Stetho.initializeWithDefaults(this);
+
+        database = Room.databaseBuilder(getApplicationContext(),
+                MangostaDatabase.class, "MangostaDatabase").build();
     }
 
     public static MangostaApplication getInstance() {
         return CONTEXT;
+    }
+
+    public MangostaDatabase getDatabase() {
+        return database;
     }
 
     public void moveToBackground() {

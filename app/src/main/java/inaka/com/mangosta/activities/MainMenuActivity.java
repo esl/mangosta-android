@@ -2,8 +2,7 @@ package inaka.com.mangosta.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.viewpager.widget.ViewPager;
-import androidx.appcompat.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,20 +13,25 @@ import com.google.android.material.tabs.TabLayout;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
+import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.ViewPagerMainMenuAdapter;
-import inaka.com.mangosta.fragments.ChatsListsFragment;
-import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.User;
 import inaka.com.mangosta.notifications.RosterNotifications;
-import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
-import inaka.com.mangosta.xmpp.XMPPUtils;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class MainMenuActivity extends BaseActivity {
+
+    private static final String TAG = MainMenuActivity.class.getSimpleName();
 
     @BindView(R.id.slidingTabStrip)
     TabLayout mSlidingTabStrip;
@@ -41,7 +45,7 @@ public class MainMenuActivity extends BaseActivity {
     @BindView(R.id.createNewBlogFloatingButton)
     FloatingActionButton createNewBlogFloatingButton;
 
-    public boolean mRoomsLoaded = false;
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
     public static String NEW_BLOG_POST = "newBlogPost";
     public static String NEW_ROSTER_REQUEST = "newRosterRequest";
@@ -76,6 +80,8 @@ public class MainMenuActivity extends BaseActivity {
         createNewBlogFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                goToSocialTab();
+
                 Intent intent = new Intent(MainMenuActivity.this, CreateBlogActivity.class);
                 MainMenuActivity.this.startActivity(intent);
             }
@@ -94,9 +100,9 @@ public class MainMenuActivity extends BaseActivity {
                     String sender = bundle.getString(NEW_ROSTER_REQUEST_SENDER);
                     Jid jid = JidCreate.from(sender);
                     RosterNotifications.cancelRosterRequestNotification(this, sender);
-                    answerSubscriptionRequest(jid);
+                    RosterNotifications.answerSubscriptionRequest(jid);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "roster request error", e);
                 }
             }
         }
@@ -126,16 +132,28 @@ public class MainMenuActivity extends BaseActivity {
 
             case R.id.actionSignOut: {
                 Preferences.getInstance().deleteAll();
-                RealmManager.getInstance().deleteAll();
+                Completable clearDataTask = Completable.fromCallable(() -> {
+                    database.beginTransaction();
+                    database.chatDao().deleteAll();
+                    database.chatMessageDao().deleteAll();
+                    database.blogPostDao().deleteAll();
+                    database.blogPostCommentDao().deleteAll();
+                    database.endTransaction();
+                    return null;
+                });
+                addDisposable(clearDataTask
+	                    .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(() -> {
+                            XMPPSession.getInstance().logoff();
 
-                XMPPSession.getInstance().logoff();
+                            ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).clearFragmentsList();
 
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).clearFragmentsList();
-
-                Intent splashActivityIntent = new Intent(this, SplashActivity.class);
-                splashActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                this.startActivity(splashActivityIntent);
-                finish();
+                            Intent splashActivityIntent = new Intent(this, SplashActivity.class);
+                            splashActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            this.startActivity(splashActivityIntent);
+                            finish();
+                        }));
 
                 return true;
             }
@@ -183,29 +201,6 @@ public class MainMenuActivity extends BaseActivity {
         this.startActivity(userOptionsActivityIntent);
     }
 
-    // receives events from EventBus
-    @Override
-    public void onEvent(Event event) {
-        super.onEvent(event);
-        switch (event.getType()) {
-            case ROOMS_LOADED:
-                mRoomsLoaded = true;
-                break;
-            case GO_BACK_FROM_CHAT:
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
-                break;
-            case CONTACTS_CHANGED:
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).syncChats();
-                break;
-            case BLOG_POST_CREATED:
-                goToSocialTab();
-                break;
-            case REFRESH_UNREAD_MESSAGES_COUNT:
-                ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadChats();
-                break;
-        }
-    }
-
     private void goToSocialTab() {
         mViewpagerMainMenu.setCurrentItem(ViewPagerMainMenuAdapter.SOCIAL_MEDIA_FRAGMENT_POSITION);
         ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter()).reloadBlogPosts();
@@ -214,14 +209,6 @@ public class MainMenuActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        reloadChats();
     }
 
-    private void reloadChats() {
-        ChatsListsFragment mChatsListsFragment = (ChatsListsFragment) ((ViewPagerMainMenuAdapter) mViewpagerMainMenu.getAdapter())
-                .getRegisteredFragment(0);
-        if (mChatsListsFragment != null) {
-            mChatsListsFragment.loadChats();
-        }
-    }
 }

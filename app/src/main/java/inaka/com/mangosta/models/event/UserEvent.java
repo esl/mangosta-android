@@ -1,6 +1,6 @@
-package inaka.com.mangosta.models;
+package inaka.com.mangosta.models.event;
 
-import de.greenrobot.event.EventBus;
+import inaka.com.mangosta.models.User;
 
 public class UserEvent {
 
@@ -16,21 +16,12 @@ public class UserEvent {
         this.mType = type;
         this.mUser = user;
     }
-
-    public UserEvent(Type type) {
-        this.mType = type;
-    }
-
     public Type getType() {
         return mType;
     }
 
     public User getUser() {
         return mUser;
-    }
-
-    public void post() {
-        EventBus.getDefault().post(this);
     }
 
 }

@@ -14,8 +14,6 @@ import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.ChatActivity;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
-import inaka.com.mangosta.models.Event;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
 
@@ -23,20 +21,18 @@ public class MessageNotifications {
 
     private static HashMap<String, Integer> mChatMessageCounters = new HashMap<>();
 
-    public static void chatMessageNotification(String messageId) {
+    public static void chatMessageNotification(ChatMessage chatMessage, Chat chat) {
         // show notification only if the app is closed
         if (!MangostaApplication.getInstance().isClosed()) {
-            new Event(Event.Type.REFRESH_UNREAD_MESSAGES_COUNT).post();
             return;
         }
 
         Context context = XMPPSessionService.CONTEXT;
-        ChatMessage chatMessage = RealmManager.getInstance().getChatMessage(messageId);
+
         String chatJid = chatMessage.getRoomJid();
 
         Integer count = updateMessageCounters(chatJid);
 
-        Chat chat = RealmManager.getInstance().getChat(chatJid);
         String chatName = chat.getName();
         String text = String.format(Locale.getDefault(), context.getResources().getQuantityString(R.plurals.chat_message_notification, count), count);
 
@@ -72,7 +68,6 @@ public class MessageNotifications {
         Bundle bundle = new Bundle();
         bundle.putString(ChatActivity.CHAT_JID_PARAMETER, chatJid);
         bundle.putString(ChatActivity.CHAT_NAME_PARAMETER, chatName);
-        bundle.putBoolean(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
         intent.putExtras(bundle);
         return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }

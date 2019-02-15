@@ -17,12 +17,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.models.event.RosterEvent;
 import inaka.com.mangosta.models.User;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
 
 public class RosterManager {
 
     private static RosterManager mInstance;
+
+    private PublishSubject<RosterEvent> rosterChangedSubject = PublishSubject.create();
 
     public static RosterManager getInstance() {
         if (mInstance == null) {
@@ -32,17 +36,17 @@ public class RosterManager {
             roster.addRosterListener(new RosterListener() {
                 @Override
                 public void entriesAdded(Collection<Jid> collection) {
-                    new Event(Event.Type.ROSTER_CHANGED).post();
+                    mInstance.rosterChangedSubject.onNext(new RosterEvent());
                 }
 
                 @Override
                 public void entriesUpdated(Collection<Jid> collection) {
-                    new Event(Event.Type.ROSTER_CHANGED).post();
+                    mInstance.rosterChangedSubject.onNext(new RosterEvent());
                 }
 
                 @Override
                 public void entriesDeleted(Collection<Jid> collection) {
-                    new Event(Event.Type.ROSTER_CHANGED).post();
+                    mInstance.rosterChangedSubject.onNext(new RosterEvent());
                 }
 
                 @Override
@@ -55,6 +59,10 @@ public class RosterManager {
 
     public static void setSpecialInstanceForTesting(RosterManager rosterManager) {
         mInstance = rosterManager;
+    }
+
+    public Observable<RosterEvent> getRosterChangeObservable() {
+        return rosterChangedSubject;
     }
 
     public void removeAllContacts()

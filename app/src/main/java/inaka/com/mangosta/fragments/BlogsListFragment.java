@@ -1,26 +1,26 @@
 package inaka.com.mangosta.fragments;
 
 import android.os.Bundle;
-import androidx.fragment.app.Fragment;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
-import java.util.List;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.BlogPostsListAdapter;
-import inaka.com.mangosta.models.BlogPost;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.notifications.BlogPostNotifications;
-import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.MangostaApplication;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
-public class BlogsListFragment extends Fragment {
+public class BlogsListFragment extends BaseFragment {
 
     @BindView(R.id.blogsRecyclerView)
     RecyclerView blogsRecyclerView;
@@ -28,8 +28,10 @@ public class BlogsListFragment extends Fragment {
     @BindView(R.id.socialMediaSwipeRefreshLayout)
     SwipeRefreshLayout socialMediaSwipeRefreshLayout;
 
-    List<BlogPost> mBlogPosts;
     private BlogPostsListAdapter mBlogPostsListAdapter;
+
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -40,12 +42,9 @@ public class BlogsListFragment extends Fragment {
         final LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         blogsRecyclerView.setLayoutManager(layoutManager);
 
-        mBlogPosts = new ArrayList<>();
-        mBlogPostsListAdapter = new BlogPostsListAdapter(mBlogPosts, getActivity());
+        mBlogPostsListAdapter = new BlogPostsListAdapter(new ArrayList<>(), getActivity());
 
         blogsRecyclerView.setAdapter(mBlogPostsListAdapter);
-
-        loadBlogPosts();
 
         socialMediaSwipeRefreshLayout.setColorSchemeResources(
                 android.R.color.holo_blue_bright,
@@ -68,11 +67,11 @@ public class BlogsListFragment extends Fragment {
             socialMediaSwipeRefreshLayout.setRefreshing(true);
         }
 
-        if (mBlogPosts != null && mBlogPostsListAdapter != null) {
-            mBlogPosts.clear();
-            mBlogPosts.addAll(RealmManager.getInstance().getBlogPosts());
-            mBlogPostsListAdapter.notifyDataSetChanged();
-        }
+        addDisposable(database.blogPostDao().getAll()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(list -> {}//@TODO mBlogPostsListAdapter.submitList(list))
+                        ));
 
         if (socialMediaSwipeRefreshLayout != null) {
             socialMediaSwipeRefreshLayout.setRefreshing(false);

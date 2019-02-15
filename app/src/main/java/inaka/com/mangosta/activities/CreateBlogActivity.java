@@ -1,7 +1,6 @@
 package inaka.com.mangosta.activities;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.Bundle;
 import androidx.appcompat.widget.Toolbar;
 
@@ -20,7 +19,6 @@ import org.jxmpp.jid.Jid;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 import io.reactivex.Completable;
@@ -101,7 +99,6 @@ public class CreateBlogActivity extends BaseActivity {
                     progress.dismiss();
                     createBlogText.setText("");
                     Toast.makeText(CreateBlogActivity.this, getString(R.string.blog_post_published), Toast.LENGTH_SHORT).show();
-                    new Event(Event.Type.BLOG_POST_CREATED).post();
                     finish();
                 }, error -> {
                     progress.dismiss();

@@ -2,20 +2,25 @@ package inaka.com.mangosta.models;
 
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
-public class ChatMessage extends RealmObject {
+@Entity
+public class ChatMessage {
 
     public static final int TYPE_CHAT = 0;
     public static final int TYPE_ROOM_NAME_CHANGED = 1;
     public static final int TYPE_ROOM_CREATED = 2;
     public static final int TYPE_STICKER = 3;
 
+    public static final int TYPE_HEADER = -1;
+
     public static final int STATUS_SENDING = 0;
     public static final int STATUS_SENT = 1;
 
     @PrimaryKey
+    @NonNull
     private String messageId;
     private String roomJid;
     private String userSender;

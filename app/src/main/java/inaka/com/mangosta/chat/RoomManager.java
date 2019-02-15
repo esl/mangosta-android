@@ -2,6 +2,7 @@ package inaka.com.mangosta.chat;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.jivesoftware.smack.SmackException;
@@ -34,10 +35,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.UUID;
 
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.network.MongooseService;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.Chat;
+import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.MongooseMUCLight;
 import inaka.com.mangosta.models.MongooseMUCLightMessage;
@@ -49,9 +52,7 @@ import inaka.com.mangosta.models.requests.CreateMUCLightRequest;
 import inaka.com.mangosta.models.requests.CreateMessageRequest;
 import inaka.com.mangosta.models.responses.MongooseIdResponse;
 import inaka.com.mangosta.network.MongooseAPI;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.MangostaApplication;
-import inaka.com.mangosta.utils.NavigateToChat;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
@@ -61,36 +62,52 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import io.realm.Realm;
 import okio.Buffer;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class RoomManager {
+    private static final String TAG = RoomManager.class.getSimpleName();
 
-    private RoomManagerListener mListener;
-    private static RoomManager mInstance;
-    private static boolean mIsTesting;
+    private static RoomManager instance;
+    private static MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
-    private RoomManager(RoomManagerListener listener) {
-        mListener = listener;
-    }
+    private boolean mIsTesting;
 
-    public static RoomManager getInstance(RoomManagerListener listener) {
-        if (mInstance == null) {
-            mInstance = new RoomManager(listener);
+    public static RoomManager getInstance() {
+        if (instance == null) {
+            instance = new RoomManager(false);
         }
-        return mInstance;
+        return instance;
     }
 
-    public static boolean isTesting() {
+    public static RoomManager getTestInstance() {
+        if (instance == null) {
+            instance = new RoomManager(true);
+        }
+        return instance;
+    }
+
+    private RoomManager(boolean isTesting) {
+        mIsTesting = isTesting;
+    }
+
+    public boolean isTesting() {
         return mIsTesting;
     }
 
-    public static void setSpecialInstanceForTesting(RoomManager roomManager) {
-        mInstance = roomManager;
-        mIsTesting = true;
+    public void loadAllChats() {
+        Completable task = Completable.fromCallable(() -> {
+            loadRosterContactsChats(); // load 1 to 1 chats from contacts
+            loadMUCLightRooms(); // load group chats
+            return null;
+        });
+
+        Disposable d = task.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> Log.d(TAG, "loadChatsBackgroundTask complete"),
+                        error -> Log.d(TAG, "loadChatsBackgroundTask error", error));
     }
 
     public void loadMUCLightRooms() {
@@ -105,84 +122,173 @@ public class RoomManager {
                 List<MongooseMUCLight> rooms = call.execute().body();
                 processMUCLightRooms(rooms);
             } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                mListener.onRoomsLoaded();
+                Log.e(TAG, "loadMUCLightRooms error", e);
             }
-        }
-    }
-
-    public void loadMUCLightRoomsInBackground() {
-        final XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
-        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
-
-        if (connection.isAuthenticated() && mongooseService != null) {
-            Call<List<MongooseMUCLight>> call = mongooseService.getMUCLights();
-            call.enqueue(new Callback<List<MongooseMUCLight>>() {
-                @Override
-                public void onResponse(Call<List<MongooseMUCLight>> call, Response<List<MongooseMUCLight>> response) {
-                    processMUCLightRooms(response.body());
-                    mListener.onRoomsLoaded();
-                }
-
-                @Override
-                public void onFailure(Call<List<MongooseMUCLight>> call, Throwable t) {
-                    t.printStackTrace();
-                    mListener.onRoomsLoaded();
-                }
-            });
         }
     }
 
     private void processMUCLightRooms(List<MongooseMUCLight> rooms) {
 
         if (rooms != null) {
-            RealmManager.getInstance().hideAllMUCLightChats();
-            Realm realm = RealmManager.getInstance().getRealm();
+            Disposable d = Single.fromCallable(() -> database.chatDao().updateVisibilityAll(Chat.TYPE_MUC_LIGHT, false))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(done -> {
+                        for (MongooseMUCLight room : rooms) {
+                            String itemJid = room.getId() + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
+                            Disposable d1 = database.chatDao().findByJid(itemJid)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(existingChat -> {
+                                                //existing chat
+                                                existingChat.setShow(true);
+                                                existingChat.setName(room.getName());
+                                                existingChat.setSubject(room.getSubject());
+                                                Completable.fromAction(() -> database.chatDao().update(existingChat))
+                                                        .subscribeOn(Schedulers.io())
+                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                        .subscribe();
+                                            }, error -> Log.w(TAG, "processMUCLightRooms error", error),
+                                            () -> {
+                                                //new chat
+                                                Chat chat = new Chat();
+                                                chat.setJid(itemJid);
+                                                chat.setType(Chat.TYPE_MUC_LIGHT);
+                                                chat.setShow(true);
+                                                chat.setName(room.getName());
+                                                chat.setSubject(room.getSubject());
+                                                Completable.fromAction(() -> database.chatDao().insert(chat))
+                                                        .subscribeOn(Schedulers.io())
+                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                        .subscribe();
+                                            });
 
-            for (MongooseMUCLight room : rooms) {
-                String itemJid = room.getId() + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
-
-                Chat chatRoom = realm.where(Chat.class).equalTo("jid", itemJid).findFirst();
-
-                if (chatRoom == null) {
-                    chatRoom = new Chat();
-                    chatRoom.setJid(itemJid);
-                    chatRoom.setType(Chat.TYPE_MUC_LIGHT);
-                }
-
-                realm.beginTransaction();
-                chatRoom.setShow(true);
-                chatRoom.setName(room.getName());
-                chatRoom.setSubject(room.getSubject());
-                realm.copyToRealmOrUpdate(chatRoom);
-                realm.commitTransaction();
-
-                // set last retrieved from MAM
-                ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(chatRoom.getJid());
-                if (chatMessage != null) {
-                    realm.beginTransaction();
-                    chatRoom.setLastTimestampRetrieved(chatMessage.getDate().getTime());
-                    realm.copyToRealmOrUpdate(chatRoom);
-                    realm.commitTransaction();
-                }
-            }
-
-            realm.close();
+                        }
+                    });
         }
 
     }
 
-    public static String createCommonChat(User user) {
-        createChatIfNotExists(user.getJid(), true);
-        return user.getJid();
-    }
-
-    public static ChatManager getChatManager() {
+    public ChatManager getChatManager() {
         return ChatManager.getInstanceFor(XMPPSession.getInstance().getXMPPConnection());
     }
 
-    public static void createMUCLightAndGo(List<User> users, final String roomName, final Activity context) {
+    public MultiUserChatLight createMUCLight(List<User> users, String roomName) {
+        List<Jid> occupants = new ArrayList<>();
+
+        for (User user : users) {
+            try {
+                occupants.add(JidCreate.from(user.getJid()));
+            } catch (XmppStringprepException e) {
+                e.printStackTrace();
+            }
+        }
+
+        XMPPTCPConnection connection = XMPPSession.getInstance().getXMPPConnection();
+        MultiUserChatLightManager multiUserChatLightManager = MultiUserChatLightManager.getInstanceFor(connection);
+
+        String roomId = UUID.randomUUID().toString();
+        String roomJid = roomId + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME;
+        MultiUserChatLight multiUserChatLight = null;
+
+        try {
+            multiUserChatLight = multiUserChatLightManager.getMultiUserChatLight(JidCreate.from(roomJid).asEntityBareJidIfPossible());
+            multiUserChatLight.create(roomName, occupants);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return multiUserChatLight;
+    }
+
+    public Completable createChat(final String chatJid) {
+        return Completable.fromAction(() -> {
+            Chat chat = new Chat();
+            chat.setJid(chatJid);
+            if (chatJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
+                chat.setType(Chat.TYPE_MUC_LIGHT);
+                //chat.setSortPosition(RealmManager.getInstance().getMUCLights().size());
+                findMUCLightName(chat);
+            } else {
+                chat.setType(Chat.TYPE_1_T0_1);
+                //chat.setSortPosition(RealmManager.getInstance().get1to1Chats().size());
+                if (!chatJid.equals(Preferences.getInstance().getUserXMPPJid())) {
+                    chat.setName(XMPPUtils.fromJIDToUserName(chatJid));
+                }
+            }
+
+            chat.setShow(true);
+            chat.setDateCreated(new Date());
+
+            Log.d(TAG, "createChat " + chatJid);
+            database.chatDao().insert(chat);
+        }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    private void findMUCLightName(Chat chat) {
+        if (XMPPSession.getInstance().getXMPPConnection().isAuthenticated()) {
+            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCLightItems();
+
+            if (discoverItems != null) {
+                List<DiscoverItems.Item> items = discoverItems.getItems();
+
+                for (DiscoverItems.Item item : items) {
+
+                    String itemJid = item.getEntityID().toString();
+                    if (itemJid.equals(chat.getJid())) {
+                        chat.setName(item.getName());
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    public void setShowChat(Chat mChat) {
+        Completable.fromAction(() -> database.chatDao().updateVisibilityByJid(mChat.getJid(), true))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
+    }
+
+    public void manageNewChat(Chat chat, String chatName, String chatJid) {
+        if (chat == null) {
+            chat = new Chat();
+            chat.setJid(chatJid);
+
+            if (chatJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
+                chat.setType(Chat.TYPE_MUC_LIGHT);
+                //chatRoom.setSortPosition(RealmManager.getInstance().getMUCLights().size());
+            } else {
+                chat.setType(Chat.TYPE_1_T0_1);
+                //chatRoom.setSortPosition(RealmManager.getInstance().get1to1Chats().size());
+            }
+
+            chat.setDateCreated(new Date());
+        }
+        chat.setName(chatName);
+        chat.setShow(true);
+
+        final Chat updateChat = chat;
+        Completable.fromAction(() -> database.chatDao().update(updateChat))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
+    }
+
+    public void updateChatsSortPosition(List<Chat> chats) {
+        for (int i = 0; i < chats.size(); i++) {
+            Chat chat = chats.get(i);
+            chat.setSortPosition(i);
+        }
+
+        Completable.fromAction(() -> database.chatDao().updateItems(chats));
+    }
+
+    public static void createMUCLight(List<User> users, final String roomName,
+            Activity context, RoomManagerListener listener) {
         final List<String> occupants = new ArrayList<>();
 
         for (User user : users) {
@@ -218,7 +324,7 @@ public class RoomManager {
                                 context.runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        NavigateToChat.go(mucLightId + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME, roomName, context);
+                                        listener.onRoomCreated(mucLightId + "@" + XMPPSession.MUC_LIGHT_SERVICE_NAME, roomName);
                                     }
                                 });
                             }
@@ -258,66 +364,18 @@ public class RoomManager {
         }
     }
 
-    public static void createChatIfNotExists(String chatJid, final boolean save) {
-        if (!RealmManager.getInstance().chatExists(chatJid)) {
-            // save chat
-            final inaka.com.mangosta.models.Chat chat = new inaka.com.mangosta.models.Chat(chatJid);
-
-            if (save) {
-
-                if (chatJid.contains(XMPPSession.MUC_LIGHT_SERVICE_NAME)) {
-                    chat.setType(Chat.TYPE_MUC_LIGHT);
-                    findMUCLightName(chat);
-                } else {
-                    chat.setType(Chat.TYPE_1_T0_1);
-                    if (!chatJid.equals(Preferences.getInstance().getUserXMPPJid())) {
-                        chat.setName("Chat with " + XMPPUtils.fromJIDToUserName(chatJid));
-                    }
-                }
-
-                chat.setShow(true);
-                chat.setDateCreated(new Date());
-                RealmManager.getInstance().saveChat(chat);
-            }
-        }
-    }
-
-    private static void findMUCLightName(Chat chat) {
-        if (XMPPSession.getInstance().getXMPPConnection().isAuthenticated()) {
-            DiscoverItems discoverItems = XMPPSession.getInstance().discoverMUCLightItems();
-
-            if (discoverItems != null) {
-                List<DiscoverItems.Item> items = discoverItems.getItems();
-
-                for (DiscoverItems.Item item : items) {
-
-                    String itemJid = item.getEntityID().toString();
-                    if (itemJid.equals(chat.getJid())) {
-                        chat.setName(item.getName());
-                    }
-                }
-
-            }
-
-        }
-    }
-
-    public void loadArchivedMessages(final String chatJid, int pages, int count) {
-        Realm realm = RealmManager.getInstance().getRealm();
-        Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
+    public void loadArchivedMessages(final Chat chat, int pages, int count) {
 
         long timestamp = chat.getLastTimestampRetrieved();
         int chatType = chat.getType();
 
-        realm.close();
-
         switch (chatType) {
             case Chat.TYPE_MUC_LIGHT:
-                getMUCLightMessages(chatJid, pages, count);
+                getMUCLightMessages(chat.getJid(), pages, count);
                 break;
 
             case Chat.TYPE_1_T0_1:
-                getMessages(chatJid, timestamp, pages, count);
+                getMessages(chat.getJid(), timestamp, pages, count);
                 break;
         }
 
@@ -363,13 +421,10 @@ public class RoomManager {
                 }
 
                 private void setLastTimestamp(long lastTimestamp) {
-                    Realm realm = RealmManager.getInstance().getRealm();
-                    realm.beginTransaction();
-                    Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
-                    chat.setLastTimestampRetrieved(lastTimestamp);
-                    realm.copyToRealmOrUpdate(chat);
-                    realm.commitTransaction();
-                    realm.close();
+                    Disposable d = Completable.fromAction(() -> database.chatDao().updateLastTimestamp(jid, lastTimestamp))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe();
                 }
 
                 @Override
@@ -411,30 +466,33 @@ public class RoomManager {
 
         for (MongooseMessage message : messages) {
 
-            if (!RealmManager.getInstance().chatMessageExists(message.getId()) &&
-                    !message.getTo().equals("undefined") &&
-                    !message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
-
-                String jidTo = message.getTo().split("/")[0];
-                String me = XMPPSession.getInstance().getXMPPConnection().getUser().toString().split("/")[0];
-
-                Realm realm = RealmManager.getInstance().getRealm();
-                realm.beginTransaction();
-
-                ChatMessage chatMessage = makeChatMessage(message, roomJid);
-
-                if (jidTo.equals(me)) {
-                    chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(roomJid));
-                } else {
-                    chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(me));
-                }
-
-                realm.copyToRealmOrUpdate(chatMessage);
-                realm.commitTransaction();
-                realm.close();
-
-                XMPPSession.getInstance().notifyPublished(message);
+            if (message.getTo().equals("undefined") || message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
+                continue;
             }
+
+            Disposable d = database.chatMessageDao().findByMessageId(message.getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(found -> Log.d(TAG, "message id already exists"),
+                    error -> Log.w(TAG, "message lookup error", error),
+                    () -> {
+                        //no existing messsage found, continue
+                        String jidTo = message.getTo().split("/")[0];
+                        String me = XMPPSession.getInstance().getXMPPConnection().getUser().toString().split("/")[0];
+
+                        ChatMessage chatMessage = makeChatMessage(message, roomJid);
+
+                        if (jidTo.equals(me)) {
+                            chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(roomJid));
+                        } else {
+                            chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(me));
+                        }
+
+                        Disposable d1 = Single.fromCallable(() -> database.chatMessageDao().insert(chatMessage))
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(result -> XMPPSession.getInstance().notifyPublished(message));
+                    });
         }
 
     }
@@ -443,23 +501,26 @@ public class RoomManager {
 
         for (MongooseMUCLightMessage message : messages) {
 
-            if (!RealmManager.getInstance().chatMessageExists(message.getId()) &&
-                    message.getType().equals("message") &&
-                    !message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
-
-                String userFrom = message.getFrom().split("/")[0];
-
-                Realm realm = RealmManager.getInstance().getRealm();
-                realm.beginTransaction();
-
-                ChatMessage chatMessage = makeMUCLightMessage(message, userFrom, roomJid);
-
-                realm.copyToRealmOrUpdate(chatMessage);
-                realm.commitTransaction();
-                realm.close();
-
-                XMPPSession.getInstance().notifyMUCLightPublished(message);
+            if (!message.getType().equals("message") || message.getBody().contains("xmlns='http://jabber.org/protocol/chatstates'")) {
+                continue;
             }
+
+            Disposable d = database.chatMessageDao().findByMessageId(message.getId())
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(found -> Log.d(TAG, "message id already exists"),
+                            error -> Log.w(TAG, "message lookup error", error),
+                            () -> {
+                                String userFrom = message.getFrom().split("/")[0];
+
+
+                                ChatMessage chatMessage = makeMUCLightMessage(message, userFrom, roomJid);
+
+                                Disposable d1 = Single.fromCallable(() -> database.chatMessageDao().insert(chatMessage))
+                                        .subscribeOn(Schedulers.io())
+                                        .observeOn(AndroidSchedulers.mainThread())
+                                        .subscribe(result -> XMPPSession.getInstance().notifyMUCLightPublished(message));
+                            });
         }
 
     }
@@ -504,89 +565,73 @@ public class RoomManager {
         return date;
     }
 
-    public void leaveMUCLight(final String jid) {
+    public void leaveMUCLight(final String jid, RoomManagerListener listener) {
         MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
         String authenticatedUser = XMPPSession.getInstance().getXMPPConnection().getUser().asEntityBareJid().toString();
 
-        try {
-            if (mongooseService != null) {
+        if (mongooseService != null) {
 
-                Call<Object> call = mongooseService.removeUserFromMUCLight(jid.split("@")[0], authenticatedUser);
-                call.enqueue(new Callback<Object>() {
-                    @Override
-                    public void onResponse(Call<Object> call, Response<Object> response) {
-                        Realm realm = RealmManager.getInstance().getRealm();
-                        realm.beginTransaction();
-
-                        Chat chat = realm.where(Chat.class).equalTo("jid", jid).findFirst();
-                        if (chat != null) {
-                            chat.setShow(false);
-                            chat.deleteFromRealm();
-                        }
-
-                        realm.commitTransaction();
-                        realm.close();
-                    }
-
-                    @Override
-                    public void onFailure(Call<Object> call, Throwable t) {
-                        Context context = MangostaApplication.getInstance();
-                        Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
-                        mListener.onError(t.getLocalizedMessage());
-                    }
-                });
-            }
-
-        } finally {
-            mListener.onRoomLeft(jid);
-        }
-    }
-
-    public void leave1to1Chat(String chatJid) {
-        Realm realm = RealmManager.getInstance().getRealm();
-
-        Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
-
-        realm.beginTransaction();
-        chat.deleteFromRealm();
-        realm.commitTransaction();
-        realm.close();
-
-        mListener.onRoomLeft(chatJid);
-    }
-
-    public void destroyMUCLight(final String jid) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                MultiUserChatLightManager manager = XMPPSession.getInstance().getMUCLightManager();
-
-                try {
-                    MultiUserChatLight multiUserChatLight = manager.getMultiUserChatLight(JidCreate.from(jid).asEntityBareJidIfPossible());
-                    multiUserChatLight.destroy();
-                } catch (Exception e) {
-                    Context context = MangostaApplication.getInstance();
-                    Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
-                    mListener.onError(e.getLocalizedMessage());
-                } finally {
-                    mListener.onRoomLeft(jid);
+            Call<Object> call = mongooseService.removeUserFromMUCLight(jid.split("@")[0], authenticatedUser);
+            call.enqueue(new Callback<Object>() {
+                @Override
+                public void onResponse(Call<Object> call, Response<Object> response) {
+                    Disposable d = Single.fromCallable(() -> database.chatDao().deleteByJid(jid))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(result -> listener.onRoomLeft(jid),
+                                    error -> listener.onError(error.getMessage()));
                 }
 
-            }
-        }).start();
+                @Override
+                public void onFailure(Call<Object> call, Throwable t) {
+                    Context context = MangostaApplication.getInstance();
+                    Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
+                    listener.onError(t.getLocalizedMessage());
+                }
+            });
+        }
+
     }
 
-    public void sendTextMessage(String jid, String content, int chatType) {
-        sendRestMessageDependingOnType(content, jid, chatType);
+    public void leave1to1Chat(String chatJid, RoomManagerListener listener) {
+        Disposable d = Completable.fromAction(() -> database.chatDao().deleteByJid(chatJid))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> listener.onRoomLeft(chatJid),
+                        error -> listener.onError(error.getMessage()));
     }
 
-    public void sendStickerMessage(final String messageId, final String jid, final String content, final int chatType) {
+    public void destroyMUCLight(final String jid, final RoomManagerListener listener) {
+        Completable task = Completable.fromAction(() -> {
+                MultiUserChatLightManager manager = XMPPSession.getInstance().getMUCLightManager();
+
+                MultiUserChatLight multiUserChatLight = manager.getMultiUserChatLight(JidCreate.from(jid).asEntityBareJidIfPossible());
+                multiUserChatLight.destroy();
+            });
+        Disposable d = task.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> listener.onRoomLeft(jid),
+                        error -> {
+                            //Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show();
+                            listener.onError(error.getLocalizedMessage());
+                });
+    }
+
+    public void sendTextMessage(String jid, boolean isMucLight, String content, RoomManagerListener listener) {
+        sendRestMessageDependingOnType(jid, isMucLight, content, ChatMessage.TYPE_CHAT, listener);
+    }
+
+    public void sendStickerMessage(String jid, boolean isMucLight, String imageName, RoomManagerListener listener) {
+        String messageId = UUID.randomUUID().toString();
+
+        saveChatMessage(jid, imageName, ChatMessage.TYPE_STICKER, messageId);
+
         Completable task = Completable.fromCallable(() -> {
-            Message message = new Message(JidCreate.from(jid), content);
-            BoBHash bobHash = new BoBHash(Base64.encode(content), "base64");
+            Message message = new Message(JidCreate.from(jid), imageName);
+            BoBHash bobHash = new BoBHash(Base64.encode(imageName), "base64");
             message.addExtension(new BoBExtension(bobHash, null, null));
             message.setStanzaId(messageId);
-            sendXMPPMessageDependingOnType(message, jid, chatType);
+            sendXMPPMessageDependingOnType(jid, isMucLight, message, ChatMessage.TYPE_STICKER, listener);
             return null;
         });
 
@@ -594,117 +639,138 @@ public class RoomManager {
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        () -> mListener.onMessageSent(chatType),
-                        error -> mListener.onError(error.getLocalizedMessage())
+                        () -> listener.onMessageSent(ChatMessage.TYPE_STICKER),
+                        error -> listener.onError(error.getLocalizedMessage())
                 );
     }
 
-    private void sendRestMessageDependingOnType(final String content, final String jid, int chatType) {
+    private void sendRestMessageDependingOnType(final String jid, boolean isMucLight,
+            final String content, int chatType, RoomManagerListener listener) {
 
-        try {
-            MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
+        MongooseService mongooseService = MongooseAPI.getInstance().getAuthenticatedService();
 
-            if (mongooseService != null) {
+        if (mongooseService != null) {
 
-                Call<MongooseIdResponse> call;
-                if (chatType == Chat.TYPE_MUC_LIGHT) {
-                    call = mongooseService.sendMessageToMUCLight(jid.split("@")[0], new CreateMUCLightMessageRequest(content));
-                } else {
-                    call = mongooseService.sendMessage(new CreateMessageRequest(jid, content));
+            Call<MongooseIdResponse> call;
+            if (isMucLight) {
+                call = mongooseService.sendMessageToMUCLight(jid.split("@")[0], new CreateMUCLightMessageRequest(content));
+            } else {
+                call = mongooseService.sendMessage(new CreateMessageRequest(jid, content));
+            }
+
+            call.enqueue(new Callback<MongooseIdResponse>() {
+                @Override
+                public void onResponse(Call<MongooseIdResponse> call, Response<MongooseIdResponse> response) {
+                    MongooseIdResponse idResponse = response.body();
+                    if (idResponse != null) {
+                        Disposable d = saveMessageLocally(jid, content, chatType, idResponse.getId())
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(result -> {
+                                        if (result > 0) {
+                                           Toast.makeText(MangostaApplication.getInstance(), R.string.message_sent, Toast.LENGTH_SHORT).show();
+                                            listener.onMessageSent(chatType);
+                                        } else {
+                                            Toast.makeText(MangostaApplication.getInstance(), R.string.error_send_message, Toast.LENGTH_SHORT).show();
+                                            listener.onError("Error sending message");
+                                        }
+                                });
+
+                        }
                 }
 
-                call.enqueue(new Callback<MongooseIdResponse>() {
-                    @Override
-                    public void onResponse(Call<MongooseIdResponse> call, Response<MongooseIdResponse> response) {
-                        MongooseIdResponse idResponse = response.body();
-                        if (idResponse != null) {
-                            saveMessageLocally(jid, content, idResponse.getId());
-                            Toast.makeText(MangostaApplication.getInstance(), R.string.message_sent, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<MongooseIdResponse> call, Throwable t) {
-                        Toast.makeText(MangostaApplication.getInstance(), R.string.error_send_message, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        } finally {
-            mListener.onMessageSent(chatType);
+                @Override
+                public void onFailure(Call<MongooseIdResponse> call, Throwable t) {
+                    Toast.makeText(MangostaApplication.getInstance(), R.string.error_send_message, Toast.LENGTH_SHORT).show();
+                    listener.onError("Error sending message");
+                }
+            });
         }
     }
 
-    private void sendXMPPMessageDependingOnType(Message message, String jid, int chatType) {
-        if (chatType == Chat.TYPE_MUC_LIGHT) {
+    private void sendXMPPMessageDependingOnType(String jid, boolean isMucLight,
+            Message message, int chatType, RoomManagerListener listener) {
+        if (isMucLight) {
 
             MultiUserChatLightManager manager = XMPPSession.getInstance().getMUCLightManager();
 
             try {
                 MultiUserChatLight multiUserChatLight = manager.getMultiUserChatLight(JidCreate.from(jid).asEntityBareJidIfPossible());
                 multiUserChatLight.sendMessage(message);
+                listener.onMessageSent(chatType);
             } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException e) {
-                mListener.onError(e.getLocalizedMessage());
-            } finally {
-                mListener.onMessageSent(chatType);
+                listener.onError(e.getLocalizedMessage());
             }
 
         } else {
-            ChatManager chatManager = RoomsListManager.getInstance().getChatManager();
+            ChatManager chatManager = getChatManager();
             try {
                 chatManager.createChat(JidCreate.from(jid).asEntityJidIfPossible()).sendMessage(message);
+                listener.onMessageSent(chatType);
             } catch (InterruptedException | XmppStringprepException | SmackException.NotConnectedException e) {
-                mListener.onError(e.getLocalizedMessage());
-            } finally {
-                mListener.onMessageSent(chatType);
+                listener.onError(e.getLocalizedMessage());
             }
         }
     }
 
     public void updateTypingStatus(final ChatState chatState, final String jid,
-                                   final int chatType) {
+                                   final boolean isMucLight, final RoomManagerListener listener) {
         try {
             Message message = new Message(JidCreate.from(jid));
             message.addExtension(new ChatStateExtension(chatState));
-            sendXMPPMessageDependingOnType(message, jid, chatType);
+            sendXMPPMessageDependingOnType(jid, isMucLight, message,
+                    ChatMessage.TYPE_CHAT, listener);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private String saveMessageLocally(String chatJid, String content, String messageId) {
-        RoomManager.createChatIfNotExists(chatJid, true);
-
-        Realm realm = RealmManager.getInstance().getRealm();
-        Chat chat = realm.where(Chat.class).equalTo("jid", chatJid).findFirst();
-
+    private Single<Long> saveMessageLocally(String chatJID, String content, int type, String messageId) {
         ChatMessage chatMessage = new ChatMessage();
 
         chatMessage.setMessageId(messageId);
-        chatMessage.setRoomJid(chat.getJid());
+        chatMessage.setRoomJid(chatJID);
         chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(Preferences.getInstance().getUserXMPPJid()));
         chatMessage.setStatus(ChatMessage.STATUS_SENDING);
         chatMessage.setDate(new Date());
-        chatMessage.setType(ChatMessage.TYPE_CHAT);
+        chatMessage.setType(type);
         chatMessage.setContent(content);
 
-        realm.beginTransaction();
-        realm.copyToRealmOrUpdate(chatMessage);
-        realm.commitTransaction();
+        return Single.fromCallable(() -> database.chatMessageDao().insert(chatMessage));
+    }
 
-        realm.close();
+    public void createChatIfNotExists(String chatJID) {
+        Disposable d = database.chatDao().findByJid(chatJID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(found -> {},
+                        error -> Log.w(TAG,"query error", error),
+                        () -> createChat(chatJID).subscribe()
+                );
+    }
 
-        return messageId;
+    public void saveChatMessage(String chatJID, String content, int type, String messageId) {
+        Disposable d = database.chatDao().findByJid(chatJID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(id -> saveMessageLocally(chatJID, content, type, messageId)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(),
+                error -> Log.w(TAG, "query error", error),
+                () -> {
+                        Log.w(TAG, "create missing chat object");
+                        createChat(chatJID)
+                                .andThen(saveMessageLocally(chatJID, content, type, messageId))
+                                .subscribe();
+                });
     }
 
     public void loadRosterContactsChats() throws SmackException.NotLoggedInException, InterruptedException, SmackException.NotConnectedException {
-        try {
-            HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getContacts();
-            for (Map.Entry pair : buddies.entrySet()) {
-                String userJid = pair.getKey().toString();
-                RoomsListManager.getInstance().createChatIfNotExists(userJid, true);
-            }
-        } finally {
-            mListener.onRoomsLoaded();
+        HashMap<Jid, Presence.Type> buddies = RosterManager.getInstance().getContacts();
+        for (Map.Entry pair : buddies.entrySet()) {
+            String userJid = pair.getKey().toString();
+            createChatIfNotExists(userJid);
         }
     }
 

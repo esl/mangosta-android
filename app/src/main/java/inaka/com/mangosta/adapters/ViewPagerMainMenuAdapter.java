@@ -56,13 +56,11 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
             switch (position) {
                 case CHATS_FRAGMENT_POSITION:
                     ChatsListsFragment chatsListsFragment = new ChatsListsFragment();
-                    chatsListsFragment.loadChatsBackgroundTask();
                     mFragmentList[position] = chatsListsFragment;
                     break;
 
                 case SOCIAL_MEDIA_FRAGMENT_POSITION:
                     BlogsListFragment blogsListFragment = new BlogsListFragment();
-                    blogsListFragment.loadBlogPosts();
                     mFragmentList[position] = blogsListFragment;
                     break;
             }
@@ -103,20 +101,6 @@ public class ViewPagerMainMenuAdapter extends FragmentPagerAdapter {
 
     public void clearFragmentsList() {
         mFragmentList = new Fragment[]{};
-    }
-
-    public void syncChats() {
-        ChatsListsFragment chatsListsFragment = ((ChatsListsFragment) mFragmentList[CHATS_FRAGMENT_POSITION]);
-        if (chatsListsFragment != null) {
-            chatsListsFragment.loadChatsBackgroundTask();
-        }
-    }
-
-    public void reloadChats() {
-        ChatsListsFragment chatsListsFragment = ((ChatsListsFragment) mFragmentList[CHATS_FRAGMENT_POSITION]);
-        if (chatsListsFragment != null) {
-            chatsListsFragment.loadChats();
-        }
     }
 
     public void reloadBlogPosts() {

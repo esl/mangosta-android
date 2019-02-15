@@ -82,7 +82,9 @@ public class SplashActivity extends FragmentActivity {
                     xmppReloginAndStart();
                 } else {
                     createLoginDialog();
-                    progressLoading.setVisibility(View.INVISIBLE);
+                    if (!isFinishing() && !isDestroyed()) {
+                        progressLoading.setVisibility(View.INVISIBLE);
+                    }
                 }
             }
         }, WAIT_TIME);
@@ -123,7 +125,7 @@ public class SplashActivity extends FragmentActivity {
         });
 
         Disposable d = task
-                .subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::startApplication, error -> {
                     XMPPSession.getInstance().getXMPPConnection().disconnect();

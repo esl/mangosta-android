@@ -1,12 +1,12 @@
 package inaka.com.mangosta.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,24 +15,19 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.activities.ChatActivity;
 import inaka.com.mangosta.adapters.ChatListAdapter;
 import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.chat.RoomManagerListener;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.Chat;
-import inaka.com.mangosta.models.Event;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.ui.itemTouchHelper.SimpleItemTouchHelperCallback;
-import inaka.com.mangosta.utils.ChatOrderComparator;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
-import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import io.reactivex.Completable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -40,6 +35,8 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class ChatsListsFragment extends BaseFragment {
+
+    private static final String TAG = ChatsListsFragment.class.getSimpleName();
 
     @BindView(R.id.groupChatsRecyclerView)
     RecyclerView groupChatsRecyclerView;
@@ -63,19 +60,20 @@ public class ChatsListsFragment extends BaseFragment {
     ProgressBar chatsLoading;
 
     private RoomManager mRoomManager;
-    private List<Chat> mGroupChats;
-    private List<Chat> mOneToOneChats;
+    private RoomManagerListener mRoomManagerListener;
 
     private ChatListAdapter mGroupChatsAdapter;
     private ChatListAdapter mOneToOneChatsAdapter;
+
+    private boolean mOneToOneChatsLoaded = false;
+    private boolean mGroupChatsLoaded = false;
+
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
     Disposable mMessageSubscription;
     Disposable mMessageSentAlertSubscription;
 
     Activity mContext;
-
-    private static final Object SYNC_CHATS = new Object() {
-    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -83,12 +81,13 @@ public class ChatsListsFragment extends BaseFragment {
         ButterKnife.bind(this, view);
 
         mContext = getActivity();
-        mRoomManager = RoomManager.getInstance(new RoomManagerChatListListener(mContext));
+        mRoomManager = RoomManager.getInstance();
+        mRoomManagerListener = new RoomManagerChatListListener();
 
-        mGroupChats = new ArrayList<>();
+        updateProgress();
+
         initGroupChatsRecyclerView();
 
-        mOneToOneChats = new ArrayList<>();
         initOneToOneChatsRecyclerView();
 
         final Preferences preferences = Preferences.getInstance();
@@ -119,15 +118,34 @@ public class ChatsListsFragment extends BaseFragment {
                     }
                 });
 
-        mMessageSubscription = XMPPSession.getInstance()
-                .subscribeToMessages(message -> loadChats());
+        mRoomManager.loadAllChats();
 
-        mMessageSentAlertSubscription = XMPPSession.getInstance()
-                .subscribeToMessageSent(message -> loadChats());
-
-        loadChatsBackgroundTask();
+        addDisposable(database.chatDao().findByType(Chat.TYPE_MUC_LIGHT)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(mucLightChatRooms -> {
+                    mGroupChatsAdapter.updateList(mucLightChatRooms);
+                    mGroupChatsLoaded = true;
+                    updateProgress();
+                }));
+        addDisposable(database.chatDao().findByType(Chat.TYPE_1_T0_1)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(one2oneChatRooms -> {
+                    mOneToOneChatsAdapter.updateList(one2oneChatRooms);
+                    mOneToOneChatsLoaded = true;
+                    updateProgress();
+                }));
 
         return view;
+    }
+
+    private void updateProgress() {
+        if (mOneToOneChatsLoaded && mGroupChatsLoaded) {
+            chatsLoading.setVisibility(View.GONE);
+        } else {
+            chatsLoading.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -162,7 +180,17 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     private void initGroupChatsRecyclerView() {
-        mGroupChatsAdapter = getGroupChatsAdapter();
+        mGroupChatsAdapter = new ChatListAdapter(new ArrayList<>(), mContext,
+                new ChatListAdapter.ChatClickListener() {
+                    @Override
+                    public void onChatClicked(Chat chat) {
+                        Intent intent = new Intent(mContext, ChatActivity.class);
+                        intent.putExtra(ChatActivity.CHAT_JID_PARAMETER, chat.getJid());
+                        intent.putExtra(ChatActivity.CHAT_NAME_PARAMETER, XMPPUtils.getChatName(chat));
+                        mContext.startActivity(intent);
+                    }
+                });
+
         groupChatsRecyclerView.setHasFixedSize(true);
         LinearLayoutManager layoutManagerGroupChats = new LinearLayoutManager(mContext);
         groupChatsRecyclerView.setLayoutManager(layoutManagerGroupChats);
@@ -174,7 +202,17 @@ public class ChatsListsFragment extends BaseFragment {
     }
 
     private void initOneToOneChatsRecyclerView() {
-        mOneToOneChatsAdapter = getOneToOneChatsAdapter();
+        mOneToOneChatsAdapter = new ChatListAdapter(new ArrayList<>(), mContext,
+                new ChatListAdapter.ChatClickListener() {
+                    @Override
+                    public void onChatClicked(Chat chat) {
+                        Intent intent = new Intent(mContext, ChatActivity.class);
+                        intent.putExtra(ChatActivity.CHAT_JID_PARAMETER, chat.getJid());
+                        intent.putExtra(ChatActivity.CHAT_NAME_PARAMETER, XMPPUtils.getChatName(chat));
+                        mContext.startActivity(intent);
+                    }
+                });
+
         oneToOneChatsRecyclerView.setHasFixedSize(true);
         LinearLayoutManager layoutManagerOneToOneChats = new LinearLayoutManager(mContext);
         oneToOneChatsRecyclerView.setLayoutManager(layoutManagerOneToOneChats);
@@ -185,177 +223,35 @@ public class ChatsListsFragment extends BaseFragment {
         mItemTouchHelper.attachToRecyclerView(oneToOneChatsRecyclerView);
     }
 
-    public ChatListAdapter getGroupChatsAdapter() {
-        return getChatListAdapter(mGroupChats);
-    }
-
-    public ChatListAdapter getOneToOneChatsAdapter() {
-        return getChatListAdapter(mOneToOneChats);
-    }
-
-    private ChatListAdapter getChatListAdapter(List<Chat> chats) {
-        return new ChatListAdapter(chats, mContext,
-                new ChatListAdapter.ChatClickListener() {
-                    @Override
-                    public void onChatClicked(Chat chat) {
-                        Intent intent = new Intent(mContext, ChatActivity.class);
-                        intent.putExtra(ChatActivity.CHAT_JID_PARAMETER, chat.getJid());
-                        intent.putExtra(ChatActivity.CHAT_NAME_PARAMETER, XMPPUtils.getChatName(chat));
-                        intent.putExtra(ChatActivity.IS_NEW_CHAT_PARAMETER, false);
-                        mContext.startActivity(intent);
-                    }
-                });
-    }
-
-    public void loadChats() {
-        try {
-            if (chatsLoading != null) {
-                chatsLoading.setVisibility(View.VISIBLE);
-            }
-        } catch (Exception e) {
-        }
-
-        if (mContext == null) {
-            changeChatsList();
-        } else {
-            mContext.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    changeChatsList();
-                }
-            });
-        }
-    }
-
-    private void changeChatsList() {
-        synchronized (SYNC_CHATS) {
-            updateChatsList(mGroupChats, RealmManager.getInstance().getMUCLights());
-            updateChatsList(mOneToOneChats, RealmManager.getInstance().get1to1Chats());
-
-            Collections.sort(mGroupChats, new ChatOrderComparator());
-            Collections.sort(mOneToOneChats, new ChatOrderComparator());
-
-            if (mOneToOneChatsAdapter == null) {
-                mOneToOneChatsAdapter = getOneToOneChatsAdapter();
-            }
-
-            if (mGroupChatsAdapter == null) {
-                mGroupChatsAdapter = getGroupChatsAdapter();
-            }
-
-            mOneToOneChatsAdapter.notifyDataSetChanged();
-            mGroupChatsAdapter.notifyDataSetChanged();
-
-            if (chatsLoading != null) {
-                chatsLoading.setVisibility(View.GONE);
-            }
-        }
-    }
-
-    private void loadChatsAfterRoomLeft(final String roomJid) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                RealmManager.getInstance().deleteChat(roomJid);
-                mRoomManager.loadMUCLightRoomsInBackground();
-            }
-        });
-    }
-
-    private void updateChatsList(List<Chat> chatsList, List<Chat> updaterList) {
-        boolean deletedOneToOneChat = deletedChat(chatsList);
-        if (deletedOneToOneChat) {
-            chatsList.clear();
-            chatsList.addAll(updaterList);
-        } else {
-            refineChatsList(chatsList, updaterList);
-        }
-    }
-
-    private boolean deletedChat(List<Chat> chats) {
-        for (Chat chat : chats) {
-            if (!chat.isValid()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void refineChatsList(List<Chat> list, List<Chat> refiner) {
-        for (Chat chat : refiner) {
-            if (!list.contains(chat)) {
-                list.add(chat);
-            }
-        }
-    }
-
-    public void loadChatsBackgroundTask() {
-        if (mRoomManager == null) {
-            return;
-        }
-
-        Completable task = Completable.fromCallable(() -> {
-            mRoomManager.loadRosterContactsChats(); // load 1 to 1 chats from contacts
-            mRoomManager.loadMUCLightRooms(); // load group chats
-            return null;
-        });
-
-        addDisposable(task
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(ChatsListsFragment.this::loadChats,
-                        error -> loadChats()));
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        EventBus.getDefault().unregister(this);
-    }
-
     // receives events from EventBus
-    public void onEvent(Event event) {
-        switch (event.getType()) {
-            case GO_BACK_FROM_CHAT:
-                loadChats();
-                break;
-
-            case CONTACTS_CHANGED:
-                loadChatsBackgroundTask();
-                break;
-
-            case PRESENCE_RECEIVED:
-                mContext.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOneToOneChatsAdapter.notifyDataSetChanged();
-                    }
-                });
-                break;
-        }
-    }
+//    public void onEvent(Event event) {
+//        switch (event.getType()) {
+//
+//            case CONTACTS_CHANGED:
+//                loadChatsBackgroundTask();
+//                break;
+//
+//            case PRESENCE_RECEIVED:
+//                mContext.runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        mOneToOneChatsAdapter.notifyDataSetChanged();
+//                    }
+//                });
+//                break;
+//        }
+//    }
 
     private class RoomManagerChatListListener extends RoomManagerListener {
 
-        public RoomManagerChatListListener(Context context) {
-            super(context);
-        }
-
         @Override
         public void onRoomLeft(String roomJid) {
-            loadChatsAfterRoomLeft(roomJid);
+            Disposable d = Completable.fromAction(() -> database.chatDao().deleteByJid(roomJid))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe();
         }
 
-        @Override
-        public void onRoomsLoaded() {
-            loadChats();
-        }
     }
 
 }

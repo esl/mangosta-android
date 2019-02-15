@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.UUID;
 
 import inaka.com.mangosta.chat.RoomManager;
-import inaka.com.mangosta.chat.RoomsListManager;
 import inaka.com.mangosta.network.MongooseService;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;

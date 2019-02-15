@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,21 +22,28 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
-import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
-import io.realm.Realm;
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapter.ViewHolder> {
 
@@ -45,6 +51,8 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
     private final int VIEW_TYPE_CHAT_ME_MESSAGE = 1;
     private final int VIEW_TYPE_STICKER_MESSAGE = 2;
     private final int VIEW_TYPE_UNREAD_MESSAGES = 3;
+
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
     private Context mContext;
     private List<ChatMessage> mMessages;
@@ -58,37 +66,16 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     @Override
     public int getItemViewType(int position) {
-        int viewType;
-        int unreadMessages = 0;
-        int unreadMessagesViewPosition = 0;
-
-        if (mChat.isValid()) {
-            unreadMessages = mChat.getUnreadMessagesCount();
-            unreadMessagesViewPosition = mMessages.size() - unreadMessages;
-        }
-
-        if (unreadMessages == 0) {
-            viewType = getViewType(position);
-        } else {
-            if (position < unreadMessagesViewPosition) {
-                viewType = getViewType(position);
-            } else if (position == unreadMessagesViewPosition) {
-                viewType = VIEW_TYPE_UNREAD_MESSAGES;
-            } else {
-                viewType = getViewType(position - 1);
-            }
-        }
-
-        return viewType;
-    }
-
-    private int getViewType(int position) {
         int viewType = 0;
 
         if (position >= 0) {
             ChatMessage chatMessage = mMessages.get(position);
 
             switch (chatMessage.getType()) {
+                case ChatMessage.TYPE_HEADER:
+                    viewType = VIEW_TYPE_UNREAD_MESSAGES;
+                    break;
+
                 case ChatMessage.TYPE_CHAT:
                     if (chatMessage.isMeMessage()) {
                         viewType = VIEW_TYPE_CHAT_ME_MESSAGE;
@@ -104,6 +91,12 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
         }
 
         return viewType;
+    }
+
+    public void updateList(List<ChatMessage> newList) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ChatMessagesAdapter.ChatMessagesDiffCallback(this.mMessages, newList));
+        diffResult.dispatchUpdatesTo(this);
+        this.mMessages = newList;
     }
 
     @Override
@@ -141,28 +134,6 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
 
     @Override
     public void onBindViewHolder(ChatMessagesAdapter.ViewHolder holder, int position) {
-        int unreadMessages = 0;
-        int unreadMessagesViewPosition = 0;
-
-        if (mChat.isValid()) {
-            unreadMessages = mChat.getUnreadMessagesCount();
-            unreadMessagesViewPosition = mMessages.size() - unreadMessages;
-        }
-
-        if (unreadMessages == 0) {
-            bindChatMessage(holder, position);
-        } else {
-            if (position < unreadMessagesViewPosition) {
-                bindChatMessage(holder, position);
-            } else if (position == unreadMessagesViewPosition) {
-                ((UnreadMessagesViewHolder) holder).bind(unreadMessages);
-            } else {
-                bindChatMessage(holder, position - 1);
-            }
-        }
-    }
-
-    private void bindChatMessage(ViewHolder holder, int position) {
         if (position >= 0) {
             ChatMessage chatMessage = mMessages.get(position);
 
@@ -178,35 +149,25 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                 case ChatMessage.TYPE_STICKER:
                     ((StickerMessageViewHolder) holder).bind(chatMessage);
                     break;
+
+                case ChatMessage.TYPE_HEADER:
+                    ((UnreadMessagesViewHolder) holder).bind(mChat.getUnreadMessagesCount());
             }
 
             if (chatMessage.isUnread()) {
-                Realm realm = RealmManager.getInstance().getRealm();
-                realm.beginTransaction();
-                chatMessage.setUnread(false);
-                realm.copyToRealmOrUpdate(chatMessage);
-                realm.commitTransaction();
-                realm.close();
+                Disposable d = Single.fromCallable(() -> database.chatMessageDao().updateUnread(false, chatMessage.getMessageId()))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(updated -> {
+                            if (updated > 0) chatMessage.setUnread(true);
+                        });
             }
         }
     }
 
     @Override
     public int getItemCount() {
-        if (mChat.isValid()) {
-            int unreadMessages = mChat.getUnreadMessagesCount();
-            if (unreadMessages == 0) {
-                return mMessages.size();
-            } else {
-                return mMessages.size() + 1;
-            }
-        } else {
-            try {
-                return mMessages.size();
-            } catch (Exception e) {
-                return 0;
-            }
-        }
+        return mMessages.size();
     }
 
     protected static class ViewHolder extends RecyclerView.ViewHolder {
@@ -215,7 +176,7 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
         }
     }
 
-    public static class MessageViewHolder extends ChatMessagesAdapter.ViewHolder {
+    public class MessageViewHolder extends ChatMessagesAdapter.ViewHolder {
 
         @BindView(R.id.messageSenderTextView)
         TextView messageSenderTextView;
@@ -306,18 +267,15 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                     .setView(viewFixMessage)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            Realm realm = RealmManager.getInstance().getRealm();
                             try {
                                 // prepare correction message
                                 Jid roomJid = JidCreate.from(chatMessage.getRoomJid());
                                 Message message = new Message(roomJid, messageEditText.getText().toString());
 
-                                Chat chat = realm.where(Chat.class).equalTo("jid", chatMessage.getRoomJid()).findFirst();
-
                                 // add message correction extension
                                 message.addExtension(new MessageCorrectExtension(chatMessage.getMessageId()));
 
-                                if (chat.getType() == Chat.TYPE_1_T0_1) {
+                                if (mChat.getType() == Chat.TYPE_1_T0_1) {
                                     message.setType(Message.Type.chat);
                                 } else {
                                     message.setType(Message.Type.groupchat);
@@ -327,17 +285,14 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
                                 XMPPSession.getInstance().sendStanza(message);
 
                                 // update message if 1 to 1 chat
-                                if (chat.getType() == Chat.TYPE_1_T0_1) {
-                                    realm.beginTransaction();
-                                    chatMessage.setContent(message.getBody());
-                                    chatMessage.setDate(new Date());
-                                    realm.copyToRealmOrUpdate(chatMessage);
-                                    realm.commitTransaction();
+                                if (mChat.getType() == Chat.TYPE_1_T0_1) {
+                                    Completable.fromAction(() -> database.chatMessageDao().updateContent(message.getBody(), message.getStanzaId()))
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe();
                                 }
                             } catch (XmppStringprepException | InterruptedException | SmackException.NotConnectedException e) {
                                 e.printStackTrace();
-                            } finally {
-                                realm.close();
                             }
                         }
                     })
@@ -461,10 +416,39 @@ public class ChatMessagesAdapter extends RecyclerView.Adapter<ChatMessagesAdapte
     }
 
     private static boolean messageIsLastOneSentByMe(ChatMessage chatMessage) {
-        return RealmManager.getInstance().getLastMessageSentByMeForChat(chatMessage.getRoomJid()).getMessageId().equals(chatMessage.getMessageId());
+        return true; //@TODO RealmManager.getInstance().getLastMessageSentByMeForChat(chatMessage.getRoomJid()).getMessageId().equals(chatMessage.getMessageId());
     }
 
+
+    public class ChatMessagesDiffCallback extends DiffUtil.Callback {
+        private List<ChatMessage> mOldList;
+        private List<ChatMessage> mNewList;
+
+        public ChatMessagesDiffCallback(List<ChatMessage> oldList, List<ChatMessage> newList) {
+            this.mOldList = oldList;
+            this.mNewList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return mOldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return mNewList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return mNewList.get(newItemPosition).getType() == mOldList.get(oldItemPosition).getType()
+                    && Objects.equals(mNewList.get(newItemPosition).getMessageId(), mOldList.get(oldItemPosition).getMessageId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return Objects.equals(mNewList.get(newItemPosition).getContent(), mOldList.get(oldItemPosition).getContent())
+                    && Objects.equals(mNewList.get(newItemPosition).getDate(), mOldList.get(oldItemPosition).getDate());
+        }
+    }
 }
-
-
-

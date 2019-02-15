@@ -1,6 +1,5 @@
 package inaka.com.mangosta.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,9 +21,7 @@ import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
 import inaka.com.mangosta.chat.RoomManager;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import io.reactivex.Completable;
@@ -98,10 +95,17 @@ public class ChatMembersActivity extends BaseActivity {
         progressLoading.setVisibility(View.VISIBLE);
 
         Completable task = Completable.fromCallable(() -> {
-            List<String> jids = RoomManager.getInstance(null).loadMUCLightMembers(roomJid);
+            RoomManager roomManager = RoomManager.getInstance();
+            List<String> jids = roomManager.loadMUCLightMembers(roomJid);
             for (String jid : jids) {
-                obtainUser(XMPPUtils.fromJIDToUserName(jid));
+                String userName = XMPPUtils.fromJIDToUserName(jid);
+                User user = new User(XMPPUtils.fromUserNameToJID(userName));
+                mMembers.add(user);
+                if (progressLoading != null && progressLoading.getVisibility() == View.VISIBLE) {
+                    progressLoading.setVisibility(View.GONE);
+                }
             }
+            mMembersAdapter.notifyDataSetChanged();
             return null;
         });
 
@@ -115,27 +119,12 @@ public class ChatMembersActivity extends BaseActivity {
                 }));
     }
 
-    private void obtainUser(final String userName) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                User user = new User(XMPPUtils.fromUserNameToJID(userName));
-                mMembers.add(user);
-                mMembersAdapter.notifyDataSetChanged();
-
-                if (progressLoading != null && progressLoading.getVisibility() == View.VISIBLE) {
-                    progressLoading.setVisibility(View.GONE);
-                }
-            }
-        });
-
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (Preferences.isTesting() && !RealmManager.isTesting()) {
+        if (Preferences.isTesting()) {
             progressLoading.setVisibility(View.GONE);
         } else {
             loadMembers(mRoomJid);
@@ -153,21 +142,6 @@ public class ChatMembersActivity extends BaseActivity {
         }
 
         return true;
-    }
-
-    @Override
-    public void onEvent(Event event) {
-        super.onEvent(event);
-        switch (event.getType()) {
-            case PRESENCE_RECEIVED:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mMembersAdapter.notifyDataSetChanged();
-                    }
-                });
-                break;
-        }
     }
 
 }

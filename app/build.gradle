@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'realm-android'
 
 android {
     compileSdkVersion 28
@@ -13,6 +12,12 @@ android {
         versionName "1.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
     }
 
     compileOptions {
@@ -59,8 +64,6 @@ buildscript {
         jcenter()
     }
     dependencies {
-        // Realm
-        classpath "io.realm:realm-gradle-plugin:2.3.0"
     }
 }
 
@@ -72,6 +75,8 @@ repositories {
 }
 
 dependencies {
+    def room_version = "2.1.0-alpha04"
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Espresso
@@ -99,13 +104,23 @@ dependencies {
     androidTestImplementation 'org.mockito:mockito-core:1.10.19'
 
     // Android
-    implementation 'androidx.appcompat:appcompat:1.1.0-alpha01'
+    implementation 'androidx.appcompat:appcompat:1.1.0-alpha02'
     implementation 'androidx.legacy:legacy-support-v13:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.material:material:1.1.0-alpha02'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0-alpha01'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0-alpha02'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
+
+    // Room
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-rxjava2:$room_version"
+
+    // Stetho
+    implementation 'com.facebook.stetho:stetho:1.5.0'
+    implementation 'com.facebook.stetho:stetho-okhttp3:1.5.0'
+
 
     // Butterknife
     implementation 'com.jakewharton:butterknife:10.0.0'
@@ -142,8 +157,5 @@ dependencies {
 //    implementation 'org.igniterealtime.smack:smack-android-extensions:4.2.0-beta3-SNAPSHOT'
 //    implementation 'org.igniterealtime.smack:smack-tcp:4.2.0-beta3-SNAPSHOT'
 //    implementation "org.igniterealtime.smack:smack-experimental:4.2.0-beta3-SNAPSHOT"
-
-    // EventBus
-    implementation 'de.greenrobot:eventbus:2.4.0'
 
 }

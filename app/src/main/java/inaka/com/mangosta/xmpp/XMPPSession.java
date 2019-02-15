@@ -104,17 +104,16 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
 import inaka.com.mangosta.chat.ChatConnection;
-import inaka.com.mangosta.chat.RoomsListManager;
+import inaka.com.mangosta.chat.RoomManager;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
 import inaka.com.mangosta.models.MongooseMUCLightMessage;
 import inaka.com.mangosta.models.MongooseMessage;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.notifications.BlogPostNotifications;
 import inaka.com.mangosta.notifications.MessageNotifications;
 import inaka.com.mangosta.notifications.RosterNotifications;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
@@ -123,12 +122,13 @@ import inaka.com.mangosta.xmpp.microblogging.elements.PostEntryExtension;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishPostExtension;
 import inaka.com.mangosta.xmpp.microblogging.providers.PostEntryProvider;
+import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
-import io.realm.Realm;
 
 public class XMPPSession {
     private static final String TAG = XMPPSession.class.getSimpleName();
@@ -168,6 +168,8 @@ public class XMPPSession {
     private List<String> messagesToDeleteIds = new ArrayList<>();
 
     private boolean connectionDoneOnce = false;
+
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
     public XMPPTCPConnection getXMPPConnection() {
         return mXMPPConnection;
@@ -272,6 +274,7 @@ public class XMPPSession {
         StanzaListener mainStanzaListener = new StanzaListener() {
             @Override
             public void processPacket(Stanza stanza) throws SmackException.NotConnectedException {
+                Log.d(TAG, "processPacket " + stanza.getStanzaId());
                 if (stanza instanceof Message) {
                     Message message = (Message) stanza;
 
@@ -291,11 +294,11 @@ public class XMPPSession {
 
                             // if not a chat state
                             if (!forwardedMessage.hasExtension(ChatStateExtension.NAMESPACE) || forwardedMessage.getBody() != null) {
-                                saveMamMessage(forwardedMessage, date);
+                                handleMamMessage(forwardedMessage, date);
                             }
 
                         } else { // normal message
-                            saveMessage(message);
+                            handleMessage(message, null, false);
                         }
 
                     }
@@ -309,10 +312,10 @@ public class XMPPSession {
                         processSubscribePresence(presence);
                         processUnsubscribePresence(presence);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "process presence error", e);
                     }
 
-                    new Event(Event.Type.PRESENCE_RECEIVED).post();
+                    mPresencePublisher.onNext(presence);
 
                 } else if (stanza instanceof ErrorIQ) {
                     ErrorIQ errorIq = (ErrorIQ) stanza;
@@ -401,10 +404,8 @@ public class XMPPSession {
                     if (preferences.userAndPasswordNotEmpty()) {
                         mXMPPConnection.connect();
                     }
-                } catch (SmackException.AlreadyConnectedException ace) {
-                    Log.w("SMACK", "Already Connected");
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (SmackException | IOException | XMPPException | InterruptedException ex) {
+                    Log.w(TAG, "Connect error", ex);
                 }
             }
         }).start();
@@ -505,7 +506,10 @@ public class XMPPSession {
                     Date updated = postEntryExtension.getUpdated();
 
                     BlogPost blogPost = new BlogPost(id, jid, null, title, published, updated);
-                    RealmManager.getInstance().saveBlogPost(blogPost);
+                    Completable.fromCallable(() -> database.blogPostDao().insert(blogPost))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe();
 
                     String commentsNode = PublishCommentExtension.NODE + "/" + id;
                     ServiceDiscoveryManager.getInstanceFor(mXMPPConnection).addFeature(commentsNode + "+notify");
@@ -518,20 +522,13 @@ public class XMPPSession {
                 MangostaApplication mangostaApplication = MangostaApplication.getInstance();
                 if (mangostaApplication.isClosed()) {
                     BlogPostNotifications.newBlogPostNotification();
-                } else {
-                    mangostaApplication.getCurrentActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            new Event(Event.Type.BLOG_POST_CREATED).post();
-                        }
-                    });
                 }
             }
         });
     }
 
     public void publishQueryArchive(Stanza stanza) {
-        String id = (stanza == null) ? null : stanza.getStanzaId();
+        String id = (stanza == null) ? "" : stanza.getStanzaId();
         mArchiveQueryPublisher.onNext(id);
     }
 
@@ -871,37 +868,33 @@ public class XMPPSession {
         }
     }
 
-    private void saveMamMessage(Message message, Date delayDate) {
-        String messageId = assignMessageId(message);
+    private void handleMamMessage(Message message, Date delayDate) {
+        assignMessageId(message);
 
         // not processing changes in affiliations or configurations
         if (!hasAffiliationsChangeExtension(message) && !hasConfigurationChangeExtension(message)) {
-            if (isMessageCorrection(message)) { // message correction
-                saveMessageCorrection(message, delayDate);
-            } else { // normal message received
-                if (!RealmManager.getInstance().chatMessageExists(messageId)) {
-                    manageMessageReceived(message, delayDate, messageId, true);
-                }
-            }
+            handleMessage(message, delayDate, true);
         }
     }
 
-    private void saveMessage(Message message) {
-        String messageId = assignMessageId(message);
+    private void handleMessage(Message message, Date delayDate, boolean fromMam) {
+        assignMessageId(message);
 
-        if (RealmManager.getInstance().chatMessageExists(messageId)) { // message sent confirmation
-            manageMessageAlreadyExists(message, null, messageId);
-
-        } else if (isMessageCorrection(message)) { // message correction
-            manageMessageCorrection(message, null);
-
-        } else { // normal message received
-            manageMessageReceived(message, null, messageId, false);
-
-            if (canBeTextMessageOrSticker(message)) {
-                MessageNotifications.chatMessageNotification(messageId);
-            }
-        }
+        Disposable d = database.chatMessageDao().findByMessageId(message.getStanzaId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(foundMessage -> {
+                        manageMessageAlreadyExists(message, delayDate, foundMessage);
+                }, error -> Log.w(TAG, "message lookup error", error),
+                        () -> {
+                            if (isMessageCorrection(message)) {
+                                // message correction
+                                manageMessageCorrection(message, delayDate);
+                            } else {
+                                // normal message received
+                                manageMessageReceived(message, delayDate, fromMam);
+                            }
+                        });
     }
 
     private boolean canBeTextMessageOrSticker(Message message) {
@@ -929,28 +922,24 @@ public class XMPPSession {
         String newMessageBody = message.getBody();
         String idInitialMessage = messageCorrectExtension.getIdInitialMessage();
 
-        Realm realm = RealmManager.getInstance().getRealm();
-        realm.beginTransaction();
-
-        ChatMessage chatMessage = realm.where(ChatMessage.class)
-                .equalTo("messageId", idInitialMessage)
-                .findFirst();
-
-        if (chatMessage != null) {
-            chatMessage.setContent(newMessageBody);
-            manageDelayDate(delayDate, chatMessage);
-            realm.copyToRealmOrUpdate(chatMessage);
-        }
-
-        realm.commitTransaction();
-        realm.close();
+        Disposable d = database.chatMessageDao().findByMessageId(idInitialMessage)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(chatMessage -> {
+                    chatMessage.setContent(newMessageBody);
+                    manageDelayDate(delayDate, chatMessage);
+                    Completable.fromAction(() -> database.chatMessageDao().update(chatMessage))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe();
+                });
     }
 
-    private void manageMessageReceived(Message message, Date delayDate, String messageId, boolean fromMam) {
+    private void manageMessageReceived(Message message, Date delayDate, boolean fromMam) {
         String[] jidList = message.getFrom().toString().split("/");
 
         ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setMessageId(messageId);
+        chatMessage.setMessageId(message.getStanzaId());
 
         String chatRoomJID;
         if (!jidList[0].equals(Preferences.getInstance().getUserXMPPJid())) {
@@ -970,10 +959,6 @@ public class XMPPSession {
             return;
         }
 
-        RoomsListManager.getInstance().createChatIfNotExists(chatRoomJID, true);
-
-        manageSender(jidList, chatMessage, chatRoomJID);
-
         chatMessage.setStatus(ChatMessage.STATUS_SENT);
         chatMessage.setUnread(true);
 
@@ -986,77 +971,93 @@ public class XMPPSession {
             chatMessage.setType(ChatMessage.TYPE_CHAT);
         }
 
-        Realm realm = RealmManager.getInstance().getRealm();
-        Chat chatRoom = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
-        realm.beginTransaction();
-
-        if (canBeTextMessageOrSticker(message) && !fromMam) {
-            chatRoom.addUnreadMessage();
-        }
-
-        // room name or subject change
-        manageConfigurationsChange(message, chatMessage, chatRoom);
-
-        // not saving invalid messages
-        if (chatMessage.getContent() == null || chatMessage.getContent().isEmpty() || chatMessage.getUserSender() == null) {
-            realm.commitTransaction();
-            realm.close();
-            return;
-        }
+        final boolean addUnreadMessage = (canBeTextMessageOrSticker(message) && !fromMam);
 
         // assign date
         manageDelayDate(delayDate, chatMessage);
 
-        realm.copyToRealmOrUpdate(chatMessage);
-        realm.commitTransaction();
-        realm.close();
+        Disposable d = database.chatDao().findByJid(chatRoomJID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(chat -> {
+                            //add message to existing chat
+                            manageSender(jidList, chatMessage, chat);
+                            manageConfigurationsChange(message, chatMessage, chat);
+                            if (addUnreadMessage) {
+                                chat.addUnreadMessage();
+                                MessageNotifications.chatMessageNotification(chatMessage, chat);
+                            }
+                            saveMessage(chat, chatMessage);
+                        }, error ->
+                                Log.w(TAG, "query error", error),
+                        () -> {
+                            //create new chat before adding message
+                            Disposable d1 = RoomManager.getInstance().createChat(chatRoomJID)
+                                    .andThen(database.chatDao().findByJid(chatRoomJID))
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(chat -> {
+                                        manageSender(jidList, chatMessage, chat);
+                                        manageConfigurationsChange(message, chatMessage, chat);
+                                        if (addUnreadMessage) {
+                                            chat.addUnreadMessage();
+                                            MessageNotifications.chatMessageNotification(chatMessage, chat);
+                                        }
+                                        saveMessage(chat, chatMessage);
+                                    }, error -> Log.w(TAG, "query error", error));
+                        });
+    }
+
+    private void saveMessage(Chat chat, ChatMessage chatMessage) {
+        if (TextUtils.isEmpty(chatMessage.getContent()) || chatMessage.getUserSender() == null) {
+            return;  //ignore if invalid
+        }
+
+        Log.d(TAG, "Insert new message " + chatMessage.getMessageId() + " " + chat.getJid());
+
+        //update the chat and save the message
+        Completable.fromAction(() -> database.chatDao().update(chat))
+                .andThen(Completable.fromAction(() -> database.chatMessageDao().insert(chatMessage)))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
     }
 
     private boolean isBoBMessage(Message message) {
         return message.hasExtension(BoBExtension.ELEMENT, BoBExtension.NAMESPACE);
     }
 
-    private String assignMessageId(Message message) {
+    private void assignMessageId(Message message) {
         String messageId = message.getStanzaId();
         if (TextUtils.isEmpty(messageId)) {
             messageId = UUID.randomUUID().toString();
+            message.setStanzaId(messageId);
         }
-        return messageId;
     }
 
-    private void manageMessageAlreadyExists(Message message, Date delayDate, String messageId) {
-        Realm realm = RealmManager.getInstance().getRealm();
-        realm.beginTransaction();
+    private void manageMessageAlreadyExists(Message message, Date delayDate,
+            ChatMessage existingMessage) {
 
-        ChatMessage chatMessage = realm.where(ChatMessage.class).equalTo("messageId", messageId).findFirst();
-        chatMessage.setStatus(ChatMessage.STATUS_SENT);
+        existingMessage.setStatus(ChatMessage.STATUS_SENT);
 
         if (isBoBMessage(message)) {
             BoBExtension bobExtension = BoBExtension.from(message);
-            chatMessage.setContent(Base64.decodeToString(bobExtension.getBoBHash().getHash()));
+            existingMessage.setContent(Base64.decodeToString(bobExtension.getBoBHash().getHash()));
         } else {
-            chatMessage.setContent(message.getBody());
+            existingMessage.setContent(message.getBody());
         }
 
         if (delayDate != null) {
-            chatMessage.setDate(delayDate);
+            existingMessage.setDate(delayDate);
         }
 
-        realm.copyToRealmOrUpdate(chatMessage);
-        realm.commitTransaction();
-        realm.close();
+        Completable.fromAction(() -> database.chatMessageDao().update(existingMessage))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
     }
 
-    private Realm realmBeginTransaction() {
-        Realm realm = RealmManager.getInstance().getRealm();
-        realm.beginTransaction();
-        return realm;
-    }
-
-    private void manageSender(String[] jidList, ChatMessage chatMessage, String chatRoomJid) {
-        Realm realm = RealmManager.getInstance().getRealm();
-        Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJid).findFirst();
-
+    private void manageSender(String[] jidList, ChatMessage chatMessage, Chat chat) {
         if (chat.getType() == Chat.TYPE_MUC_LIGHT) {
             if (jidList.length > 1) {
                 chatMessage.setUserSender(XMPPUtils.fromJIDToUserName(jidList[1]));
@@ -1067,26 +1068,16 @@ public class XMPPSession {
 
             if (!jidList[0].equals(Preferences.getInstance().getUserXMPPJid())) {
                 String roomName = XMPPUtils.fromJIDToUserName(jidList[0]);
-                realm.beginTransaction();
                 chat.setName(roomName);
-                realm.copyToRealmOrUpdate(chat);
-                realm.commitTransaction();
             }
-
         }
     }
 
     private void deleteChat(String chatRoomJID) {
-        Realm realm = realmBeginTransaction();
-
-        Chat chat = realm.where(Chat.class).equalTo("jid", chatRoomJID).findFirst();
-        if (chat != null) {
-            chat.setShow(false);
-            chat.deleteFromRealm();
-        }
-
-        realm.commitTransaction();
-        realm.close();
+        Completable.fromAction(() -> database.chatDao().updateVisibilityByJid(chatRoomJID, false))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
     }
 
     private void manageDelayDate(Date delayDate, ChatMessage chatMessage) {
@@ -1097,7 +1088,7 @@ public class XMPPSession {
         }
     }
 
-    private void manageConfigurationsChange(Message message, ChatMessage chatMessage, Chat chatRoom) {
+    private void manageConfigurationsChange(Message message, ChatMessage chatMessage, Chat chat) {
         if (hasConfigurationChangeExtension(message)) {
             MUCLightElements.ConfigurationsChangeExtension configurationsChangeExtension = MUCLightElements.ConfigurationsChangeExtension.from(message);
 
@@ -1105,11 +1096,11 @@ public class XMPPSession {
             String subject = configurationsChangeExtension.getSubject();
 
             if (roomName != null) {
-                chatRoom.setName(roomName);
+                chat.setName(roomName);
             }
 
             if (subject != null) {
-                chatRoom.setSubject(subject);
+                chat.setSubject(subject);
             }
 
             chatMessage.setType(ChatMessage.TYPE_ROOM_NAME_CHANGED);
@@ -1118,10 +1109,10 @@ public class XMPPSession {
 
     public void deleteMessagesToDelete() {
         synchronized (LOCK_MESSAGES_TO_DELETE_IDS_LIST) {
-            for (String messageId : messagesToDeleteIds) {
-                RealmManager.getInstance().deleteMessage(messageId);
-            }
-            messagesToDeleteIds.clear();
+            Disposable d = Single.fromCallable(() -> database.chatMessageDao().deleteItems(messagesToDeleteIds))
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(result -> messagesToDeleteIds.clear());
         }
     }
 

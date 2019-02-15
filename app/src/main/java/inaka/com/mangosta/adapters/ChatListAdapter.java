@@ -1,6 +1,8 @@
 package inaka.com.mangosta.adapters;
 
 import android.content.Context;
+
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,9 +21,9 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
+import inaka.com.mangosta.chat.RoomManager;
 import inaka.com.mangosta.models.Chat;
 import inaka.com.mangosta.models.ChatMessage;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.ui.ViewHolderType;
 import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperAdapter;
 import inaka.com.mangosta.ui.itemTouchHelper.ItemTouchHelperViewHolder;
@@ -45,7 +47,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     public boolean onItemMove(int fromPosition, int toPosition) {
         Collections.swap(mChats, fromPosition, toPosition);
         notifyItemMoved(fromPosition, toPosition);
-        RealmManager.getInstance().updateChatsSortPosition(mChats);
+        RoomManager.getInstance().updateChatsSortPosition(mChats);
         return true;
     }
 
@@ -53,6 +55,12 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     public void onItemDismiss(int position) {
         mChats.remove(position);
         notifyItemRemoved(position);
+    }
+
+    public void updateList(List<Chat> newList) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ChatDiffCallback(this.mChats, newList));
+        diffResult.dispatchUpdatesTo(this);
+        this.mChats = newList;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -93,14 +101,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
         public void bind(final Chat chat) {
 
-            if (chat == null || !chat.isValid()) {
-                return;
-            }
-
             chatNameTextView.setText(XMPPUtils.getChatName(chat));
 
-            String jid = chat.getJid();
-            ChatMessage chatMessage = RealmManager.getInstance().getLastMessageForChat(jid);
+            ChatMessage chatMessage = null; //@TODO get last received message
 
             if (chatMessage != null) {
                 manageLastMessage(chatMessage);
@@ -216,6 +219,38 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     public interface ChatClickListener {
         void onChatClicked(Chat chat);
+    }
+
+    public class ChatDiffCallback extends DiffUtil.Callback {
+        private List<Chat> mOldList;
+        private List<Chat> mNewList;
+
+        public ChatDiffCallback(List<Chat> oldList, List<Chat> newList) {
+            this.mOldList = oldList;
+            this.mNewList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return mOldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return mNewList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return mNewList.get(newItemPosition).getJid().equals(mOldList.get(oldItemPosition).getJid());
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return mNewList.get(newItemPosition).getName().equals(mOldList.get(oldItemPosition).getName())
+                    || mNewList.get(newItemPosition).getSubject().equals(mOldList.get(oldItemPosition).getSubject())
+                    || mNewList.get(newItemPosition).getUnreadMessagesCount() == mOldList.get(oldItemPosition).getUnreadMessagesCount();
+        }
     }
 
 }

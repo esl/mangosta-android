@@ -3,37 +3,24 @@ package inaka.com.mangosta.activities;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import androidx.appcompat.app.AlertDialog;
+
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 
-import org.jivesoftware.smack.packet.Presence;
-import org.jxmpp.jid.Jid;
-
-import java.util.Locale;
-
 import butterknife.Unbinder;
-import de.greenrobot.event.EventBus;
-import inaka.com.mangosta.R;
-import inaka.com.mangosta.models.Event;
-import inaka.com.mangosta.realm.RealmManager;
 import inaka.com.mangosta.services.XMPPSessionService;
 import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.Preferences;
-import inaka.com.mangosta.xmpp.RosterManager;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.realm.Realm;
 
 public class BaseActivity extends AppCompatActivity {
 
-    private Realm mRealm;
     public static int mSessionDepth = 0;
 
     protected Unbinder unbinder;
@@ -62,7 +49,6 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mRealm = RealmManager.getInstance().getRealm();
         disposables = new CompositeDisposable();
     }
 
@@ -70,11 +56,6 @@ public class BaseActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (unbinder != null) {
             unbinder.unbind();
-        }
-        EventBus.getDefault().unregister(this);
-
-        if (mRealm != null && !Preferences.isTesting()) {
-            mRealm.close();
         }
         clearReferences();
         disposables.dispose();
@@ -105,10 +86,6 @@ public class BaseActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        if (!EventBus.getDefault().isRegistered(this)) {
-            EventBus.getDefault().register(this);
-        }
-
         mSessionDepth++;
 
         Log.wtf("activities", String.valueOf(mSessionDepth));
@@ -136,18 +113,6 @@ public class BaseActivity extends AppCompatActivity {
 
     }
 
-
-    public Realm getRealm() {
-        try {
-            if (mRealm.isClosed()) {
-                mRealm = RealmManager.getInstance().getRealm();
-            }
-        } catch (Throwable e) {
-            mRealm = RealmManager.getInstance().getRealm();
-        }
-        return mRealm;
-    }
-
     private void clearReferences() {
         Activity currActivity = getAppCurrentActivity();
         if (this.equals(currActivity)) {
@@ -155,56 +120,8 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public void onEvent(Event event) {
-        switch (event.getType()) {
-            case PRESENCE_SUBSCRIPTION_REQUEST:
-                if (getAppCurrentActivity().equals(this)) {
-                    answerSubscriptionRequest(event.getJidSender());
-                }
-                break;
-        }
-    }
-
     private Activity getAppCurrentActivity() {
         return MangostaApplication.getInstance().getCurrentActivity();
-    }
-
-    protected void answerSubscriptionRequest(final Jid jid) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(false);
-        builder.setMessage(String.format(Locale.getDefault(), getString(R.string.roster_subscription_request), jid.toString()));
-
-        builder.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                try {
-                    Presence subscribed = new Presence(Presence.Type.subscribed);
-                    subscribed.setTo(jid);
-                    XMPPSession.getInstance().sendStanza(subscribed);
-
-                    if (!RosterManager.getInstance().isContact(jid)) {
-                        RosterManager.getInstance().addContact(jid.toString());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        builder.setNegativeButton(R.string.decline, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog dialog = builder.show();
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.colorPrimary));
-            }
-        });
-
     }
 
     protected void addDisposable(Disposable disposable) {

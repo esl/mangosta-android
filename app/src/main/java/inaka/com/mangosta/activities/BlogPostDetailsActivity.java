@@ -21,20 +21,27 @@ import org.jxmpp.jid.Jid;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.BlogPostCommentsListAdapter;
+import inaka.com.mangosta.database.MangostaDatabase;
 import inaka.com.mangosta.models.BlogPost;
 import inaka.com.mangosta.models.BlogPostComment;
-import inaka.com.mangosta.realm.RealmManager;
+import inaka.com.mangosta.utils.MangostaApplication;
 import inaka.com.mangosta.utils.TimeCalculation;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
 import inaka.com.mangosta.xmpp.microblogging.elements.PublishCommentExtension;
+import io.reactivex.Completable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class BlogPostDetailsActivity extends BaseActivity {
+
+    public static String BLOG_POST_PARAMETER = "blogPost";
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -61,7 +68,8 @@ public class BlogPostDetailsActivity extends BaseActivity {
     List<BlogPostComment> mBlogPostComments;
 
     private BlogPostCommentsListAdapter commentsListAdapter;
-    public static String BLOG_POST_PARAMETER = "blogPost";
+
+    private MangostaDatabase database = MangostaApplication.getInstance().getDatabase();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,13 +109,16 @@ public class BlogPostDetailsActivity extends BaseActivity {
 
                     try {
                         BlogPostComment blogPostComment = sendBlogPostComment(newComment, mBlogPost);
-                        RealmManager.getInstance().saveBlogPostComment(blogPostComment);
+
+                        Completable.fromCallable(() -> database.blogPostCommentDao().insert(blogPostComment))
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe();
 
                         Toast.makeText(getApplicationContext(), BlogPostDetailsActivity.this.getResources()
                                 .getString(R.string.comment_created), Toast.LENGTH_LONG).show();
                         textNewComment.setText("");
 
-                        loadBlogPostComments();
                         progressSendComment.dismiss();
 
                     } catch (SmackException.NotConnectedException | InterruptedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
@@ -152,8 +163,11 @@ public class BlogPostDetailsActivity extends BaseActivity {
 
     private void loadBlogPostComments() {
         mBlogPostComments.clear();
-        mBlogPostComments.addAll(RealmManager.getInstance().getBlogPostComments(mBlogPost.getId()));
-        commentsListAdapter.notifyDataSetChanged();
+        addDisposable(database.blogPostCommentDao().getCommentsForBlogPost(mBlogPost.getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(comments -> {}//@todo commentsListAdapter.submitList(comments)
+                ));
     }
 
     @Override

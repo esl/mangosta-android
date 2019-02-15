@@ -5,12 +5,15 @@ import android.os.Parcelable;
 
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
-public class BlogPost extends RealmObject implements Parcelable {
+@Entity
+public class BlogPost implements Parcelable {
 
     @PrimaryKey
+    @NonNull
     private String id;
     private String ownerJid;
     private String ownerAvatarUrl;
@@ -19,7 +22,6 @@ public class BlogPost extends RealmObject implements Parcelable {
     private Date updated;
 
     public BlogPost() {
-
     }
 
     public BlogPost(String id, String ownerJid, String ownerAvatarUrl, String content, Date published, Date updated) {

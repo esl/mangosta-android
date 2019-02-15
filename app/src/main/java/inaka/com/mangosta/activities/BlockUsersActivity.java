@@ -2,7 +2,6 @@ package inaka.com.mangosta.activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -27,12 +26,10 @@ import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import inaka.com.mangosta.R;
 import inaka.com.mangosta.adapters.UsersListAdapter;
-import inaka.com.mangosta.models.Event;
 import inaka.com.mangosta.models.User;
-import inaka.com.mangosta.models.UserEvent;
+import inaka.com.mangosta.models.event.UserEvent;
 import inaka.com.mangosta.utils.Preferences;
 import inaka.com.mangosta.xmpp.XMPPSession;
 import inaka.com.mangosta.xmpp.XMPPUtils;
@@ -94,6 +91,9 @@ public class BlockUsersActivity extends BaseActivity {
 
         mSearchAdapter = new UsersListAdapter(this, mSearchUsers, true, false);
         mBlockedAdapter = new UsersListAdapter(this, mBlockedUsers, false, true);
+
+        addDisposable(mSearchAdapter.getEventObservable().subscribe(this::onUserEvent));
+        addDisposable(mBlockedAdapter.getEventObservable().subscribe(this::onUserEvent));
 
         blockedUsersRecyclerView.setAdapter(mBlockedAdapter);
         blockSearchResultRecyclerView.setAdapter(mSearchAdapter);
@@ -175,9 +175,6 @@ public class BlockUsersActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!EventBus.getDefault().isRegistered(this)) {
-            EventBus.getDefault().register(this);
-        }
         mBlockedUsers.clear();
         getBlockedUsers();
     }
@@ -195,8 +192,7 @@ public class BlockUsersActivity extends BaseActivity {
         return true;
     }
 
-    // receives events from EventBus
-    public void onEvent(UserEvent userEvent) {
+    private void onUserEvent(UserEvent userEvent) {
         User user = userEvent.getUser();
 
         switch (userEvent.getType()) {
@@ -209,22 +205,6 @@ public class BlockUsersActivity extends BaseActivity {
 
             case REMOVE_USER:
                 unblockUser(user);
-                break;
-        }
-    }
-
-    @Override
-    public void onEvent(Event event) {
-        super.onEvent(event);
-        switch (event.getType()) {
-            case PRESENCE_RECEIVED:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSearchAdapter.notifyDataSetChanged();
-                        mBlockedAdapter.notifyDataSetChanged();
-                    }
-                });
                 break;
         }
     }

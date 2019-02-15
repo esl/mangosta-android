@@ -15,12 +15,15 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import inaka.com.mangosta.R;
-import inaka.com.mangosta.models.Event;
+import inaka.com.mangosta.models.event.SendEvent;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
 
 public class StickersAdapter extends RecyclerView.Adapter<StickersAdapter.StickerViewHolder> {
 
-    Context mContext;
-    List<String> mStickers;
+    private Context mContext;
+    private List<String> mStickers;
+    private PublishSubject<SendEvent> stickerSendSubject = PublishSubject.create();
 
     public StickersAdapter(Context context, List<String> stickersNameList) {
         mContext = context;
@@ -44,13 +47,21 @@ public class StickersAdapter extends RecyclerView.Adapter<StickersAdapter.Sticke
         return mStickers.size();
     }
 
-    protected static class ViewHolder extends RecyclerView.ViewHolder {
+    private void sendSticker(String sticker) {
+        stickerSendSubject.onNext(new SendEvent(SendEvent.Type.SEND_STICKER, sticker));
+    }
+
+    public Observable<SendEvent> getStickerSentObservable() {
+        return stickerSendSubject;
+    }
+
+    protected class ViewHolder extends RecyclerView.ViewHolder {
         private ViewHolder(View view) {
             super(view);
         }
     }
 
-    public static class StickerViewHolder extends StickersAdapter.ViewHolder {
+    public class StickerViewHolder extends StickersAdapter.ViewHolder {
 
         @BindView(R.id.stickerImageView)
         ImageView stickerImageView;
@@ -72,7 +83,7 @@ public class StickersAdapter extends RecyclerView.Adapter<StickersAdapter.Sticke
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    new Event(Event.Type.STICKER_SENT, sticker).post();
+                    sendSticker(sticker);
                 }
             });
         }

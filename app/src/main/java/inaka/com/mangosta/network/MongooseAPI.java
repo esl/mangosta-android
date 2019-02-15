@@ -2,6 +2,7 @@ package inaka.com.mangosta.network;
 
 import android.text.TextUtils;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,9 +22,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MongooseAPI {
 
-    private static final boolean ACCEPT_INVALID_CERTIFICATES = false; //for debug testing ONLY!
-
-    public static final String BASE_URL = "https://31.172.186.62:5285/api/";
+    private static final boolean ACCEPT_INVALID_CERTIFICATES = true; //for debug testing ONLY!
+    public static final String BASE_URL = "https://192.168.0.19:32769/api/";
 
     private static MongooseAPI mInstance;
 
@@ -70,6 +70,7 @@ public class MongooseAPI {
                     HttpClientBuilder.getTrustAllCerts());
         }
 
+        httpClient.addNetworkInterceptor(new StethoInterceptor());
         httpClient.addInterceptor(logging);
         httpClient.addInterceptor(requestInterceptor);
 

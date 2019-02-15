@@ -2,12 +2,15 @@ package inaka.com.mangosta.models;
 
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
-public class BlogPostComment extends RealmObject {
+@Entity
+public class BlogPostComment {
 
     @PrimaryKey
+    @NonNull
     private String id;
     private String content;
     private String authorName;
@@ -16,7 +19,6 @@ public class BlogPostComment extends RealmObject {
     private String blogPostId;
 
     public BlogPostComment() {
-
     }
 
     public BlogPostComment(String id, String blogPostId, String content, String authorName, String authorJid, Date published) {
